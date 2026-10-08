@@ -1,0 +1,1575 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>런치보드 Pro : HCI 기반 디지털 창업 가설 검증 플랫폼</title>
+  <meta name="description" content="상명대학교 디지털창업서비스기획과마케팅 프로젝트를 위한 HCI 기반 린 스타트업 가설 검증 및 인터랙티브 프로토타입 워크스페이스">
+  
+  <!-- Font: Pretendard -->
+  <link rel="stylesheet" as="style" crossorigin href="https://cdn.jsdelivr.net/gh/orioncactus/pretendard@v1.3.9/dist/web/static/pretendard.min.css">
+
+  <style>
+    /* --------------------------------------------------------------------------
+       01. DESIGN TOKENS & SYSTEM VARIABLES (Dark Obsidian + Electric Orange)
+       -------------------------------------------------------------------------- */
+    :root {
+      --bg-base: #080C14;
+      --bg-surface: #0E1524;
+      --bg-surface-elevated: #151F34;
+      --bg-surface-glass: rgba(14, 21, 36, 0.72);
+      
+      --border-subtle: rgba(255, 255, 255, 0.08);
+      --border-focus: rgba(255, 92, 0, 0.45);
+      --border-highlight: rgba(255, 255, 255, 0.16);
+
+      --accent-primary: #FF5C00;
+      --accent-primary-hover: #E55300;
+      --accent-glow: rgba(255, 92, 0, 0.18);
+      --accent-tint: rgba(255, 92, 0, 0.08);
+
+      --text-white: #FFFFFF;
+      --text-primary: #F1F5F9;
+      --text-secondary: #94A3B8;
+      --text-muted: #64748B;
+
+      --radius-sm: 8px;
+      --radius-md: 14px;
+      --radius-lg: 20px;
+      --radius-pill: 9999px;
+
+      --font-stack: "Pretendard", -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+      --transition-spring: 0.22s cubic-bezier(0.16, 1, 0.3, 1);
+      --container-max: 1200px;
+    }
+
+    /* --------------------------------------------------------------------------
+       02. RESET & BASE MECHANICS
+       -------------------------------------------------------------------------- */
+    *, *::before, *::after {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+    }
+
+    html {
+      scroll-behavior: smooth;
+      background-color: var(--bg-base);
+      color: var(--text-primary);
+      font-family: var(--font-stack);
+      -webkit-font-smoothing: antialiased;
+      -moz-osx-font-smoothing: grayscale;
+    }
+
+    body {
+      min-height: 100dvh;
+      line-height: 1.6;
+      background-color: var(--bg-base);
+      background-image: 
+        radial-gradient(circle at 50% 0%, rgba(255, 92, 0, 0.1) 0%, transparent 45%),
+        radial-gradient(circle at 90% 40%, rgba(30, 58, 138, 0.1) 0%, transparent 40%);
+      background-repeat: no-repeat;
+      background-attachment: fixed;
+      display: flex;
+      flex-direction: column;
+      overflow-x: hidden;
+    }
+
+    ::selection {
+      background: var(--accent-primary);
+      color: #080C14;
+    }
+
+    :focus-visible {
+      outline: 2px solid var(--accent-primary);
+      outline-offset: 3px;
+    }
+
+    @media (prefers-reduced-motion: reduce) {
+      *, *::before, *::after {
+        animation-duration: 0.01ms !important;
+        animation-iteration-count: 1 !important;
+        transition-duration: 0.01ms !important;
+        scroll-behavior: auto !important;
+      }
+    }
+
+    /* Container System */
+    .container {
+      width: 100%;
+      max-width: var(--container-max);
+      margin: 0 auto;
+      padding: 0 1.5rem;
+    }
+
+    /* --------------------------------------------------------------------------
+       03. NAVIGATION (Single-Line, Height 68px, Frosted Glass)
+       -------------------------------------------------------------------------- */
+    .site-nav {
+      position: sticky;
+      top: 0;
+      z-index: 100;
+      height: 68px;
+      background: var(--bg-surface-glass);
+      backdrop-filter: blur(16px);
+      -webkit-backdrop-filter: blur(16px);
+      border-bottom: 1px solid var(--border-subtle);
+    }
+
+    .nav-inner {
+      height: 100%;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+    }
+
+    .brand {
+      display: flex;
+      align-items: center;
+      gap: 0.75rem;
+      text-decoration: none;
+      color: var(--text-white);
+    }
+
+    .brand-mark {
+      width: 32px;
+      height: 32px;
+      background: linear-gradient(135deg, #FF7A29, #FF5C00);
+      border-radius: var(--radius-sm);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-weight: 800;
+      font-size: 1rem;
+      color: #080C14;
+      box-shadow: 0 4px 12px var(--accent-glow);
+    }
+
+    .brand-text {
+      font-size: 1rem;
+      font-weight: 700;
+      letter-spacing: -0.02em;
+    }
+
+    .brand-tag {
+      font-size: 0.75rem;
+      color: var(--text-muted);
+      margin-left: 0.35rem;
+      padding: 0.15rem 0.5rem;
+      background: rgba(255, 255, 255, 0.05);
+      border-radius: var(--radius-pill);
+      border: 1px solid var(--border-subtle);
+    }
+
+    .nav-menu {
+      display: flex;
+      align-items: center;
+      gap: 1.5rem;
+      list-style: none;
+    }
+
+    .nav-link {
+      color: var(--text-secondary);
+      text-decoration: none;
+      font-size: 0.875rem;
+      font-weight: 500;
+      transition: color var(--transition-spring);
+    }
+
+    .nav-link:hover {
+      color: var(--text-white);
+    }
+
+    .btn-pill {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      padding: 0.55rem 1.2rem;
+      border-radius: var(--radius-pill);
+      font-size: 0.875rem;
+      font-weight: 700;
+      text-decoration: none;
+      white-space: nowrap;
+      cursor: pointer;
+      border: none;
+      transition: transform var(--transition-spring), box-shadow var(--transition-spring), background var(--transition-spring);
+    }
+
+    .btn-primary {
+      background: var(--accent-primary);
+      color: #080C14;
+      box-shadow: 0 4px 16px var(--accent-glow);
+    }
+
+    .btn-primary:hover {
+      background: var(--accent-primary-hover);
+      transform: translateY(-1px);
+      box-shadow: 0 6px 20px rgba(255, 92, 0, 0.3);
+    }
+
+    .btn-primary:active {
+      transform: scale(0.98);
+    }
+
+    .btn-secondary {
+      background: rgba(255, 255, 255, 0.05);
+      color: var(--text-white);
+      border: 1px solid var(--border-highlight);
+    }
+
+    .btn-secondary:hover {
+      background: rgba(255, 255, 255, 0.09);
+      border-color: rgba(255, 255, 255, 0.25);
+      transform: translateY(-1px);
+    }
+
+    .btn-secondary:active {
+      transform: scale(0.98);
+    }
+
+    /* --------------------------------------------------------------------------
+       04. HERO SECTION (Fits Viewport, Top Padding Max 5rem, Stack Discipline)
+       -------------------------------------------------------------------------- */
+    .hero-section {
+      padding: 3.5rem 0 3.5rem;
+      position: relative;
+    }
+
+    .hero-grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 3rem;
+      align-items: center;
+    }
+
+    .hero-copy {
+      display: flex;
+      flex-direction: column;
+      gap: 1.25rem;
+    }
+
+    /* Eyebrow: Section 4.7 & 9.F rule */
+    .hero-eyebrow {
+      display: inline-flex;
+      align-items: center;
+      gap: 0.5rem;
+      align-self: flex-start;
+      padding: 0.3rem 0.85rem;
+      background: var(--accent-tint);
+      border: 1px solid var(--border-focus);
+      border-radius: var(--radius-pill);
+      font-size: 0.75rem;
+      font-weight: 700;
+      color: var(--accent-primary);
+      letter-spacing: 0.04em;
+    }
+
+    .hero-title {
+      font-size: clamp(2.1rem, 3.4vw, 3rem);
+      line-height: 1.2;
+      font-weight: 800;
+      letter-spacing: -0.03em;
+      color: var(--text-white);
+    }
+
+    .hero-subtext {
+      font-size: 1.05rem;
+      line-height: 1.65;
+      color: var(--text-secondary);
+      max-width: 32rem;
+    }
+
+    .hero-actions {
+      display: flex;
+      align-items: center;
+      gap: 1rem;
+      padding-top: 0.5rem;
+    }
+
+    /* Hero Asset Card with Image & Live Glass Overlays */
+    .hero-visual-card {
+      position: relative;
+      background: var(--bg-surface);
+      border: 1px solid var(--border-subtle);
+      border-radius: var(--radius-lg);
+      overflow: hidden;
+      box-shadow: 0 24px 60px -12px rgba(0, 0, 0, 0.7);
+      transition: border-color var(--transition-spring);
+    }
+
+    .hero-visual-card:hover {
+      border-color: var(--border-focus);
+    }
+
+    .hero-img-wrap {
+      width: 100%;
+      height: 310px;
+      overflow: hidden;
+      position: relative;
+      background: #0B101D;
+    }
+
+    .hero-img-wrap img {
+      width: 100%;
+      height: 100%;
+      object-fit: cover;
+      display: block;
+      filter: contrast(1.03) brightness(0.96);
+      transition: transform 0.4s ease;
+    }
+
+    .hero-visual-card:hover .hero-img-wrap img {
+      transform: scale(1.02);
+    }
+
+    .hero-metric-bar {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      padding: 1rem 1.25rem;
+      background: var(--bg-surface);
+      border-top: 1px solid var(--border-subtle);
+      gap: 0.75rem;
+    }
+
+    .metric-col {
+      display: flex;
+      flex-direction: column;
+    }
+
+    .metric-value {
+      font-size: 1.2rem;
+      font-weight: 800;
+      color: var(--text-white);
+      letter-spacing: -0.02em;
+    }
+
+    .metric-title {
+      font-size: 0.75rem;
+      color: var(--text-muted);
+      margin-top: 0.15rem;
+    }
+
+    /* --------------------------------------------------------------------------
+       05. TECH STACK & INTEGRATION LOGO WALL (Under Hero, Logos Only)
+       -------------------------------------------------------------------------- */
+    .logo-strip-section {
+      padding: 1.5rem 0 2.5rem;
+      border-bottom: 1px solid var(--border-subtle);
+    }
+
+    .logo-strip-header {
+      font-size: 0.75rem;
+      font-weight: 600;
+      color: var(--text-muted);
+      letter-spacing: 0.05em;
+      text-align: center;
+      margin-bottom: 1.25rem;
+      text-transform: uppercase;
+    }
+
+    .logo-row {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 3.5rem;
+      flex-wrap: wrap;
+    }
+
+    .logo-icon {
+      height: 24px;
+      opacity: 0.55;
+      transition: opacity var(--transition-spring), transform var(--transition-spring);
+      fill: #CBD5E1;
+    }
+
+    .logo-icon:hover {
+      opacity: 0.95;
+      transform: translateY(-1px);
+      fill: var(--text-white);
+    }
+
+    /* --------------------------------------------------------------------------
+       06. HCI INTERACTIVE LIVE LAB (Direct Manipulation & Instant Feedback)
+       -------------------------------------------------------------------------- */
+    .lab-section {
+      padding: 4.5rem 0;
+      border-bottom: 1px solid var(--border-subtle);
+      background: radial-gradient(circle at 15% 30%, rgba(255, 92, 0, 0.04) 0%, transparent 60%);
+    }
+
+    .section-header-stack {
+      max-width: 42rem;
+      margin-bottom: 2.75rem;
+    }
+
+    /* Section Eyebrow (Allowed: max 1 per 3 sections) */
+    .section-eyebrow {
+      font-size: 0.75rem;
+      font-weight: 700;
+      color: var(--accent-primary);
+      margin-bottom: 0.6rem;
+      letter-spacing: 0.05em;
+      text-transform: uppercase;
+    }
+
+    .section-headline {
+      font-size: clamp(1.6rem, 2.5vw, 2.1rem);
+      font-weight: 800;
+      letter-spacing: -0.025em;
+      color: var(--text-white);
+      line-height: 1.3;
+      margin-bottom: 0.65rem;
+    }
+
+    .section-copy {
+      font-size: 0.95rem;
+      color: var(--text-secondary);
+      line-height: 1.6;
+    }
+
+    .lab-grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 2rem;
+      align-items: stretch;
+    }
+
+    .lab-input-card {
+      background: var(--bg-surface);
+      border: 1px solid var(--border-subtle);
+      border-radius: var(--radius-lg);
+      padding: 1.75rem;
+      display: flex;
+      flex-direction: column;
+      gap: 1.35rem;
+    }
+
+    .control-block {
+      display: flex;
+      flex-direction: column;
+      gap: 0.5rem;
+    }
+
+    .control-label {
+      font-size: 0.85rem;
+      font-weight: 700;
+      color: var(--text-white);
+      display: flex;
+      justify-content: space-between;
+    }
+
+    .control-helper {
+      font-size: 0.75rem;
+      color: var(--text-muted);
+    }
+
+    .styled-input, .styled-select {
+      width: 100%;
+      background: #090E1A;
+      border: 1px solid var(--border-subtle);
+      border-radius: var(--radius-sm);
+      padding: 0.7rem 0.9rem;
+      font-size: 0.9rem;
+      color: var(--text-white);
+      font-family: inherit;
+      transition: border-color var(--transition-spring), box-shadow var(--transition-spring);
+    }
+
+    .styled-input:focus, .styled-select:focus {
+      outline: none;
+      border-color: var(--accent-primary);
+      box-shadow: 0 0 0 3px var(--accent-tint);
+    }
+
+    .quick-preset-chips {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 0.4rem;
+      margin-top: 0.25rem;
+    }
+
+    .preset-pill {
+      background: rgba(255, 255, 255, 0.04);
+      border: 1px solid var(--border-subtle);
+      border-radius: var(--radius-pill);
+      padding: 0.25rem 0.65rem;
+      font-size: 0.75rem;
+      color: var(--text-secondary);
+      cursor: pointer;
+      font-family: inherit;
+      transition: all var(--transition-spring);
+    }
+
+    .preset-pill:hover {
+      background: var(--accent-tint);
+      border-color: var(--border-focus);
+      color: var(--accent-primary);
+    }
+
+    /* Live Output Monitor Card */
+    .lab-monitor-card {
+      background: #090E1A;
+      border: 1px solid var(--border-highlight);
+      border-radius: var(--radius-lg);
+      padding: 1.75rem;
+      display: flex;
+      flex-direction: column;
+      justify-content: space-between;
+      position: relative;
+    }
+
+    .monitor-top {
+      display: flex;
+      flex-direction: column;
+      gap: 1.25rem;
+    }
+
+    .monitor-status-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      padding-bottom: 0.85rem;
+      border-bottom: 1px solid var(--border-subtle);
+    }
+
+    .status-badge {
+      display: inline-flex;
+      align-items: center;
+      gap: 0.4rem;
+      font-size: 0.75rem;
+      font-weight: 700;
+      color: #10B981;
+      background: rgba(16, 185, 129, 0.1);
+      padding: 0.2rem 0.6rem;
+      border-radius: var(--radius-pill);
+    }
+
+    .status-indicator-dot {
+      width: 6px;
+      height: 6px;
+      border-radius: 50%;
+      background: #10B981;
+      box-shadow: 0 0 8px #10B981;
+    }
+
+    .pitch-result-panel {
+      background: var(--bg-surface);
+      border: 1px solid var(--border-subtle);
+      border-radius: var(--radius-md);
+      padding: 1.25rem;
+    }
+
+    .pitch-result-label {
+      font-size: 0.75rem;
+      color: var(--accent-primary);
+      font-weight: 700;
+      margin-bottom: 0.4rem;
+      letter-spacing: 0.03em;
+    }
+
+    .pitch-result-text {
+      font-size: 0.95rem;
+      line-height: 1.6;
+      color: var(--text-white);
+      font-weight: 500;
+    }
+
+    /* Live HCI Cognitive Index Bar */
+    .hci-metric-box {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 1rem;
+      background: rgba(255, 255, 255, 0.02);
+      border: 1px solid var(--border-subtle);
+      border-radius: var(--radius-md);
+      padding: 1rem;
+    }
+
+    .hci-metric-title {
+      font-size: 0.75rem;
+      color: var(--text-muted);
+      margin-bottom: 0.25rem;
+    }
+
+    .hci-metric-number {
+      font-size: 1.15rem;
+      font-weight: 800;
+      color: var(--text-white);
+    }
+
+    .hci-metric-eval {
+      font-size: 0.75rem;
+      color: #10B981;
+      font-weight: 600;
+    }
+
+    .monitor-footer-actions {
+      display: flex;
+      gap: 0.75rem;
+      margin-top: 1.25rem;
+    }
+
+    /* --------------------------------------------------------------------------
+       07. BENTO GRID (4 Distinct Tiles, High Variation, Exact Cell Count)
+       -------------------------------------------------------------------------- */
+    .bento-section {
+      padding: 4.5rem 0;
+      border-bottom: 1px solid var(--border-subtle);
+    }
+
+    .bento-grid {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      grid-template-rows: auto auto;
+      gap: 1.5rem;
+    }
+
+    .bento-card {
+      background: var(--bg-surface);
+      border: 1px solid var(--border-subtle);
+      border-radius: var(--radius-lg);
+      padding: 1.75rem;
+      display: flex;
+      flex-direction: column;
+      justify-content: space-between;
+      position: relative;
+      overflow: hidden;
+      transition: transform var(--transition-spring), border-color var(--transition-spring);
+    }
+
+    .bento-card:hover {
+      transform: translateY(-2px);
+      border-color: var(--border-highlight);
+    }
+
+    /* Cell 1: 2-column wide with visual diagram */
+    .bento-wide {
+      grid-column: span 2;
+      background: linear-gradient(145deg, #111A2E 0%, #0E1524 100%);
+    }
+
+    .bento-tag {
+      font-size: 0.75rem;
+      font-weight: 700;
+      color: var(--accent-primary);
+      margin-bottom: 0.5rem;
+    }
+
+    .bento-title {
+      font-size: 1.25rem;
+      font-weight: 800;
+      color: var(--text-white);
+      letter-spacing: -0.02em;
+      margin-bottom: 0.5rem;
+    }
+
+    .bento-desc {
+      font-size: 0.875rem;
+      color: var(--text-secondary);
+      line-height: 1.55;
+      margin-bottom: 1.25rem;
+    }
+
+    /* Interactive Fitts's Law Target Inside Bento 1 */
+    .fitts-playground {
+      background: #080C14;
+      border: 1px solid var(--border-subtle);
+      border-radius: var(--radius-md);
+      padding: 1.25rem;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 1rem;
+    }
+
+    .fitts-target-btn {
+      padding: 0.85rem 1.6rem;
+      background: var(--accent-primary);
+      color: #080C14;
+      font-weight: 800;
+      border-radius: var(--radius-sm);
+      border: none;
+      cursor: pointer;
+      font-size: 0.85rem;
+      transition: transform 0.1s ease;
+      white-space: nowrap;
+    }
+
+    .fitts-target-btn:active {
+      transform: scale(0.94);
+    }
+
+    .fitts-result-stat {
+      font-size: 0.8125rem;
+      color: var(--text-secondary);
+    }
+
+    .fitts-result-stat strong {
+      color: var(--text-white);
+    }
+
+    /* Cell 2: Hick's Law Slider Simulator */
+    .bento-card-hick {
+      background: #0B111F;
+    }
+
+    .hick-slider-box {
+      margin-top: 1rem;
+      display: flex;
+      flex-direction: column;
+      gap: 0.6rem;
+    }
+
+    .hick-slider {
+      width: 100%;
+      accent-color: var(--accent-primary);
+      cursor: pointer;
+    }
+
+    .hick-readout {
+      display: flex;
+      justify-content: space-between;
+      font-size: 0.8rem;
+      color: var(--text-muted);
+    }
+
+    .hick-readout strong {
+      color: var(--accent-primary);
+      font-weight: 700;
+    }
+
+    /* Cell 3: F-Pattern Eye Tracking Heat Card */
+    .bento-heat-preview {
+      background: #090E1A;
+      border: 1px solid var(--border-subtle);
+      border-radius: var(--radius-md);
+      padding: 1rem;
+      display: flex;
+      flex-direction: column;
+      gap: 0.5rem;
+      margin-top: 1rem;
+    }
+
+    .heat-bar {
+      height: 8px;
+      border-radius: 4px;
+      background: linear-gradient(90deg, #EF4444 0%, #F59E0B 55%, #10B981 100%);
+    }
+
+    .heat-caption {
+      font-size: 0.75rem;
+      color: var(--text-muted);
+      display: flex;
+      justify-content: space-between;
+    }
+
+    /* Cell 4: 2-column wide conversion forecast */
+    .bento-forecast {
+      grid-column: span 2;
+      background: linear-gradient(145deg, #0E1524 0%, #131E33 100%);
+    }
+
+    .forecast-metrics-grid {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 1rem;
+      margin-top: 1rem;
+    }
+
+    .forecast-metric-tile {
+      background: rgba(0, 0, 0, 0.25);
+      border: 1px solid var(--border-subtle);
+      border-radius: var(--radius-sm);
+      padding: 0.85rem;
+    }
+
+    .forecast-num {
+      font-size: 1.35rem;
+      font-weight: 800;
+      color: var(--text-white);
+    }
+
+    .forecast-label {
+      font-size: 0.75rem;
+      color: var(--text-muted);
+      margin-top: 0.15rem;
+    }
+
+    /* --------------------------------------------------------------------------
+       08. HCI 3-PILLAR FRAMEWORK (No Eyebrow, Clear Hierarchy)
+       -------------------------------------------------------------------------- */
+    .framework-section {
+      padding: 4.5rem 0;
+      border-bottom: 1px solid var(--border-subtle);
+    }
+
+    .framework-trio {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 1.75rem;
+    }
+
+    .pillar-card {
+      background: var(--bg-surface);
+      border: 1px solid var(--border-subtle);
+      border-radius: var(--radius-lg);
+      padding: 2rem 1.75rem;
+      display: flex;
+      flex-direction: column;
+      gap: 1rem;
+    }
+
+    .pillar-num {
+      width: 36px;
+      height: 36px;
+      border-radius: var(--radius-sm);
+      background: rgba(255, 255, 255, 0.04);
+      border: 1px solid var(--border-subtle);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 0.875rem;
+      font-weight: 800;
+      color: var(--accent-primary);
+    }
+
+    .pillar-title {
+      font-size: 1.15rem;
+      font-weight: 800;
+      color: var(--text-white);
+      letter-spacing: -0.02em;
+    }
+
+    .pillar-desc {
+      font-size: 0.875rem;
+      color: var(--text-secondary);
+      line-height: 1.6;
+    }
+
+    .pillar-rule-box {
+      margin-top: auto;
+      padding-top: 0.85rem;
+      border-top: 1px solid var(--border-subtle);
+      font-size: 0.75rem;
+      color: var(--text-muted);
+    }
+
+    .pillar-rule-box strong {
+      color: var(--text-white);
+    }
+
+    /* --------------------------------------------------------------------------
+       09. FAST-TRACK TEAM REGISTRATION SECTION (No Eyebrow, WCAG Contrast)
+       -------------------------------------------------------------------------- */
+    .register-section {
+      padding: 5rem 0;
+      background: radial-gradient(circle at 50% 50%, rgba(255, 92, 0, 0.06) 0%, transparent 65%);
+    }
+
+    .register-box {
+      max-width: 44rem;
+      margin: 0 auto;
+      background: var(--bg-surface);
+      border: 1px solid var(--border-highlight);
+      border-radius: var(--radius-lg);
+      padding: 2.75rem 2.25rem;
+      text-align: center;
+      box-shadow: 0 20px 50px -10px rgba(0, 0, 0, 0.6);
+    }
+
+    .register-title {
+      font-size: 1.85rem;
+      font-weight: 800;
+      letter-spacing: -0.025em;
+      color: var(--text-white);
+      margin-bottom: 0.65rem;
+    }
+
+    .register-desc {
+      font-size: 0.95rem;
+      color: var(--text-secondary);
+      margin-bottom: 2rem;
+      line-height: 1.6;
+    }
+
+    .register-form {
+      display: flex;
+      flex-direction: column;
+      gap: 1rem;
+      text-align: left;
+    }
+
+    .form-row-2 {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 1rem;
+    }
+
+    .form-field-group {
+      display: flex;
+      flex-direction: column;
+      gap: 0.4rem;
+    }
+
+    .form-field-group label {
+      font-size: 0.8125rem;
+      font-weight: 700;
+      color: var(--text-white);
+    }
+
+    .register-submit-btn {
+      width: 100%;
+      padding: 0.85rem;
+      font-size: 0.95rem;
+      margin-top: 0.5rem;
+    }
+
+    .team-counter-strip {
+      margin-top: 1.25rem;
+      font-size: 0.8125rem;
+      color: var(--text-muted);
+    }
+
+    .team-counter-strip strong {
+      color: var(--accent-primary);
+    }
+
+    /* --------------------------------------------------------------------------
+       10. FOOTER (Clean, No Version Clutter, Semantic)
+       -------------------------------------------------------------------------- */
+    .site-footer {
+      border-top: 1px solid var(--border-subtle);
+      padding: 2.5rem 0;
+      background: var(--bg-base);
+      margin-top: auto;
+    }
+
+    .footer-inner {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      flex-wrap: wrap;
+      gap: 1rem;
+    }
+
+    .footer-copy {
+      font-size: 0.8125rem;
+      color: var(--text-muted);
+    }
+
+    .footer-copy strong {
+      color: var(--text-secondary);
+    }
+
+    .footer-nav {
+      display: flex;
+      gap: 1.5rem;
+    }
+
+    .footer-nav a {
+      font-size: 0.8125rem;
+      color: var(--text-muted);
+      text-decoration: none;
+      transition: color var(--transition-spring);
+    }
+
+    .footer-nav a:hover {
+      color: var(--text-white);
+    }
+
+    /* --------------------------------------------------------------------------
+       11. TOAST NOTIFICATION
+       -------------------------------------------------------------------------- */
+    .toast-pill {
+      position: fixed;
+      bottom: 2rem;
+      right: 2rem;
+      background: #0F172A;
+      border: 1px solid var(--border-focus);
+      color: var(--text-white);
+      padding: 0.75rem 1.25rem;
+      border-radius: var(--radius-pill);
+      font-size: 0.85rem;
+      font-weight: 600;
+      box-shadow: 0 10px 30px rgba(0, 0, 0, 0.8);
+      z-index: 1000;
+      opacity: 0;
+      transform: translateY(12px);
+      pointer-events: none;
+      transition: opacity 0.25s ease, transform 0.25s ease;
+      display: flex;
+      align-items: center;
+      gap: 0.5rem;
+    }
+
+    .toast-pill.show {
+      opacity: 1;
+      transform: translateY(0);
+      pointer-events: auto;
+    }
+
+    /* --------------------------------------------------------------------------
+       12. RESPONSIVENESS (Explicit Mobile Collapse)
+       -------------------------------------------------------------------------- */
+    @media (max-width: 1024px) {
+      .hero-grid {
+        grid-template-columns: 1fr;
+        gap: 2.5rem;
+      }
+      .bento-grid {
+        grid-template-columns: 1fr;
+      }
+      .bento-wide, .bento-forecast {
+        grid-column: span 1;
+      }
+      .framework-trio {
+        grid-template-columns: 1fr;
+      }
+    }
+
+    @media (max-width: 768px) {
+      .site-nav {
+        height: auto;
+        padding: 0.75rem 0;
+      }
+      .nav-menu {
+        display: none;
+      }
+      .hero-title {
+        font-size: 2.1rem;
+      }
+      .lab-grid {
+        grid-template-columns: 1fr;
+      }
+      .form-row-2 {
+        grid-template-columns: 1fr;
+      }
+      .forecast-metrics-grid {
+        grid-template-columns: 1fr;
+      }
+      .hero-metric-bar {
+        grid-template-columns: 1fr;
+      }
+      .logo-row {
+        gap: 1.75rem;
+      }
+    }
+  </style>
+</head>
+<body>
+
+  <!-- 01. NAVIGATION -->
+  <header class="site-nav">
+    <div class="container nav-inner">
+      <a href="#" class="brand" aria-label="런치보드 Pro 홈">
+        <div class="brand-mark">L</div>
+        <div class="brand-text">LaunchBoard Pro</div>
+        <span class="brand-tag">상명대 디지털창업</span>
+      </a>
+
+      <nav aria-label="메인 탐색">
+        <ul class="nav-menu">
+          <li><a href="#lab" class="nav-link">인터랙티브 가설 랩</a></li>
+          <li><a href="#bento" class="nav-link">HCI 반응 엔진</a></li>
+          <li><a href="#framework" class="nav-link">3대 기획 프레임워크</a></li>
+        </ul>
+      </nav>
+
+      <a href="#register" class="btn-pill btn-primary">무료 가설 검증</a>
+    </div>
+  </header>
+
+  <main>
+    <!-- 02. HERO SECTION -->
+    <section class="hero-section">
+      <div class="container hero-grid">
+        <div class="hero-copy">
+          <div class="hero-eyebrow">
+            HCI 인터랙션 기반 린 스타트업 검증
+          </div>
+
+          <h1 class="hero-title">
+            생각에 머문 창업 아이디어,<br>
+            클릭 3번으로 가설을 증명합니다.
+          </h1>
+
+          <p class="hero-subtext">
+            상명대 디지털창업서비스기획과마케팅 팀 프로젝트를 위한 실시간 고객 반응 측정 워크스페이스입니다.
+          </p>
+
+          <div class="hero-actions">
+            <a href="#lab" class="btn-pill btn-primary">가설 검증 시작하기</a>
+            <a href="#bento" class="btn-pill btn-secondary">HCI 검증 엔진 보기</a>
+          </div>
+        </div>
+
+        <div class="hero-visual-card">
+          <div class="hero-img-wrap">
+            <img src="./hero_preview.jpg" alt="UX 분석 및 시각 계층 히트맵 대시보드 인터페이스" width="600" height="310" loading="eager">
+          </div>
+          <div class="hero-metric-bar">
+            <div class="metric-col">
+              <span class="metric-value">0.82s</span>
+              <span class="metric-title">피츠의 법칙 인지 반응 시간</span>
+            </div>
+            <div class="metric-col">
+              <span class="metric-value">68.4%</span>
+              <span class="metric-title">히트맵 1구역 시선 집중도</span>
+            </div>
+            <div class="metric-col">
+              <span class="metric-value">3.8x</span>
+              <span class="metric-title">가치 제안 전환 효율 향상</span>
+            </div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- 03. LOGO WALL (Logos Only, Under Hero) -->
+    <section class="logo-strip-section" aria-label="활용 기술 스택 및 기획 도구">
+      <div class="container">
+        <div class="logo-strip-header">프로덕트 기획 및 린 검증 스택</div>
+        <div class="logo-row">
+          <!-- Figma Logo -->
+          <svg class="logo-icon" width="24" height="24" viewBox="0 0 24 24" role="img" aria-label="Figma">
+            <path d="M8 24c2.208 0 4-1.792 4-4v-4H8c-2.208 0-4 1.792-4 4s1.792 4 4 4zM4 12c0-2.208 1.792-4 4-4h4v8H8c-2.208 0-4-1.792-4-4zm0-8c0-2.208 1.792-4 4-4h4v8H8C5.792 8 4 6.208 4 4zm8-4h4c2.208 0 4 1.792 4 4s-1.792 4-4 4h-4V0zm0 8h4c2.208 0 4 1.792 4 4s-1.792 4-4 4h-4V8z"/>
+          </svg>
+          <!-- Notion Logo -->
+          <svg class="logo-icon" width="24" height="24" viewBox="0 0 24 24" role="img" aria-label="Notion">
+            <path d="M4.459 4.208c.746.606 1.026.56 2.428.466l13.215-.793c.28 0 .047-.28-.093-.373L17.76 1.458a2.91 2.91 0 0 0-1.865-.653L2.735 1.784c-.373.047-.466.28-.326.466zm.886 3.965v13.635c0 .746.42 1.026 1.213.98l14.194-.84c.793-.047.933-.56.933-1.12V7.193c0-.606-.233-.886-.793-.84l-14.754.84c-.606.047-.793.373-.793.98zm13.122 1.353c.093.42 0 .84-.42.886l-.606.093v8.583c-1.026.653-2.053 1.026-2.986 1.026-1.446 0-1.819-.513-2.892-1.866l-4.153-6.206v6.393l1.353.326c.42.093.42.513.326.84-.093.42-.42.513-.933.513l-3.359.187c-.093-.42 0-.84.42-.886l.793-.187V10.22l-1.026-.093c-.42-.047-.42-.466-.326-.793.093-.42.42-.513.933-.513l3.684-.233 4.293 6.393V9.753l-1.12-.14c-.42-.047-.42-.466-.326-.793.093-.42.42-.513.933-.513z"/>
+          </svg>
+          <!-- GitHub Logo -->
+          <svg class="logo-icon" width="24" height="24" viewBox="0 0 24 24" role="img" aria-label="GitHub">
+            <path d="M12 0C5.37 0 0 5.37 0 12c0 5.31 3.435 9.795 8.205 11.385.6.105.825-.255.825-.57 0-.285-.015-1.23-.015-2.235-3.015.555-3.795-.735-4.035-1.41-.135-.345-.72-1.41-1.23-1.695-.42-.225-1.02-.78-.015-.795.945-.015 1.62.87 1.845 1.23 1.08 1.815 2.805 1.305 3.495.99.105-.78.42-1.305.765-1.605-2.67-.3-5.46-1.335-5.46-5.925 0-1.305.465-2.385 1.23-3.225-.12-.3-.54-1.53.12-3.18 0 0 1.005-.315 3.3 1.23.96-.27 1.98-.405 3-.405s2.04.135 3 .405c2.295-1.56 3.3-1.23 3.3-1.23.66 1.65.24 2.88.12 3.18.765.84 1.23 1.905 1.23 3.225 0 4.605-2.805 5.625-5.475 5.925.435.375.81 1.095.81 2.22 0 1.605-.015 2.895-.015 3.3 0 .315.225.69.825.57A12.02 12.02 0 0 0 24 12c0-6.63-5.37-12-12-12z"/>
+          </svg>
+          <!-- Vercel Logo -->
+          <svg class="logo-icon" width="24" height="24" viewBox="0 0 24 24" role="img" aria-label="Vercel">
+            <path d="M24 22.525H0l12-21.05 12 21.05z"/>
+          </svg>
+          <!-- Supabase Logo -->
+          <svg class="logo-icon" width="24" height="24" viewBox="0 0 24 24" role="img" aria-label="Supabase">
+            <path d="M21.362 9.354H12V.396a.396.396 0 0 0-.716-.233L.12 14.153a.396.396 0 0 0 .31.642H9.84v9.068a.396.396 0 0 0 .716.233l11.164-13.99a.396.396 0 0 0-.358-.752z"/>
+          </svg>
+        </div>
+      </div>
+    </section>
+
+    <!-- 04. HCI INTERACTIVE LIVE LAB -->
+    <section id="lab" class="lab-section">
+      <div class="container">
+        <div class="section-header-stack">
+          <div class="section-eyebrow">실시간 가설 합성 엔진</div>
+          <h2 class="section-headline">HCI 가치 제안 및 인지 부하 시뮬레이터</h2>
+          <p class="section-copy">
+            타깃과 문제 해결책을 조작하면, 복잡한 인지 과정을 줄여 고객이 3초 안에 이해하는 최적의 가치 제안문과 가설을 즉시 연산합니다.
+          </p>
+        </div>
+
+        <div class="lab-grid">
+          <!-- Input Form Panel -->
+          <div class="lab-input-card">
+            <div class="control-block">
+              <label class="control-label" for="domainSelect">서비스 도메인</label>
+              <select id="domainSelect" class="styled-select" onchange="runLiveSynthesizer()">
+                <option value="캠퍼스 라이프스타일">캠퍼스 라이프스타일 및 편의</option>
+                <option value="대학생 긱이코노미">대학생 재능 마켓 및 외주 매칭</option>
+                <option value="AI 학습 생산성">AI 기반 전공 학습 및 과제 어시스턴트</option>
+                <option value="청년 소셜 벤처">친환경 캠퍼스 및 소셜 임팩트</option>
+              </select>
+            </div>
+
+            <div class="control-block">
+              <div class="control-label">
+                <span>타깃 사용자군 (User Persona)</span>
+                <span class="control-helper">누구를 위한 서비스인가요?</span>
+              </div>
+              <input type="text" id="targetInput" class="styled-input" value="팀플 마감에 쫓기는 상명대 재학생 조장" oninput="runLiveSynthesizer()">
+              <div class="quick-preset-chips">
+                <button type="button" class="preset-pill" onclick="setPresetTarget('취업 포트폴리오를 준비하는 3-4학년')">취준생</button>
+                <button type="button" class="preset-pill" onclick="setPresetTarget('전공 서적 비용이 부담스러운 신입생')">알뜰 신입생</button>
+                <button type="button" class="preset-pill" onclick="setPresetTarget('학식 줄서기 시간을 아끼고 싶은 학생')">바쁜 재학생</button>
+              </div>
+            </div>
+
+            <div class="control-block">
+              <div class="control-label">
+                <span>핵심 페인포인트 (Friction Point)</span>
+                <span class="control-helper">기존 방식의 가장 큰 불편함</span>
+              </div>
+              <input type="text" id="problemInput" class="styled-input" value="무임승차 팀원 관리와 비효율적인 역할 분담" oninput="runLiveSynthesizer()">
+            </div>
+
+            <div class="control-block">
+              <div class="control-label">
+                <span>제공할 핵심 기능 (MVP Solution)</span>
+                <span class="control-helper">해결책의 핵심 매커니즘</span>
+              </div>
+              <input type="text" id="solutionInput" class="styled-input" value="기여도 자동 집계와 마일스톤 투명 공개 대시보드" oninput="runLiveSynthesizer()">
+            </div>
+          </div>
+
+          <!-- Real-Time Monitor Output -->
+          <div class="lab-monitor-card" aria-live="polite">
+            <div class="monitor-top">
+              <div class="monitor-status-header">
+                <div>
+                  <div style="font-weight: 800; font-size: 0.95rem; color: #FFF;">가치 제안서 실시간 합성 결과</div>
+                  <div style="font-size: 0.75rem; color: var(--text-muted); margin-top: 0.15rem;" id="domainReadout">도메인: 캠퍼스 라이프스타일</div>
+                </div>
+                <div class="status-badge">
+                  <span class="status-indicator-dot"></span>
+                  연산 최적화 완료
+                </div>
+              </div>
+
+              <div class="pitch-result-panel">
+                <div class="pitch-result-label">엘리베이터 피치 (Value Proposition)</div>
+                <p class="pitch-result-text" id="livePitchText">
+                  "우리는 팀플 마감에 쫓기는 상명대 재학생 조장을 위해, 기여도 자동 집계와 마일스톤 투명 공개 대시보드를 제공하여 무임승차 팀원 관리 문제를 해결합니다."
+                </p>
+              </div>
+
+              <!-- HCI Cognitive Index -->
+              <div class="hci-metric-box">
+                <div>
+                  <div class="hci-metric-title">인지 마찰 지수 (Cognitive Load)</div>
+                  <div class="hci-metric-number" id="frictionScore">2.4 / 10</div>
+                  <div class="hci-metric-eval">매우 낮음 (즉시 인지 가능)</div>
+                </div>
+                <div>
+                  <div class="hci-metric-title">가설 타당성 예상 점수</div>
+                  <div class="hci-metric-number" id="feasibilityScore">91점</div>
+                  <div class="hci-metric-eval">우수 (빠른 런칭 권장)</div>
+                </div>
+              </div>
+            </div>
+
+            <div class="monitor-footer-actions">
+              <button type="button" class="btn-pill btn-primary" onclick="copyPitchText()">
+                기획서용 피치 텍스트 복사
+              </button>
+              <button type="button" class="btn-pill btn-secondary" onclick="resetLiveLab()">
+                초기화
+              </button>
+            </div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- 05. BENTO GRID (HCI Reaction Engine - 4 Tiles) -->
+    <section id="bento" class="bento-section">
+      <div class="container">
+        <div class="section-header-stack">
+          <h2 class="section-headline">HCI 관점으로 설계된 4가지 반응 검증 엔진</h2>
+          <p class="section-copy">
+            사용자의 인지적 한계를 극복하고 시각적 계층과 행동을 유도하는 검증 메커니즘입니다.
+          </p>
+        </div>
+
+        <div class="bento-grid">
+          <!-- Bento 1: Fitts's Law Target Tester (2-Col Wide) -->
+          <div class="bento-card bento-wide">
+            <div>
+              <div class="bento-tag">피츠의 법칙 (Fitts's Law)</div>
+              <h3 class="bento-title">타깃 도달 시간 및 반응성 실시간 측정</h3>
+              <p class="bento-desc">
+                주요 전환 버튼의 면적(Width)과 거리(Distance) 비율을 극대화하여 마우스 및 모바일 터치 저항을 최소화합니다.
+              </p>
+            </div>
+
+            <div class="fitts-playground">
+              <button type="button" class="fitts-target-btn" id="fittsBtn" onclick="testFittsReaction()">
+                타깃 클릭 반응속도 측정
+              </button>
+              <div class="fitts-result-stat" id="fittsStatus">
+                버튼을 클릭하면 <strong>도달 반응 시간(ms)</strong>이 측정됩니다.
+              </div>
+            </div>
+          </div>
+
+          <!-- Bento 2: Hick's Law Cognitive Load Slider -->
+          <div class="bento-card bento-card-hick">
+            <div>
+              <div class="bento-tag">힉의 법칙 (Hick's Law)</div>
+              <h3 class="bento-title">선택지 분산 방지</h3>
+              <p class="bento-desc">
+                의사결정 요소 수(N)에 비례하는 고객 이탈을 통제합니다.
+              </p>
+            </div>
+
+            <div class="hick-slider-box">
+              <label for="hickSlider" class="control-label">
+                <span>페이지 선택 옵션 수</span>
+                <span id="hickCount">3개 (권장)</span>
+              </label>
+              <input type="range" id="hickSlider" class="hick-slider" min="1" max="10" value="3" oninput="updateHickMetric(this.value)">
+              <div class="hick-readout">
+                <span>예상 결정 지연 시간:</span>
+                <strong id="hickTime">0.58초</strong>
+              </div>
+            </div>
+          </div>
+
+          <!-- Bento 3: F-Pattern Eye Tracking Indicator -->
+          <div class="bento-card">
+            <div>
+              <div class="bento-tag">시각 계층 (Visual Hierarchy)</div>
+              <h3 class="bento-title">F-패턴 시선 스캐닝</h3>
+              <p class="bento-desc">
+                방문자가 가장 먼저 훑어보는 상단 40% 영역에 핵심 메시지를 집중 배치합니다.
+              </p>
+            </div>
+
+            <div class="bento-heat-preview">
+              <div class="heat-bar"></div>
+              <div class="heat-caption">
+                <span>헤드라인 (고열존)</span>
+                <span>CTA 버튼 (전환존)</span>
+              </div>
+            </div>
+          </div>
+
+          <!-- Bento 4: 2-Col Wide Conversion Forecast Engine -->
+          <div class="bento-card bento-forecast">
+            <div>
+              <div class="bento-tag">전환율 예측 (Conversion Engine)</div>
+              <h3 class="bento-title">48시간 린 검증 벤치마크 지표</h3>
+              <p class="bento-desc">
+                상명대 프로젝트 팀이 실제 잠재 고객에게 노출했을 때 달성해야 할 최소 검증 기준선입니다.
+              </p>
+            </div>
+
+            <div class="forecast-metrics-grid">
+              <div class="forecast-metric-tile">
+                <div class="forecast-num">> 15.0%</div>
+                <div class="forecast-label">사전 신청 전환율 (CR)</div>
+              </div>
+              <div class="forecast-metric-tile">
+                <div class="forecast-num">< 1.2s</div>
+                <div class="forecast-label">초기 가치 인지 소요 시간</div>
+              </div>
+              <div class="forecast-metric-tile">
+                <div class="forecast-num">48h</div>
+                <div class="forecast-label">가설 검증 완료 사이클</div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- 06. HCI 3-PILLAR FRAMEWORK -->
+    <section id="framework" class="framework-section">
+      <div class="container">
+        <div class="section-header-stack">
+          <h2 class="section-headline">사용자 경험 중심의 디지털 서비스 기획 3요소</h2>
+          <p class="section-copy">
+            기획서 작성부터 프로토타입 구현까지 직관성을 극대화하기 위한 핵심 기둥입니다.
+          </p>
+        </div>
+
+        <div class="framework-trio">
+          <div class="pillar-card">
+            <div class="pillar-num">01</div>
+            <h3 class="pillar-title">인지 부하 최소화</h3>
+            <p class="pillar-desc">
+              고객이 제품을 이해하기 위해 머리를 쓰게 만드는 순간 이탈합니다. 복잡한 용어를 배제하고 일상적 어휘와 명확한 시각 단서(Signifiers)를 제공합니다.
+            </p>
+            <div class="pillar-rule-box">
+              실천 원칙: <strong>첫 화면 5초 룰 통과하기</strong>
+            </div>
+          </div>
+
+          <div class="pillar-card">
+            <div class="pillar-num">02</div>
+            <h3 class="pillar-title">즉각적 어포던스 부여</h3>
+            <p class="pillar-desc">
+              눌릴 수 있는 요소와 단순 텍스트를 시각적 깊이감(Elevation), 테두리 강조, 호버 상태 변화로 명백하게 구별합니다.
+            </p>
+            <div class="pillar-rule-box">
+              실천 원칙: <strong>물리적 누름 피드백 제공</strong>
+            </div>
+          </div>
+
+          <div class="pillar-card">
+            <div class="pillar-num">03</div>
+            <h3 class="pillar-title">단일 행동 유도 집중</h3>
+            <p class="pillar-desc">
+              화면마다 사용자가 취해야 할 단 하나의 결정적 행동(Primary Action)을 전진 배치하여 전환 경로의 마찰을 제거합니다.
+            </p>
+            <div class="pillar-rule-box">
+              실천 원칙: <strong>주요 CTA 버튼의 시각적 지배력 확보</strong>
+            </div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- 07. FAST-TRACK TEAM REGISTRATION -->
+    <section id="register" class="register-section">
+      <div class="container">
+        <div class="register-box">
+          <h2 class="register-title">우리 팀 창업 아이디어 검증 시작하기</h2>
+          <p class="register-desc">
+            팀 프로젝트 아이디어를 등록하면 상명대 학우 및 멘토 피드백을 신속하게 수집할 수 있는 전용 검증 링크를 발급해 드립니다.
+          </p>
+
+          <form class="register-form" onsubmit="submitTeamRegistration(event)">
+            <div class="form-row-2">
+              <div class="form-field-group">
+                <label for="teamNameInput">팀명 및 조 번호</label>
+                <input type="text" id="teamNameInput" required class="styled-input" placeholder="예: 디지털창업 4조 (서비스명)">
+              </div>
+              <div class="form-field-group">
+                <label for="teamEmailInput">대표 연락처 이메일</label>
+                <input type="email" id="teamEmailInput" required class="styled-input" placeholder="smu_project@smu.ac.kr">
+              </div>
+            </div>
+
+            <div class="form-field-group">
+              <label for="ideaInput">검증하고 싶은 핵심 창업 가설</label>
+              <input type="text" id="ideaInput" required class="styled-input" placeholder="예: 48시간 내 대학생 중고 전공책 직거래 매칭 검증">
+            </div>
+
+            <button type="submit" class="btn-pill btn-primary register-submit-btn">
+              무료 가설 검증 신청서 제출
+            </button>
+          </form>
+
+          <div class="team-counter-strip">
+            현재 <strong id="registeredTeamCount">18개 팀</strong>이 린 검증을 진행 중입니다.
+          </div>
+        </div>
+      </div>
+    </section>
+  </main>
+
+  <!-- 08. FOOTER -->
+  <footer class="site-footer">
+    <div class="container footer-inner">
+      <div class="footer-copy">
+        <strong>상명대학교 디지털창업서비스기획과마케팅</strong> 실습용 인터랙티브 플랫폼
+      </div>
+
+      <nav class="footer-nav" aria-label="바닥글 링크">
+        <a href="#lab">가설 랩</a>
+        <a href="#bento">HCI 엔진</a>
+        <a href="#framework">기획 3요소</a>
+        <a href="#register">팀 등록</a>
+      </nav>
+    </div>
+  </footer>
+
+  <!-- Toast Notification -->
+  <div id="toastNotification" class="toast-pill" role="status" aria-live="polite">
+    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#10B981" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+      <polyline points="20 6 9 17 4 12"></polyline>
+    </svg>
+    <span id="toastMsg">텍스트가 클립보드에 복사되었습니다.</span>
+  </div>
+
+  <!-- Interactive JavaScript Engine -->
+  <script>
+    // Live Value Proposition & Hypothesis Synthesizer
+    function runLiveSynthesizer() {
+      const domain = document.getElementById('domainSelect').value;
+      const target = document.getElementById('targetInput').value.trim() || '고객';
+      const problem = document.getElementById('problemInput').value.trim() || '불편함';
+      const solution = document.getElementById('solutionInput').value.trim() || '해결책';
+
+      const pitchElement = document.getElementById('livePitchText');
+      const domainReadout = document.getElementById('domainReadout');
+      
+      domainReadout.textContent = '도메인: ' + domain;
+      pitchElement.textContent = `"우리는 ${target}을(를) 위해, ${solution}을(를) 제공하여 ${problem} 문제를 신속하게 해결합니다."`;
+
+      // Recalculate Cognitive Friction & Feasibility Score based on string length & simplicity
+      const lengthFactor = target.length + problem.length + solution.length;
+      let friction = (lengthFactor / 42).toFixed(1);
+      if (friction < 1.2) friction = 1.2;
+      if (friction > 5.0) friction = 4.8;
+      document.getElementById('frictionScore').textContent = friction + ' / 10';
+
+      let score = 95 - Math.floor(lengthFactor * 0.12);
+      if (score < 78) score = 78;
+      document.getElementById('feasibilityScore').textContent = score + '점';
+    }
+
+    function setPresetTarget(text) {
+      document.getElementById('targetInput').value = text;
+      runLiveSynthesizer();
+    }
+
+    function resetLiveLab() {
+      document.getElementById('domainSelect').selectedIndex = 0;
+      document.getElementById('targetInput').value = '팀플 마감에 쫓기는 상명대 재학생 조장';
+      document.getElementById('problemInput').value = '무임승차 팀원 관리와 비효율적인 역할 분담';
+      document.getElementById('solutionInput').value = '기여도 자동 집계와 마일스톤 투명 공개 대시보드';
+      runLiveSynthesizer();
+      showToast('시뮬레이터가 기본값으로 초기화되었습니다.');
+    }
+
+    function copyPitchText() {
+      const pitch = document.getElementById('livePitchText').textContent;
+      navigator.clipboard.writeText(pitch).then(() => {
+        showToast('가치 제안 피치가 클립보드에 복사되었습니다.');
+      }).catch(() => {
+        showToast('복사되었습니다.');
+      });
+    }
+
+    // Fitts's Law Target Reaction Timer
+    let fittsStartTime = 0;
+    function testFittsReaction() {
+      const now = performance.now();
+      if (fittsStartTime === 0) {
+        fittsStartTime = now;
+        const btn = document.getElementById('fittsBtn');
+        btn.textContent = '한 번 더 빠르게 클릭!';
+        btn.style.transform = 'scale(1.06)';
+        document.getElementById('fittsStatus').innerHTML = '반응 대기 중... <strong>즉시 다시 클릭하세요!</strong>';
+      } else {
+        const delta = Math.round(now - fittsStartTime);
+        fittsStartTime = 0;
+        const btn = document.getElementById('fittsBtn');
+        btn.textContent = '반응속도 다시 측정';
+        btn.style.transform = 'none';
+        document.getElementById('fittsStatus').innerHTML = `측정 완료: 반응 시간 <strong>${delta}ms</strong> (우수한 직접 조작 반응성)`;
+      }
+    }
+
+    // Hick's Law Slider Calculator
+    function updateHickMetric(val) {
+      document.getElementById('hickCount').textContent = val + '개 ' + (val <= 4 ? '(최적)' : '(주의)');
+      // Hick-Hyman Law: RT = b * log2(n + 1)
+      const b = 0.28;
+      const rt = (b * Math.log2(parseInt(val) + 1)).toFixed(2);
+      document.getElementById('hickTime').textContent = rt + '초';
+    }
+
+    // Team Registration Handler
+    let teamCount = 18;
+    function submitTeamRegistration(e) {
+      e.preventDefault();
+      const teamName = document.getElementById('teamNameInput').value;
+      teamCount += 1;
+      document.getElementById('registeredTeamCount').textContent = teamCount + '개 팀';
+      showToast(`'${teamName}' 등록이 완료되었습니다! 피드백 채널 링크가 발송됩니다.`);
+      e.target.reset();
+    }
+
+    // Toast Utility
+    let toastTimeout;
+    function showToast(msg) {
+      const toast = document.getElementById('toastNotification');
+      document.getElementById('toastMsg').textContent = msg;
+      toast.classList.add('show');
+      clearTimeout(toastTimeout);
+      toastTimeout = setTimeout(() => {
+        toast.classList.remove('show');
+      }, 3200);
+    }
+  </script>
+</body>
+</html>

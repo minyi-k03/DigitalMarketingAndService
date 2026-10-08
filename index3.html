@@ -1,0 +1,3192 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>수뭉봇 Pro - 상명대학교 AI 캠퍼스 어시스턴트 - Apple Design Edition</title>
+  <meta name="description" content="Apple 디자인 시스템(SF Pro 타이포그래피, 풀블리드 라이트/다크 타일, 단일 Action Blue 인터랙션)으로 설계된 상명대학교 지능형 AI 어시스턴트 수뭉봇.">
+
+  <!-- Typography: Pretendard for Korean + System SF Pro Display/Text -->
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/gh/orioncactus/pretendard@v1.3.9/dist/web/static/pretendard.min.css">
+  <!-- Icon Library: Phosphor Icons -->
+  <script src="https://unpkg.com/@phosphor-icons/web"></script>
+
+  <style>
+    /* ==========================================================================
+       01. APPLE DESIGN SYSTEM TOKENS (Apple-design-analysis YAML Specification)
+       ========================================================================== */
+    :root {
+      /* Colors: Brand & Accent (Single Interactive Color System) */
+      --color-primary: #0066cc;
+      --color-primary-focus: #0071e3;
+      --color-primary-on-dark: #2997ff;
+
+      /* Colors: Text & Ink */
+      --color-ink: #1d1d1f;
+      --color-body: #1d1d1f;
+      --color-body-on-dark: #ffffff;
+      --color-body-muted: #cccccc;
+      --color-ink-muted-80: #333333;
+      --color-ink-muted-48: #7a7a7a;
+
+      /* Colors: Hairlines & Dividers */
+      --color-divider-soft: #f0f0f0;
+      --color-hairline: #e0e0e0;
+      --color-hairline-alpha: rgba(0, 0, 0, 0.08);
+      --color-hairline-dark: rgba(255, 255, 255, 0.14);
+
+      /* Colors: Surfaces & Canvases (No Decorative Gradients) */
+      --color-canvas: #ffffff;
+      --color-canvas-parchment: #f5f5f7;
+      --color-surface-pearl: #fafafc;
+      --color-surface-tile-1: #272729;
+      --color-surface-tile-2: #2a2a2c;
+      --color-surface-tile-3: #252527;
+      --color-surface-black: #000000;
+      --color-surface-chip-translucent: rgba(210, 210, 215, 0.64);
+      --color-on-primary: #ffffff;
+      --color-on-dark: #ffffff;
+
+      /* Font Stacks */
+      --font-display: "SF Pro Display", system-ui, -apple-system, BlinkMacSystemFont, "Pretendard", sans-serif;
+      --font-text: "SF Pro Text", system-ui, -apple-system, BlinkMacSystemFont, "Pretendard", sans-serif;
+
+      /* Border Radius Scale */
+      --rounded-none: 0px;
+      --rounded-xs: 5px;
+      --rounded-sm: 8px;
+      --rounded-md: 11px;
+      --rounded-lg: 18px;
+      --rounded-pill: 9999px;
+      --rounded-full: 9999px;
+
+      /* Spacing Scale (8px Base Rhythm) */
+      --spacing-xxs: 4px;
+      --spacing-xs: 8px;
+      --spacing-sm: 12px;
+      --spacing-md: 17px;
+      --spacing-lg: 24px;
+      --spacing-xl: 32px;
+      --spacing-xxl: 48px;
+      --spacing-section: 80px;
+
+      /* Elevation: The ONLY Drop-Shadow in the System (Reserved for Product Imagery) */
+      --shadow-product: 3px 5px 30px 0 rgba(0, 0, 0, 0.22);
+
+      /* Layout Containers */
+      --container-text: 980px;
+      --container-grid: 1440px;
+
+      /* Motion */
+      --ease-apple: cubic-bezier(0.16, 1, 0.3, 1);
+    }
+
+    /* ==========================================================================
+       02. RESET & BASE MECHANICS
+       ========================================================================== */
+    *, *::before, *::after {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+    }
+
+    html {
+      font-size: 16px;
+      scroll-behavior: smooth;
+      background-color: var(--color-canvas);
+      color: var(--color-body);
+      font-family: var(--font-text);
+      -webkit-font-smoothing: antialiased;
+      -moz-osx-font-smoothing: grayscale;
+    }
+
+    body {
+      min-height: 100dvh;
+      background-color: var(--color-canvas);
+      color: var(--color-body);
+      font-family: var(--font-text);
+      font-size: 17px;
+      font-weight: 400;
+      line-height: 1.47;
+      letter-spacing: -0.374px;
+      overflow-x: hidden;
+      padding-bottom: 64px;
+    }
+
+    ::selection {
+      background-color: var(--color-primary);
+      color: var(--color-on-primary);
+    }
+
+    :focus-visible {
+      outline: 2px solid var(--color-primary-focus);
+      outline-offset: 2px;
+    }
+
+    /* ==========================================================================
+       02-B. APPLE SCROLL-REVEAL & KEYFRAME CHOREOGRAPHY
+       ========================================================================== */
+    .apple-reveal {
+      opacity: 0;
+      transform: translateY(28px) scale(0.985);
+      transition:
+        opacity 0.75s var(--ease-apple),
+        transform 0.75s var(--ease-apple);
+      transition-delay: var(--reveal-delay, 0ms);
+      will-change: opacity, transform;
+    }
+
+    .apple-reveal.is-visible {
+      opacity: 1;
+      transform: translateY(0) scale(1);
+    }
+
+    @keyframes appleBubbleEnter {
+      0% {
+        opacity: 0;
+        transform: translateY(12px) scale(0.96);
+      }
+      100% {
+        opacity: 1;
+        transform: translateY(0) scale(1);
+      }
+    }
+
+    @keyframes appleDotBounce {
+      0%, 80%, 100% {
+        transform: translateY(0);
+        opacity: 0.35;
+      }
+      40% {
+        transform: translateY(-4px);
+        opacity: 1;
+      }
+    }
+
+    @keyframes radarPulseRing {
+      0% {
+        transform: scale(1);
+        opacity: 0.75;
+      }
+      100% {
+        transform: scale(2.1);
+        opacity: 0;
+      }
+    }
+
+    @media (prefers-reduced-motion: reduce) {
+      *, *::before, *::after {
+        animation-duration: 0.001s !important;
+        animation-iteration-count: 1 !important;
+        transition-duration: 0.001s !important;
+        scroll-behavior: auto !important;
+      }
+      .apple-reveal {
+        opacity: 1 !important;
+        transform: none !important;
+      }
+    }
+
+    @media (prefers-reduced-transparency: reduce) {
+      .sub-nav-frosted,
+      .floating-sticky-bar {
+        background-color: var(--color-canvas-parchment) !important;
+        backdrop-filter: none !important;
+        -webkit-backdrop-filter: none !important;
+      }
+    }
+
+    /* ==========================================================================
+       03. TYPOGRAPHY HIERARCHY (Exact Apple Specification)
+       Weight Ladder: 300 / 400 / 600 / 700 (500 is deliberately absent)
+       ========================================================================== */
+    .type-hero-display {
+      font-family: var(--font-display);
+      font-size: 56px;
+      font-weight: 600;
+      line-height: 1.07;
+      letter-spacing: -0.28px;
+    }
+
+    .type-display-lg {
+      font-family: var(--font-display);
+      font-size: 40px;
+      font-weight: 600;
+      line-height: 1.1;
+      letter-spacing: 0;
+    }
+
+    .type-display-md {
+      font-family: var(--font-text);
+      font-size: 34px;
+      font-weight: 600;
+      line-height: 1.47;
+      letter-spacing: -0.374px;
+    }
+
+    .type-lead {
+      font-family: var(--font-display);
+      font-size: 28px;
+      font-weight: 400;
+      line-height: 1.14;
+      letter-spacing: 0.196px;
+    }
+
+    .type-lead-airy {
+      font-family: var(--font-text);
+      font-size: 24px;
+      font-weight: 300;
+      line-height: 1.5;
+      letter-spacing: 0;
+    }
+
+    .type-tagline {
+      font-family: var(--font-display);
+      font-size: 21px;
+      font-weight: 600;
+      line-height: 1.19;
+      letter-spacing: 0.231px;
+    }
+
+    .type-body-strong {
+      font-family: var(--font-text);
+      font-size: 17px;
+      font-weight: 600;
+      line-height: 1.24;
+      letter-spacing: -0.374px;
+    }
+
+    .type-body {
+      font-family: var(--font-text);
+      font-size: 17px;
+      font-weight: 400;
+      line-height: 1.47;
+      letter-spacing: -0.374px;
+    }
+
+    .type-dense-link {
+      font-family: var(--font-text);
+      font-size: 17px;
+      font-weight: 400;
+      line-height: 2.41;
+      letter-spacing: 0;
+    }
+
+    .type-caption {
+      font-family: var(--font-text);
+      font-size: 14px;
+      font-weight: 400;
+      line-height: 1.43;
+      letter-spacing: -0.224px;
+    }
+
+    .type-caption-strong {
+      font-family: var(--font-text);
+      font-size: 14px;
+      font-weight: 600;
+      line-height: 1.29;
+      letter-spacing: -0.224px;
+    }
+
+    .type-button-large {
+      font-family: var(--font-text);
+      font-size: 18px;
+      font-weight: 300;
+      line-height: 1.0;
+      letter-spacing: 0;
+    }
+
+    .type-button-utility {
+      font-family: var(--font-text);
+      font-size: 14px;
+      font-weight: 400;
+      line-height: 1.29;
+      letter-spacing: -0.224px;
+    }
+
+    .type-fine-print {
+      font-family: var(--font-text);
+      font-size: 12px;
+      font-weight: 400;
+      line-height: 1.0;
+      letter-spacing: -0.12px;
+    }
+
+    .type-micro-legal {
+      font-family: var(--font-text);
+      font-size: 10px;
+      font-weight: 400;
+      line-height: 1.3;
+      letter-spacing: -0.08px;
+    }
+
+    .type-nav-link {
+      font-family: var(--font-text);
+      font-size: 12px;
+      font-weight: 400;
+      line-height: 1.0;
+      letter-spacing: -0.12px;
+    }
+
+    .numeric-spec {
+      font-variant-numeric: tabular-nums;
+    }
+
+    /* ==========================================================================
+       04. LAYOUT CONTAINERS & FULL-BLEED PRODUCT TILES
+       ========================================================================== */
+    .container-narrow {
+      width: 100%;
+      max-width: var(--container-text);
+      margin: 0 auto;
+      padding: 0 var(--spacing-lg);
+    }
+
+    .container-wide {
+      width: 100%;
+      max-width: var(--container-grid);
+      margin: 0 auto;
+      padding: 0 var(--spacing-lg);
+    }
+
+    .product-tile-light {
+      background-color: var(--color-canvas);
+      color: var(--color-ink);
+      border-radius: var(--rounded-none);
+      padding: var(--spacing-section) 0;
+      width: 100%;
+    }
+
+    .product-tile-parchment {
+      background-color: var(--color-canvas-parchment);
+      color: var(--color-ink);
+      border-radius: var(--rounded-none);
+      padding: var(--spacing-section) 0;
+      width: 100%;
+    }
+
+    .product-tile-dark {
+      background-color: var(--color-surface-tile-1);
+      color: var(--color-on-dark);
+      border-radius: var(--rounded-none);
+      padding: var(--spacing-section) 0;
+      width: 100%;
+    }
+
+    .product-tile-dark-2 {
+      background-color: var(--color-surface-tile-2);
+      color: var(--color-on-dark);
+      border-radius: var(--rounded-none);
+      padding: var(--spacing-section) 0;
+      width: 100%;
+    }
+
+    .product-tile-dark-3 {
+      background-color: var(--color-surface-tile-3);
+      color: var(--color-on-dark);
+      border-radius: var(--rounded-none);
+      padding: var(--spacing-section) 0;
+      width: 100%;
+    }
+
+    /* ==========================================================================
+       05. APPLE COMPONENT LIBRARY (Buttons, Links, Nav, Cards, Chips, Inputs)
+       ========================================================================== */
+    button, .btn-apple {
+      font-family: var(--font-text);
+      cursor: pointer;
+      text-decoration: none;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      gap: var(--spacing-xs);
+      white-space: nowrap;
+      transition:
+        transform 0.2s var(--ease-apple),
+        border-color 0.2s var(--ease-apple),
+        background-color 0.2s var(--ease-apple),
+        color 0.2s var(--ease-apple);
+      border: none;
+    }
+
+    button:active, .btn-apple:active {
+      transform: scale(0.95);
+    }
+
+    .button-primary {
+      background-color: var(--color-primary);
+      color: var(--color-on-primary);
+      font-family: var(--font-text);
+      font-size: 17px;
+      font-weight: 400;
+      line-height: 1.47;
+      letter-spacing: -0.374px;
+      border-radius: var(--rounded-pill);
+      padding: 11px 22px;
+      border: 1px solid transparent;
+    }
+
+    .button-secondary-pill {
+      background-color: transparent;
+      color: var(--color-primary);
+      font-family: var(--font-text);
+      font-size: 17px;
+      font-weight: 400;
+      line-height: 1.47;
+      letter-spacing: -0.374px;
+      border-radius: var(--rounded-pill);
+      padding: 11px 22px;
+      border: 1px solid var(--color-primary);
+    }
+
+    .product-tile-dark .button-secondary-pill,
+    .product-tile-dark-2 .button-secondary-pill,
+    .environment-quote-card .button-secondary-pill {
+      color: var(--color-primary-on-dark);
+      border-color: var(--color-primary-on-dark);
+    }
+
+    .button-store-hero {
+      background-color: var(--color-primary);
+      color: var(--color-on-primary);
+      font-family: var(--font-text);
+      font-size: 18px;
+      font-weight: 300;
+      line-height: 1.0;
+      letter-spacing: 0;
+      border-radius: var(--rounded-pill);
+      padding: 14px 28px;
+    }
+
+    .button-dark-utility {
+      background-color: var(--color-ink);
+      color: var(--color-on-dark);
+      font-family: var(--font-text);
+      font-size: 14px;
+      font-weight: 400;
+      line-height: 1.29;
+      letter-spacing: -0.224px;
+      border-radius: var(--rounded-sm);
+      padding: 8px 15px;
+    }
+
+    .button-pearl-capsule {
+      background-color: var(--color-surface-pearl);
+      color: var(--color-ink-muted-80);
+      font-family: var(--font-text);
+      font-size: 14px;
+      font-weight: 400;
+      line-height: 1.43;
+      letter-spacing: -0.224px;
+      border-radius: var(--rounded-md);
+      border: 3px solid var(--color-divider-soft);
+      padding: 8px 14px;
+    }
+
+    .button-icon-circular {
+      width: 44px;
+      height: 44px;
+      border-radius: var(--rounded-full);
+      background-color: var(--color-surface-chip-translucent);
+      color: var(--color-ink);
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 18px;
+      flex-shrink: 0;
+    }
+
+    .text-link {
+      background-color: transparent;
+      color: var(--color-primary);
+      font-family: var(--font-text);
+      font-size: 17px;
+      font-weight: 400;
+      line-height: 1.47;
+      letter-spacing: -0.374px;
+      text-decoration: none;
+      display: inline-flex;
+      align-items: center;
+      gap: 4px;
+    }
+
+    .text-link:hover {
+      text-decoration: underline;
+    }
+
+    .text-link-on-dark {
+      background-color: transparent;
+      color: var(--color-primary-on-dark);
+      font-family: var(--font-text);
+      font-size: 17px;
+      font-weight: 400;
+      line-height: 1.47;
+      letter-spacing: -0.374px;
+      text-decoration: none;
+      display: inline-flex;
+      align-items: center;
+      gap: 4px;
+    }
+
+    .text-link-on-dark:hover {
+      text-decoration: underline;
+    }
+
+    /* ==========================================================================
+       06. TOP NAVIGATION: global-nav + sub-nav-frosted
+       ========================================================================== */
+    .global-nav {
+      background-color: var(--color-surface-black);
+      color: var(--color-on-dark);
+      height: 44px;
+      width: 100%;
+      position: relative;
+      z-index: 200;
+    }
+
+    .global-nav-inner {
+      max-width: var(--container-text);
+      height: 100%;
+      margin: 0 auto;
+      padding: 0 var(--spacing-lg);
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+    }
+
+    .global-nav-list {
+      list-style: none;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      width: 100%;
+      gap: 20px;
+    }
+
+    .global-nav-link {
+      color: var(--color-on-dark);
+      text-decoration: none;
+      font-family: var(--font-text);
+      font-size: 12px;
+      font-weight: 400;
+      line-height: 1.0;
+      letter-spacing: -0.12px;
+      opacity: 0.88;
+      transition: opacity 0.2s ease;
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      background: transparent;
+      border: none;
+      padding: 6px 4px;
+    }
+
+    .global-nav-link:hover {
+      opacity: 1;
+    }
+
+    .global-nav-logo {
+      font-size: 15px;
+      font-weight: 600;
+      opacity: 1;
+    }
+
+    .mobile-menu-btn {
+      display: none;
+      background: transparent;
+      color: var(--color-on-dark);
+      font-size: 18px;
+      padding: 6px;
+    }
+
+    .sub-nav-frosted {
+      position: sticky;
+      top: 0;
+      z-index: 190;
+      height: 52px;
+      width: 100%;
+      background-color: rgba(245, 245, 247, 0.8);
+      backdrop-filter: saturate(180%) blur(20px);
+      -webkit-backdrop-filter: saturate(180%) blur(20px);
+      border-bottom: 1px solid var(--color-hairline-alpha);
+    }
+
+    .sub-nav-inner {
+      max-width: var(--container-text);
+      height: 100%;
+      margin: 0 auto;
+      padding: 0 var(--spacing-lg);
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: var(--spacing-md);
+    }
+
+    .sub-nav-left {
+      display: flex;
+      align-items: center;
+      gap: var(--spacing-md);
+    }
+
+    .sub-nav-title {
+      color: var(--color-ink);
+      text-decoration: none;
+      font-family: var(--font-display);
+      font-size: 21px;
+      font-weight: 600;
+      line-height: 1.19;
+      letter-spacing: 0.231px;
+    }
+
+    .campus-switcher {
+      display: inline-flex;
+      align-items: center;
+      background-color: var(--color-canvas);
+      border: 1px solid var(--color-hairline);
+      border-radius: var(--rounded-sm);
+      padding: 2px;
+      gap: 2px;
+    }
+
+    .campus-switch-btn {
+      font-family: var(--font-text);
+      font-size: 12px;
+      font-weight: 400;
+      line-height: 1.0;
+      letter-spacing: -0.12px;
+      padding: 6px 10px;
+      border-radius: 6px;
+      background-color: transparent;
+      color: var(--color-ink-muted-80);
+    }
+
+    .campus-switch-btn.active {
+      background-color: var(--color-ink);
+      color: var(--color-on-dark);
+      font-weight: 600;
+    }
+
+    .sub-nav-right {
+      display: flex;
+      align-items: center;
+      gap: var(--spacing-lg);
+    }
+
+    .sub-nav-links {
+      display: flex;
+      align-items: center;
+      gap: var(--spacing-lg);
+      list-style: none;
+    }
+
+    .sub-nav-item-link {
+      color: var(--color-ink);
+      text-decoration: none;
+      font-family: var(--font-text);
+      font-size: 14px;
+      font-weight: 400;
+      line-height: 1.29;
+      letter-spacing: -0.224px;
+    }
+
+    .sub-nav-item-link:hover {
+      color: var(--color-primary);
+    }
+
+    .sub-nav-cta {
+      padding: 6px 14px;
+      font-size: 12px;
+      line-height: 1.0;
+      letter-spacing: -0.12px;
+    }
+
+    .mobile-nav-drawer {
+      display: none;
+      background-color: var(--color-surface-black);
+      color: var(--color-on-dark);
+      padding: var(--spacing-lg);
+      border-bottom: 1px solid var(--color-hairline-dark);
+    }
+
+    .mobile-nav-drawer.open {
+      display: block;
+    }
+
+    .mobile-nav-drawer ul {
+      list-style: none;
+      display: flex;
+      flex-direction: column;
+      gap: var(--spacing-md);
+    }
+
+    /* ==========================================================================
+       07. HERO PRODUCT TILE (product-tile-light + 3D Tilt iPhone 17 Pro Render)
+       ========================================================================== */
+    .hero-stack {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      text-align: center;
+      max-width: 780px;
+      margin: 0 auto;
+    }
+
+    .hero-tagline {
+      color: var(--color-ink);
+      margin-bottom: var(--spacing-xs);
+    }
+
+    .hero-headline {
+      color: var(--color-ink);
+      margin-bottom: var(--spacing-md);
+    }
+
+    .hero-subcopy {
+      color: var(--color-ink-muted-80);
+      margin-bottom: var(--spacing-lg);
+      max-width: 640px;
+    }
+
+    .hero-cta-row {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: var(--spacing-md);
+      flex-wrap: wrap;
+      margin-bottom: var(--spacing-xxl);
+    }
+
+    .hardware-finish-bar {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: var(--spacing-sm);
+      margin-bottom: var(--spacing-lg);
+      flex-wrap: wrap;
+    }
+
+    .finish-label {
+      color: var(--color-ink-muted-48);
+      margin-right: var(--spacing-xs);
+    }
+
+    .finish-swatch-btn {
+      width: 32px;
+      height: 32px;
+      border-radius: var(--rounded-full);
+      border: 2px solid var(--color-hairline);
+      padding: 0;
+      position: relative;
+    }
+
+    .finish-swatch-btn.active {
+      border-color: var(--color-primary-focus);
+      outline: 2px solid var(--color-primary-focus);
+      outline-offset: 2px;
+    }
+
+    .swatch-natural { background-color: #c8c5be; }
+    .swatch-white { background-color: #f2f1ed; }
+    .swatch-black { background-color: #353537; }
+    .swatch-desert { background-color: #d5c2b2; }
+
+    /* Product Render Pedestal with 3D Interactive Perspective */
+    .product-stage {
+      width: 100%;
+      display: flex;
+      justify-content: center;
+      padding: 0 var(--spacing-md);
+      perspective: 1200px;
+    }
+
+    .iphone-hardware-render {
+      width: 100%;
+      max-width: 460px;
+      background-color: #c8c5be;
+      border-radius: 48px;
+      padding: 12px;
+      border: 2px solid #a8a49d;
+      /* THE SINGLE APPLE PRODUCT DROP-SHADOW */
+      box-shadow: var(--shadow-product);
+      transform-style: preserve-3d;
+      transform: rotateX(var(--tilt-x, 0deg)) rotateY(var(--tilt-y, 0deg));
+      transition:
+        background-color 0.35s var(--ease-apple),
+        border-color 0.35s var(--ease-apple),
+        transform 0.25s var(--ease-apple);
+      will-change: transform;
+    }
+
+    .iphone-hardware-render[data-finish="white"] {
+      background-color: #e8e7e3;
+      border-color: #d0cfcb;
+    }
+
+    .iphone-hardware-render[data-finish="black"] {
+      background-color: #272729;
+      border-color: #1d1d1f;
+    }
+
+    .iphone-hardware-render[data-finish="desert"] {
+      background-color: #d5c2b2;
+      border-color: #b8a391;
+    }
+
+    .iphone-bezel {
+      background-color: var(--color-surface-black);
+      border-radius: 38px;
+      padding: 10px;
+    }
+
+    .iphone-screen {
+      background-color: var(--color-canvas);
+      border-radius: 30px;
+      height: 590px;
+      display: flex;
+      flex-direction: column;
+      overflow: hidden;
+      position: relative;
+      text-align: left;
+    }
+
+    /* Dynamic Island inside Screen */
+    .dynamic-island-bar {
+      background-color: var(--color-canvas);
+      padding: 10px 16px 6px;
+      display: flex;
+      justify-content: center;
+    }
+
+    .dynamic-island-pill {
+      background-color: var(--color-surface-black);
+      color: var(--color-on-dark);
+      height: 30px;
+      min-width: 136px;
+      max-width: 300px;
+      padding: 0 14px;
+      border-radius: var(--rounded-pill);
+      display: inline-flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 10px;
+      transition: all 0.35s var(--ease-apple);
+      cursor: pointer;
+    }
+
+    .dynamic-island-pill.expanded {
+      min-width: 268px;
+      height: 36px;
+    }
+
+    .island-live-badge {
+      font-size: 10px;
+      font-weight: 600;
+      color: var(--color-primary-on-dark);
+      letter-spacing: -0.08px;
+    }
+
+    .island-status-text {
+      font-size: 12px;
+      font-weight: 400;
+      color: var(--color-on-dark);
+      letter-spacing: -0.12px;
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+    }
+
+    /* App Header Inside iPhone */
+    .sim-header {
+      padding: 10px 18px 12px;
+      border-bottom: 1px solid var(--color-hairline);
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      background-color: var(--color-canvas);
+    }
+
+    .sim-identity {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+    }
+
+    .sim-avatar {
+      width: 36px;
+      height: 36px;
+      border-radius: var(--rounded-sm);
+      background-color: var(--color-ink);
+      color: var(--color-on-dark);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 18px;
+    }
+
+    .sim-title {
+      color: var(--color-ink);
+    }
+
+    .sim-subtitle {
+      color: var(--color-primary);
+    }
+
+    .sim-actions {
+      display: flex;
+      align-items: center;
+      gap: 6px;
+    }
+
+    .sim-icon-btn {
+      width: 34px;
+      height: 34px;
+      border-radius: var(--rounded-full);
+      background-color: var(--color-canvas-parchment);
+      color: var(--color-ink);
+      font-size: 15px;
+    }
+
+    /* Chat Stream + Message Spring Animation + Typing Indicator */
+    .sim-chat-stream {
+      flex: 1;
+      padding: 16px;
+      overflow-y: auto;
+      background-color: var(--color-canvas);
+      display: flex;
+      flex-direction: column;
+      gap: 14px;
+      scroll-behavior: smooth;
+    }
+
+    .sim-msg-row {
+      display: flex;
+      flex-direction: column;
+      max-width: 86%;
+      animation: appleBubbleEnter 0.34s var(--ease-apple) both;
+    }
+
+    .sim-msg-row.bot {
+      align-self: flex-start;
+    }
+
+    .sim-msg-row.user {
+      align-self: flex-end;
+    }
+
+    .sim-bubble {
+      padding: 12px 16px;
+      font-size: 14px;
+      font-weight: 400;
+      line-height: 1.43;
+      letter-spacing: -0.224px;
+    }
+
+    .sim-msg-row.bot .sim-bubble {
+      background-color: var(--color-canvas-parchment);
+      color: var(--color-ink);
+      border-radius: var(--rounded-lg);
+      border-bottom-left-radius: var(--rounded-xs);
+    }
+
+    .sim-msg-row.user .sim-bubble {
+      background-color: var(--color-primary);
+      color: var(--color-on-primary);
+      border-radius: var(--rounded-lg);
+      border-bottom-right-radius: var(--rounded-xs);
+    }
+
+    /* Animated Typing Indicator Dots */
+    .sim-typing-dots {
+      display: inline-flex;
+      align-items: center;
+      gap: 5px;
+      padding: 4px 2px;
+    }
+
+    .sim-typing-dot {
+      width: 6px;
+      height: 6px;
+      border-radius: var(--rounded-full);
+      background-color: var(--color-primary);
+      animation: appleDotBounce 1.2s infinite ease-in-out;
+    }
+
+    .sim-typing-dot:nth-child(2) {
+      animation-delay: 0.18s;
+    }
+
+    .sim-typing-dot:nth-child(3) {
+      animation-delay: 0.36s;
+    }
+
+    .sim-msg-meta {
+      font-size: 10px;
+      color: var(--color-ink-muted-48);
+      margin-top: 4px;
+      padding: 0 4px;
+    }
+
+    .sim-msg-row.user .sim-msg-meta {
+      text-align: right;
+    }
+
+    /* Embedded Action Card inside Bot Bubble */
+    .sim-inline-card {
+      margin-top: 10px;
+      background-color: var(--color-canvas);
+      border: 1px solid var(--color-hairline);
+      border-radius: var(--rounded-md);
+      padding: 12px;
+      display: flex;
+      flex-direction: column;
+      gap: 8px;
+    }
+
+    .sim-inline-row {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      font-size: 12px;
+    }
+
+    .sim-inline-label {
+      color: var(--color-ink-muted-48);
+    }
+
+    .sim-inline-value {
+      color: var(--color-ink);
+      font-weight: 600;
+    }
+
+    .sim-inline-cta {
+      width: 100%;
+      background-color: var(--color-surface-pearl);
+      color: var(--color-primary);
+      border: 1px solid var(--color-hairline);
+      border-radius: var(--rounded-sm);
+      padding: 7px 10px;
+      font-size: 12px;
+      font-weight: 600;
+    }
+
+    /* In-Phone Detail Sheet Overlay */
+    .sim-detail-sheet {
+      position: absolute;
+      inset: auto 0 0 0;
+      background-color: var(--color-canvas);
+      border-top: 1px solid var(--color-hairline);
+      border-radius: 24px 24px 0 0;
+      padding: 20px;
+      z-index: 30;
+      transform: translateY(100%);
+      transition: transform 0.32s var(--ease-apple);
+    }
+
+    .sim-detail-sheet.open {
+      transform: translateY(0);
+    }
+
+    .sheet-header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      margin-bottom: 12px;
+    }
+
+    /* Quick Prompt Pills inside Simulator */
+    .sim-quick-bar {
+      padding: 8px 14px;
+      background-color: var(--color-canvas);
+      border-top: 1px solid var(--color-divider-soft);
+      display: flex;
+      gap: 6px;
+      overflow-x: auto;
+      scrollbar-width: none;
+    }
+
+    .sim-quick-bar::-webkit-scrollbar {
+      display: none;
+    }
+
+    .sim-chip {
+      background-color: var(--color-canvas-parchment);
+      color: var(--color-ink);
+      border: 1px solid var(--color-hairline);
+      border-radius: var(--rounded-pill);
+      padding: 6px 12px;
+      font-size: 12px;
+      font-weight: 400;
+      letter-spacing: -0.12px;
+      flex-shrink: 0;
+    }
+
+    .sim-chip:hover {
+      border-color: var(--color-primary);
+      color: var(--color-primary);
+    }
+
+    /* Input Bar inside Simulator */
+    .sim-dock {
+      padding: 10px 14px 14px;
+      background-color: var(--color-canvas);
+      border-top: 1px solid var(--color-hairline);
+    }
+
+    .sim-form {
+      display: flex;
+      align-items: center;
+      background-color: var(--color-canvas-parchment);
+      border: 1px solid var(--color-hairline);
+      border-radius: var(--rounded-pill);
+      padding: 4px 6px 4px 14px;
+      height: 40px;
+    }
+
+    .sim-form:focus-within {
+      border-color: var(--color-primary-focus);
+      background-color: var(--color-canvas);
+    }
+
+    .sim-input {
+      flex: 1;
+      border: none;
+      background: transparent;
+      color: var(--color-ink);
+      font-family: var(--font-text);
+      font-size: 14px;
+      outline: none;
+    }
+
+    .sim-input::placeholder {
+      color: var(--color-ink-muted-48);
+    }
+
+    .sim-send-btn {
+      width: 30px;
+      height: 30px;
+      border-radius: var(--rounded-full);
+      background-color: var(--color-primary);
+      color: var(--color-on-primary);
+      font-size: 14px;
+    }
+
+    /* ==========================================================================
+       08. SECTION 2: DARK PRODUCT TILE (Interactive 4-Neural-Network Telemetry)
+       ========================================================================== */
+    .tile-header-centered {
+      text-align: center;
+      max-width: 760px;
+      margin: 0 auto var(--spacing-xxl);
+    }
+
+    .tile-header-centered .type-tagline {
+      color: var(--color-body-muted);
+      margin-bottom: var(--spacing-xs);
+    }
+
+    .tile-header-centered .type-display-lg {
+      margin-bottom: var(--spacing-md);
+    }
+
+    .product-tile-dark .tile-subcopy,
+    .product-tile-dark-2 .tile-subcopy {
+      color: var(--color-body-muted);
+    }
+
+    .telemetry-tabs {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: var(--spacing-xs);
+      margin-bottom: var(--spacing-xl);
+      flex-wrap: wrap;
+    }
+
+    .telemetry-tab-btn {
+      background-color: var(--color-surface-tile-3);
+      color: var(--color-body-muted);
+      border: 1px solid var(--color-hairline-dark);
+      border-radius: var(--rounded-pill);
+      padding: 10px 20px;
+      font-size: 14px;
+      font-weight: 600;
+      letter-spacing: -0.224px;
+    }
+
+    .telemetry-tab-btn.active {
+      background-color: var(--color-primary);
+      color: var(--color-on-primary);
+      border-color: var(--color-primary);
+    }
+
+    .dark-bento-grid {
+      display: grid;
+      grid-template-columns: repeat(12, 1fr);
+      gap: var(--spacing-lg);
+    }
+
+    .dark-module-card {
+      background-color: var(--color-surface-tile-2);
+      border: 1px solid var(--color-hairline-dark);
+      border-radius: var(--rounded-lg);
+      padding: var(--spacing-xl);
+      display: flex;
+      flex-direction: column;
+      justify-content: space-between;
+      gap: var(--spacing-lg);
+      transition:
+        border-color 0.3s var(--ease-apple),
+        transform 0.3s var(--ease-apple);
+    }
+
+    .dark-module-card.highlighted {
+      border-color: var(--color-primary-on-dark);
+      transform: translateY(-4px);
+    }
+
+    .span-7 { grid-column: span 7; }
+    .span-5 { grid-column: span 5; }
+
+    .module-eyebrow {
+      color: var(--color-primary-on-dark);
+      font-size: 12px;
+      font-weight: 600;
+      letter-spacing: -0.12px;
+      margin-bottom: 6px;
+    }
+
+    .module-title {
+      color: var(--color-on-dark);
+      margin-bottom: var(--spacing-xs);
+    }
+
+    .module-desc {
+      color: var(--color-body-muted);
+    }
+
+    .dark-interactive-stage {
+      background-color: var(--color-surface-tile-3);
+      border: 1px solid var(--color-hairline-dark);
+      border-radius: var(--rounded-md);
+      padding: var(--spacing-lg);
+      display: flex;
+      flex-direction: column;
+      gap: var(--spacing-md);
+    }
+
+    /* Visual Shuttle Route Track with Animated Moving Bus Marker */
+    .shuttle-visual-track {
+      position: relative;
+      height: 36px;
+      display: flex;
+      align-items: center;
+      margin: 4px 12px 2px;
+    }
+
+    .shuttle-track-rail {
+      position: absolute;
+      left: 12.5%;
+      right: 12.5%;
+      height: 2px;
+      background-color: var(--color-hairline-dark);
+      z-index: 1;
+    }
+
+    .shuttle-track-active-fill {
+      position: absolute;
+      left: 12.5%;
+      width: 25%;
+      height: 2px;
+      background-color: var(--color-primary-on-dark);
+      z-index: 2;
+      transition: width 0.55s var(--ease-apple);
+    }
+
+    .shuttle-moving-bus {
+      position: absolute;
+      left: 37.5%;
+      top: 50%;
+      transform: translate(-50%, -50%);
+      width: 26px;
+      height: 26px;
+      border-radius: var(--rounded-full);
+      background-color: var(--color-primary);
+      color: var(--color-on-primary);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 13px;
+      z-index: 4;
+      transition: left 0.55s var(--ease-apple);
+    }
+
+    .shuttle-moving-bus::after {
+      content: "";
+      position: absolute;
+      inset: -4px;
+      border-radius: var(--rounded-full);
+      border: 2px solid var(--color-primary-on-dark);
+      animation: radarPulseRing 1.8s infinite ease-out;
+      pointer-events: none;
+    }
+
+    .shuttle-route-bar {
+      display: grid;
+      grid-template-columns: repeat(4, 1fr);
+      gap: var(--spacing-xs);
+    }
+
+    .station-btn {
+      background-color: var(--color-surface-tile-1);
+      color: var(--color-body-muted);
+      border: 1px solid var(--color-hairline-dark);
+      border-radius: var(--rounded-sm);
+      padding: 10px 8px;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 4px;
+      font-size: 12px;
+      font-weight: 400;
+    }
+
+    .station-btn.active {
+      border-color: var(--color-primary-on-dark);
+      color: var(--color-on-dark);
+      background-color: var(--color-surface-black);
+      font-weight: 600;
+    }
+
+    .shuttle-readout {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      flex-wrap: wrap;
+      gap: var(--spacing-xs);
+      padding-top: var(--spacing-xs);
+      border-top: 1px solid var(--color-hairline-dark);
+    }
+
+    /* 2. Interactive Graduation Credit Simulator */
+    .audit-controls {
+      display: flex;
+      gap: var(--spacing-xs);
+      flex-wrap: wrap;
+    }
+
+    .audit-pill-btn {
+      background-color: var(--color-surface-tile-1);
+      color: var(--color-body-muted);
+      border: 1px solid var(--color-hairline-dark);
+      border-radius: var(--rounded-pill);
+      padding: 6px 14px;
+      font-size: 12px;
+      font-weight: 400;
+    }
+
+    .audit-pill-btn.active {
+      border-color: var(--color-primary-on-dark);
+      color: var(--color-on-dark);
+      font-weight: 600;
+    }
+
+    .audit-metrics-grid {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: var(--spacing-xs);
+    }
+
+    .audit-metric-box {
+      background-color: var(--color-surface-tile-1);
+      border-radius: var(--rounded-sm);
+      padding: 12px;
+    }
+
+    .metric-num {
+      font-family: var(--font-display);
+      font-size: 24px;
+      font-weight: 600;
+      color: var(--color-on-dark);
+      line-height: 1.1;
+    }
+
+    .metric-label {
+      font-size: 12px;
+      color: var(--color-body-muted);
+      margin-top: 4px;
+    }
+
+    /* 3. Interactive Library Floor Matrix */
+    .library-floor-grid {
+      display: grid;
+      grid-template-columns: repeat(2, 1fr);
+      gap: var(--spacing-xs);
+    }
+
+    .floor-card-btn {
+      background-color: var(--color-surface-tile-1);
+      border: 1px solid var(--color-hairline-dark);
+      border-radius: var(--rounded-sm);
+      padding: 12px;
+      display: flex;
+      flex-direction: column;
+      align-items: flex-start;
+      gap: 4px;
+      text-align: left;
+      color: var(--color-on-dark);
+    }
+
+    .floor-card-btn.active {
+      border-color: var(--color-primary-on-dark);
+      background-color: var(--color-surface-black);
+    }
+
+    .floor-seats {
+      font-family: var(--font-display);
+      font-size: 21px;
+      font-weight: 600;
+      color: var(--color-primary-on-dark);
+    }
+
+    /* 4. Interactive Peer-Oreum Scholarship Calculator */
+    .mileage-slider-row {
+      display: flex;
+      flex-direction: column;
+      gap: var(--spacing-xs);
+    }
+
+    .apple-range-input {
+      -webkit-appearance: none;
+      appearance: none;
+      width: 100%;
+      height: 4px;
+      background-color: var(--color-surface-tile-1);
+      border-radius: var(--rounded-pill);
+      outline: none;
+    }
+
+    .apple-range-input::-webkit-slider-thumb {
+      -webkit-appearance: none;
+      appearance: none;
+      width: 20px;
+      height: 20px;
+      border-radius: var(--rounded-full);
+      background-color: var(--color-primary-on-dark);
+      cursor: pointer;
+      border: 2px solid var(--color-on-dark);
+      transition: transform 0.15s var(--ease-apple);
+    }
+
+    .apple-range-input::-webkit-slider-thumb:hover {
+      transform: scale(1.18);
+    }
+
+    /* ==========================================================================
+       09. SECTION 3: PARCHMENT CONFIGURATOR & STORE UTILITY CARDS
+       ========================================================================== */
+    .configurator-controls-stack {
+      max-width: var(--container-text);
+      margin: 0 auto var(--spacing-xl);
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: var(--spacing-lg);
+    }
+
+    .search-input-wrapper {
+      width: 100%;
+      max-width: 560px;
+      position: relative;
+      display: flex;
+      align-items: center;
+    }
+
+    .search-input-icon {
+      position: absolute;
+      left: 18px;
+      font-size: 14px;
+      color: var(--color-ink-muted-48);
+      pointer-events: none;
+    }
+
+    .search-input {
+      width: 100%;
+      height: 44px;
+      background-color: var(--color-canvas);
+      color: var(--color-ink);
+      font-family: var(--font-text);
+      font-size: 17px;
+      font-weight: 400;
+      line-height: 1.47;
+      letter-spacing: -0.374px;
+      border: 1px solid var(--color-hairline-alpha);
+      border-radius: var(--rounded-pill);
+      padding: 12px 20px 12px 42px;
+      outline: none;
+    }
+
+    .search-input:focus {
+      border: 2px solid var(--color-primary-focus);
+      padding-left: 41px;
+    }
+
+    .search-input::placeholder {
+      color: var(--color-ink-muted-48);
+    }
+
+    .configurator-chip-row {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: var(--spacing-sm);
+      flex-wrap: wrap;
+    }
+
+    .configurator-option-chip {
+      background-color: var(--color-canvas);
+      color: var(--color-ink);
+      font-family: var(--font-text);
+      font-size: 14px;
+      font-weight: 400;
+      line-height: 1.43;
+      letter-spacing: -0.224px;
+      border-radius: var(--rounded-pill);
+      border: 1px solid var(--color-hairline);
+      padding: 12px 16px;
+      display: inline-flex;
+      align-items: center;
+      gap: var(--spacing-xs);
+    }
+
+    .configurator-option-chip-selected {
+      border: 2px solid var(--color-primary-focus);
+      padding: 11px 15px;
+      font-weight: 600;
+    }
+
+    .chip-delta {
+      color: var(--color-ink-muted-48);
+      font-size: 12px;
+    }
+
+    .store-utility-grid {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: var(--spacing-lg);
+    }
+
+    .store-utility-card {
+      background-color: var(--color-canvas);
+      color: var(--color-ink);
+      border: 1px solid var(--color-hairline);
+      border-radius: var(--rounded-lg);
+      padding: var(--spacing-lg);
+      display: flex;
+      flex-direction: column;
+      justify-content: space-between;
+      gap: var(--spacing-md);
+      transition:
+        border-color 0.25s var(--ease-apple),
+        transform 0.25s var(--ease-apple);
+    }
+
+    .store-utility-card:hover {
+      border-color: var(--color-primary);
+      transform: translateY(-4px);
+    }
+
+    .utility-card-media {
+      width: 100%;
+      aspect-ratio: 16 / 10;
+      background-color: var(--color-canvas-parchment);
+      border-radius: var(--rounded-sm);
+      padding: 20px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      overflow: hidden;
+      position: relative;
+    }
+
+    .utility-product-artifact {
+      background-color: var(--color-canvas);
+      border: 1px solid var(--color-hairline);
+      border-radius: var(--rounded-md);
+      padding: 14px 18px;
+      width: 88%;
+      box-shadow: var(--shadow-product);
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 12px;
+      transition: transform 0.3s var(--ease-apple);
+    }
+
+    .store-utility-card:hover .utility-product-artifact {
+      transform: scale(1.03);
+    }
+
+    .artifact-icon {
+      width: 40px;
+      height: 40px;
+      border-radius: var(--rounded-sm);
+      background-color: var(--color-ink);
+      color: var(--color-on-dark);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 20px;
+      flex-shrink: 0;
+    }
+
+    .utility-card-footer {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding-top: var(--spacing-xs);
+      border-top: 1px solid var(--color-divider-soft);
+    }
+
+    /* ==========================================================================
+       10. SECTION 4: ENVIRONMENT-QUOTE-CARD & VERIFIED STUDENT STORIES
+       ========================================================================== */
+    .environment-quote-card {
+      background-color: var(--color-surface-tile-1);
+      background-image: url("https://picsum.photos/seed/sangmyung-campus-dawn/1600/900");
+      background-size: cover;
+      background-position: center;
+      background-blend-mode: overlay;
+      color: var(--color-on-dark);
+      border-radius: var(--rounded-none);
+      padding: var(--spacing-section) 0;
+      text-align: center;
+    }
+
+    .quote-stage-inner {
+      max-width: var(--container-text);
+      margin: 0 auto;
+      padding: 0 var(--spacing-lg);
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+    }
+
+    .smu-2026-emblem {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      background-color: var(--color-surface-tile-3);
+      border: 1px solid var(--color-hairline-dark);
+      color: var(--color-on-dark);
+      padding: 6px 14px;
+      border-radius: var(--rounded-pill);
+      font-size: 12px;
+      font-weight: 600;
+      margin-bottom: var(--spacing-lg);
+    }
+
+    .story-quote-display {
+      max-width: 780px;
+      margin-bottom: var(--spacing-lg);
+      min-height: 132px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      transition: opacity 0.25s var(--ease-apple), transform 0.25s var(--ease-apple);
+    }
+
+    .story-attribution {
+      color: var(--color-body-muted);
+      margin-bottom: var(--spacing-xl);
+      transition: opacity 0.25s var(--ease-apple), transform 0.25s var(--ease-apple);
+    }
+
+    .story-fade-out {
+      opacity: 0;
+      transform: translateY(8px);
+    }
+
+    .story-controls-row {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: var(--spacing-md);
+      margin-bottom: var(--spacing-xl);
+    }
+
+    .story-dots {
+      display: flex;
+      gap: 8px;
+    }
+
+    .story-dot-btn {
+      width: 8px;
+      height: 8px;
+      border-radius: var(--rounded-full);
+      background-color: var(--color-ink-muted-48);
+      padding: 0;
+      transition: width 0.25s var(--ease-apple), background-color 0.25s var(--ease-apple);
+    }
+
+    .story-dot-btn.active {
+      background-color: var(--color-on-dark);
+      width: 24px;
+    }
+
+    /* ==========================================================================
+       11. FLOATING STICKY BAR (floating-sticky-bar)
+       ========================================================================== */
+    .floating-sticky-bar {
+      position: fixed;
+      bottom: 0;
+      left: 0;
+      right: 0;
+      height: 64px;
+      background-color: rgba(245, 245, 247, 0.8);
+      backdrop-filter: saturate(180%) blur(20px);
+      -webkit-backdrop-filter: saturate(180%) blur(20px);
+      border-top: 1px solid var(--color-hairline);
+      padding: 12px 32px;
+      z-index: 180;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+
+    .sticky-bar-inner {
+      width: 100%;
+      max-width: var(--container-grid);
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: var(--spacing-md);
+    }
+
+    .sticky-bar-status {
+      display: flex;
+      align-items: center;
+      gap: var(--spacing-md);
+      color: var(--color-ink);
+    }
+
+    .sticky-bar-actions {
+      display: flex;
+      align-items: center;
+      gap: var(--spacing-sm);
+    }
+
+    /* ==========================================================================
+       12. APPLE PARCHMENT FOOTER (footer)
+       ========================================================================== */
+    .apple-footer {
+      background-color: var(--color-canvas-parchment);
+      color: var(--color-ink-muted-80);
+      padding: 64px 0;
+      border-top: 1px solid var(--color-hairline);
+    }
+
+    .footer-footnotes {
+      padding-bottom: var(--spacing-lg);
+      border-bottom: 1px solid var(--color-hairline);
+      margin-bottom: var(--spacing-lg);
+      display: flex;
+      flex-direction: column;
+      gap: var(--spacing-xs);
+      color: var(--color-ink-muted-48);
+    }
+
+    .footer-columns {
+      display: grid;
+      grid-template-columns: repeat(4, 1fr);
+      gap: var(--spacing-lg);
+      margin-bottom: var(--spacing-xl);
+    }
+
+    .footer-col-title {
+      color: var(--color-ink);
+      margin-bottom: var(--spacing-xs);
+    }
+
+    .footer-col-list {
+      list-style: none;
+    }
+
+    .footer-col-list a {
+      color: var(--color-ink-muted-80);
+      text-decoration: none;
+      display: block;
+    }
+
+    .footer-col-list a:hover {
+      color: var(--color-primary);
+      text-decoration: underline;
+    }
+
+    .footer-legal-row {
+      padding-top: var(--spacing-lg);
+      border-top: 1px solid var(--color-hairline);
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      flex-wrap: wrap;
+      gap: var(--spacing-sm);
+      color: var(--color-ink-muted-48);
+    }
+
+    .footer-legal-links {
+      display: flex;
+      gap: var(--spacing-md);
+    }
+
+    .footer-legal-links a {
+      color: var(--color-ink-muted-80);
+      text-decoration: none;
+    }
+
+    .footer-legal-links a:hover {
+      color: var(--color-primary);
+    }
+
+    /* ==========================================================================
+       13. RESPONSIVE BREAKPOINTS (Apple Specification: 1068 / 833 / 640 / 419)
+       ========================================================================== */
+    @media (max-width: 1068px) {
+      .type-hero-display {
+        font-size: 40px;
+      }
+      .store-utility-grid {
+        grid-template-columns: repeat(2, 1fr);
+      }
+    }
+
+    @media (max-width: 833px) {
+      .global-nav-list .nav-desktop-only {
+        display: none;
+      }
+      .mobile-menu-btn {
+        display: inline-flex;
+      }
+      .sub-nav-links {
+        display: none;
+      }
+      .span-7, .span-5 {
+        grid-column: span 12;
+      }
+      .footer-columns {
+        grid-template-columns: repeat(2, 1fr);
+      }
+    }
+
+    @media (max-width: 640px) {
+      .product-tile-light,
+      .product-tile-parchment,
+      .product-tile-dark,
+      .product-tile-dark-2,
+      .environment-quote-card {
+        padding: 48px 0;
+      }
+      .type-hero-display {
+        font-size: 34px;
+      }
+      .type-display-lg {
+        font-size: 28px;
+      }
+      .type-lead {
+        font-size: 21px;
+      }
+      .store-utility-grid {
+        grid-template-columns: 1fr;
+      }
+      .shuttle-route-bar {
+        grid-template-columns: repeat(2, 1fr);
+      }
+      .audit-metrics-grid {
+        grid-template-columns: 1fr;
+      }
+      .floating-sticky-bar {
+        padding: 10px 16px;
+      }
+      .sticky-hide-mobile {
+        display: none;
+      }
+      .footer-columns {
+        grid-template-columns: 1fr;
+      }
+    }
+
+    @media (max-width: 419px) {
+      .type-hero-display {
+        font-size: 28px;
+      }
+      .campus-switcher {
+        display: none;
+      }
+    }
+  </style>
+</head>
+<body>
+
+  <!-- ========================================================================
+       GLOBAL NAVIGATION (global-nav: #000000, 44px height)
+       ======================================================================== -->
+  <header>
+    <nav class="global-nav" aria-label="상명대학교 글로벌 탐색">
+      <div class="global-nav-inner">
+        <ul class="global-nav-list">
+          <li>
+            <a href="#" class="global-nav-link global-nav-logo" aria-label="수뭉봇 홈">
+              <i class="ph-fill ph-sparkle"></i>
+              <span>SMU AI</span>
+            </a>
+          </li>
+          <li class="nav-desktop-only"><a href="#simulator" class="global-nav-link">수뭉봇 Pro</a></li>
+          <li class="nav-desktop-only"><a href="#telemetry" class="global-nav-link">실시간 텔레메트리</a></li>
+          <li class="nav-desktop-only"><a href="#configurator" class="global-nav-link">질문 구성기</a></li>
+          <li class="nav-desktop-only"><a href="#stories" class="global-nav-link">학우 스토리</a></li>
+          <li class="nav-desktop-only"><a href="https://smul.smu.ac.kr" target="_blank" rel="noopener" class="global-nav-link">샘물학사포털</a></li>
+          <li>
+            <button type="button" class="global-nav-link" onclick="focusPromptSearch()" aria-label="프롬프트 검색">
+              <i class="ph ph-magnifying-glass"></i>
+            </button>
+          </li>
+          <li>
+            <button type="button" class="mobile-menu-btn" onclick="toggleMobileNav()" aria-label="메뉴 열기">
+              <i class="ph ph-list"></i>
+            </button>
+          </li>
+        </ul>
+      </div>
+    </nav>
+
+    <div class="mobile-nav-drawer" id="mobileNavDrawer">
+      <ul>
+        <li><a href="#simulator" class="global-nav-link" onclick="toggleMobileNav()">수뭉봇 Pro 시뮬레이터</a></li>
+        <li><a href="#telemetry" class="global-nav-link" onclick="toggleMobileNav()">실시간 캠퍼스 텔레메트리</a></li>
+        <li><a href="#configurator" class="global-nav-link" onclick="toggleMobileNav()">학우 맞춤형 질문 구성기</a></li>
+        <li><a href="#stories" class="global-nav-link" onclick="toggleMobileNav()">재학생 학우 스토리</a></li>
+      </ul>
+    </div>
+  </header>
+
+  <!-- ========================================================================
+       FROSTED SUB-NAVIGATION (sub-nav-frosted: #f5f5f7 80%, 52px height)
+       ======================================================================== -->
+  <div class="sub-nav-frosted" role="navigation" aria-label="수뭉봇 제품 탐색">
+    <div class="sub-nav-inner">
+      <div class="sub-nav-left">
+        <a href="#" class="sub-nav-title">수뭉봇 Pro</a>
+        <div class="campus-switcher" role="tablist" aria-label="캠퍼스 데이터베이스 선택">
+          <button type="button" class="campus-switch-btn active" role="tab" aria-selected="true" id="tab-seoul" onclick="switchCampus('seoul')">서울캠퍼스</button>
+          <button type="button" class="campus-switch-btn" role="tab" aria-selected="false" id="tab-cheonan" onclick="switchCampus('cheonan')">천안캠퍼스</button>
+        </div>
+      </div>
+
+      <div class="sub-nav-right">
+        <ul class="sub-nav-links">
+          <li><a href="#simulator" class="sub-nav-item-link">시뮬레이터</a></li>
+          <li><a href="#telemetry" class="sub-nav-item-link">4대 신경망</a></li>
+          <li><a href="#configurator" class="sub-nav-item-link">질문 카탈로그</a></li>
+        </ul>
+        <a href="#simulator" class="btn-apple button-primary sub-nav-cta">대화 시작하기</a>
+      </div>
+    </div>
+  </div>
+
+  <main>
+    <!-- ======================================================================
+         SECTION 1: LIGHT HERO PRODUCT TILE (product-tile-light)
+         ====================================================================== -->
+    <section class="product-tile-light" id="hero">
+      <div class="container-narrow">
+        <div class="hero-stack apple-reveal">
+          <p class="type-tagline hero-tagline" id="heroCampusTagline">상명대학교 서울캠퍼스 AI 어시스턴트</p>
+          <h1 class="type-hero-display hero-headline">캠퍼스의 모든 해답.<br>질문 한 번으로.</h1>
+          <p class="type-lead hero-subcopy">비탈길 셔틀버스 실시간 위치부터 복잡한 졸업 학점 진단까지 가장 빠르고 명쾌하게 답해드립니다.</p>
+          <div class="hero-cta-row">
+            <a href="#simulator" class="btn-apple button-primary">수뭉봇 대화 시작하기</a>
+            <a href="#telemetry" class="btn-apple button-secondary-pill">실시간 신경망 살펴보기</a>
+          </div>
+        </div>
+
+        <!-- Hardware Finish Selector + 3D Tilt Toggle -->
+        <div class="hardware-finish-bar apple-reveal" id="simulator" style="--reveal-delay: 100ms;" aria-label="시뮬레이터 티타늄 마감 선택">
+          <span class="type-caption-strong finish-label" id="finishNameLabel">마감 - 내추럴 티타늄</span>
+          <button type="button" class="finish-swatch-btn swatch-natural active" onclick="setPhoneFinish('natural', '내추럴 티타늄', this)" aria-label="내추럴 티타늄"></button>
+          <button type="button" class="finish-swatch-btn swatch-white" onclick="setPhoneFinish('white', '화이트 티타늄', this)" aria-label="화이트 티타늄"></button>
+          <button type="button" class="finish-swatch-btn swatch-black" onclick="setPhoneFinish('black', '블랙 티타늄', this)" aria-label="블랙 티타늄"></button>
+          <button type="button" class="finish-swatch-btn swatch-desert" onclick="setPhoneFinish('desert', '데저트 티타늄', this)" aria-label="데저트 티타늄"></button>
+          <button type="button" class="button-pearl-capsule" id="tiltToggleBtn" onclick="toggleHardwareTilt()" style="margin-left: 8px; padding: 6px 12px; font-size: 12px;">
+            3D 틸트 활성됨
+          </button>
+        </div>
+
+        <!-- Product Stage with Pointer 3D Tilt & Single Apple Product Shadow -->
+        <div class="product-stage apple-reveal" id="heroProductStage" style="--reveal-delay: 180ms;">
+          <div class="iphone-hardware-render" id="iphoneRender" data-finish="natural">
+            <div class="iphone-bezel">
+              <div class="iphone-screen">
+
+                <!-- Dynamic Island -->
+                <div class="dynamic-island-bar">
+                  <div class="dynamic-island-pill" id="dynamicIsland" onclick="cycleIslandTelemetry()" title="클릭하여 실시간 캠퍼스 브리핑 전환">
+                    <span class="island-live-badge" id="islandBadge">LIVE</span>
+                    <span class="island-status-text" id="islandText">정문 셔틀 3분 후 도착</span>
+                    <i class="ph-fill ph-waveform" style="font-size:13px; color:#2997ff;"></i>
+                  </div>
+                </div>
+
+                <!-- Simulator Header -->
+                <div class="sim-header">
+                  <div class="sim-identity">
+                    <div class="sim-avatar">
+                      <i class="ph-fill ph-sparkle"></i>
+                    </div>
+                    <div>
+                      <div class="type-caption-strong sim-title">수뭉봇 Pro (SMU AI 3.0)</div>
+                      <div class="type-fine-print sim-subtitle" id="simCampusSubtitle">서울캠퍼스 실시간 학사 연동됨</div>
+                    </div>
+                  </div>
+                  <div class="sim-actions">
+                    <button type="button" class="sim-icon-btn" onclick="triggerDailyBriefing()" title="오늘의 캠퍼스 브리핑" aria-label="오늘의 캠퍼스 브리핑">
+                      <i class="ph ph-newspaper"></i>
+                    </button>
+                    <button type="button" class="sim-icon-btn" onclick="resetChatSimulator()" title="대화 초기화" aria-label="대화 초기화">
+                      <i class="ph ph-arrow-counter-clockwise"></i>
+                    </button>
+                  </div>
+                </div>
+
+                <!-- Messages Stream -->
+                <div class="sim-chat-stream" id="chatStream" role="log" aria-live="polite">
+                  <div class="sim-msg-row bot">
+                    <div class="sim-bubble">
+                      안녕하세요 학우님. 상명대학교 지능형 어시스턴트 수뭉봇 Pro입니다. 셔틀버스 도착 시간, 졸업 사정 학점, 오늘의 학식 메뉴, 도서관 잔여 좌석 중 무엇을 확인해 드릴까요?
+                    </div>
+                    <span class="sim-msg-meta">방금 전</span>
+                  </div>
+                </div>
+
+                <!-- In-Screen Interactive Detail Sheet -->
+                <div class="sim-detail-sheet" id="simDetailSheet" aria-hidden="true">
+                  <div class="sheet-header">
+                    <span class="type-caption-strong" id="sheetTitle">상세 학사 데이터</span>
+                    <button type="button" class="sim-icon-btn" onclick="closeDetailSheet()" aria-label="상세 창 닫기">
+                      <i class="ph ph-x"></i>
+                    </button>
+                  </div>
+                  <p class="type-caption" id="sheetBody" style="color: var(--color-ink-muted-80); margin-bottom: 14px;"></p>
+                  <button type="button" class="btn-apple button-primary" style="width:100%; padding:9px 16px; font-size:14px;" onclick="closeDetailSheet()">확인 완료</button>
+                </div>
+
+                <!-- Quick Action Chips -->
+                <div class="sim-quick-bar" aria-label="빠른 질문 칩">
+                  <button type="button" class="sim-chip" onclick="triggerQuickPrompt('지금 비탈길 셔틀버스 언제 와?')">셔틀버스 도착 시간</button>
+                  <button type="button" class="sim-chip" onclick="triggerQuickPrompt('졸업하려면 교양 몇 학점 더 채워야 해?')">졸업 이수학점 진단</button>
+                  <button type="button" class="sim-chip" onclick="triggerQuickPrompt('오늘 학생식당 점심 메뉴 뭐야?')">오늘의 학식 메뉴</button>
+                  <button type="button" class="sim-chip" onclick="triggerQuickPrompt('중앙도서관 열람실 좌석 남아있어?')">도서관 실시간 좌석</button>
+                  <button type="button" class="sim-chip" onclick="triggerQuickPrompt('피어오름 마일리지 장학금 마감 언제야?')">마일리지 장학금</button>
+                </div>
+
+                <!-- Input Form -->
+                <div class="sim-dock">
+                  <form class="sim-form" onsubmit="handleUserChatSubmit(event)">
+                    <label for="userChatInput" class="type-micro-legal" style="position:absolute; width:1px; height:1px; overflow:hidden; clip:rect(0,0,0,0);">질문 입력</label>
+                    <input type="text" id="userChatInput" class="sim-input" placeholder="상명대 학사·셔틀·도서관 무엇이든 질문하세요" autocomplete="off">
+                    <button type="submit" class="sim-send-btn" aria-label="전송">
+                      <i class="ph-bold ph-arrow-up"></i>
+                    </button>
+                  </form>
+                </div>
+
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- ======================================================================
+         SECTION 2: DARK PRODUCT TILE (product-tile-dark: #272729)
+         4 Interactive Neural Telemetry Modules with Visual Track & Animated Counters
+         ====================================================================== -->
+    <section class="product-tile-dark" id="telemetry">
+      <div class="container-wide">
+        <div class="tile-header-centered apple-reveal">
+          <p class="type-tagline">실시간 캠퍼스 텔레메트리</p>
+          <h2 class="type-display-lg">스마트 캠퍼스를 지탱하는 4대 지능형 신경망.</h2>
+          <p class="type-lead-airy tile-subcopy">공공 학사 데이터와 지리 엔진을 결합해 정류장별 셔틀 위치부터 학번별 졸업 요건까지 직접 조작하며 확인하세요.</p>
+        </div>
+
+        <div class="telemetry-tabs apple-reveal" style="--reveal-delay: 80ms;" role="group" aria-label="신경망 모듈 강조 선택">
+          <button type="button" class="telemetry-tab-btn active" onclick="highlightTelemetry('all', this)">전체 신경망 보기</button>
+          <button type="button" class="telemetry-tab-btn" onclick="highlightTelemetry('shuttle', this)">셔틀버스 GPS 레이더</button>
+          <button type="button" class="telemetry-tab-btn" onclick="highlightTelemetry('audit', this)">졸업 사정 시뮬레이터</button>
+          <button type="button" class="telemetry-tab-btn" onclick="highlightTelemetry('library', this)">중앙도서관 좌석 파인더</button>
+          <button type="button" class="telemetry-tab-btn" onclick="highlightTelemetry('mileage', this)">마일리지 장학 계산기</button>
+        </div>
+
+        <div class="dark-bento-grid">
+          <!-- Module 1: Interactive Shuttle Radar with Live Moving Bus Track (Span 7) -->
+          <article class="dark-module-card span-7 apple-reveal" id="mod-shuttle" style="--reveal-delay: 120ms;">
+            <div>
+              <div class="module-eyebrow">REALTIME MOBILITY</div>
+              <h3 class="type-display-md module-title">경사로 극복 셔틀버스 실시간 레이더</h3>
+              <p class="type-body module-desc">정류장을 클릭하면 노선 트랙 위 셔틀버스 마커가 실시간 이동하며 구간별 도착 시간과 경사도를 브리핑합니다.</p>
+            </div>
+
+            <div class="dark-interactive-stage">
+              <!-- Live Visual Track -->
+              <div class="shuttle-visual-track" aria-hidden="true">
+                <div class="shuttle-track-rail"></div>
+                <div class="shuttle-track-active-fill" id="shuttleTrackFill"></div>
+                <div class="shuttle-moving-bus" id="shuttleMovingMarker">
+                  <i class="ph-fill ph-bus"></i>
+                </div>
+              </div>
+
+              <div class="shuttle-route-bar" id="shuttleStationsBar">
+                <button type="button" class="station-btn" onclick="selectShuttleStation(0, this)">
+                  <i class="ph ph-train"></i>
+                  <span id="st-name-0">경복궁역</span>
+                </button>
+                <button type="button" class="station-btn active" onclick="selectShuttleStation(1, this)">
+                  <i class="ph-fill ph-bus"></i>
+                  <span id="st-name-1">정문 회차점</span>
+                </button>
+                <button type="button" class="station-btn" onclick="selectShuttleStation(2, this)">
+                  <i class="ph ph-buildings"></i>
+                  <span id="st-name-2">밀레니엄관</span>
+                </button>
+                <button type="button" class="station-btn" onclick="selectShuttleStation(3, this)">
+                  <i class="ph ph-student"></i>
+                  <span id="st-name-3">상명아트센터</span>
+                </button>
+              </div>
+
+              <div class="shuttle-readout">
+                <div>
+                  <div class="type-caption-strong" id="shuttleEtaText" style="color: var(--color-on-dark);">정문 회차점 진입 3분 전 (배차 간격 6분)</div>
+                  <div class="type-fine-print" id="shuttleMetaText" style="color: var(--color-body-muted); margin-top: 4px;">현재 차내 혼잡도: 여유 (잔여 18석) · 구간 경사도 14%</div>
+                </div>
+                <a href="#simulator" class="text-link-on-dark type-caption-strong" onclick="injectPromptFromLab('지금 정문 셔틀버스 도착 시간이랑 잔여 좌석 알려줘')">
+                  <span>수뭉봇으로 알림 받기</span>
+                  <i class="ph ph-caret-right"></i>
+                </a>
+              </div>
+            </div>
+          </article>
+
+          <!-- Module 2: Interactive Graduation Audit Simulator with Count-Up Animation (Span 5) -->
+          <article class="dark-module-card span-5 apple-reveal" id="mod-audit" style="--reveal-delay: 200ms;">
+            <div>
+              <div class="module-eyebrow">ACADEMIC DIAGNOSTICS</div>
+              <h3 class="type-display-md module-title">졸업 사정 학점 시뮬레이터</h3>
+              <p class="type-body module-desc">다전공 유형을 선택하면 학칙에 맞춘 필수 이수 학점이 애니메이션 카운터로 즉시 재계산됩니다.</p>
+            </div>
+
+            <div class="dark-interactive-stage">
+              <div class="audit-controls" role="group" aria-label="전공 유형 선택">
+                <button type="button" class="audit-pill-btn active" onclick="updateAuditSim('single', this)">심화전공 (단일)</button>
+                <button type="button" class="audit-pill-btn" onclick="updateAuditSim('double', this)">복수전공</button>
+                <button type="button" class="audit-pill-btn" onclick="updateAuditSim('minor', this)">부전공 병행</button>
+              </div>
+
+              <div class="audit-metrics-grid numeric-spec">
+                <div class="audit-metric-box">
+                  <div class="metric-num" id="auditMajorCredits">66학점</div>
+                  <div class="metric-label">주전공 필수 기준</div>
+                </div>
+                <div class="audit-metric-box">
+                  <div class="metric-num" id="auditSubCredits">0학점</div>
+                  <div class="metric-label" id="auditSubLabel">심화 단일전공</div>
+                </div>
+                <div class="audit-metric-box">
+                  <div class="metric-num" id="auditTotalCredits" style="color: var(--color-primary-on-dark);">130학점</div>
+                  <div class="metric-label">졸업 총 요구학점</div>
+                </div>
+              </div>
+
+              <a href="#simulator" class="text-link-on-dark type-caption-strong" onclick="injectPromptFromLab('내 전공 기준 졸업 이수학점이랑 교양 필수 남은 학점 진단해줘')">
+                <span>내 학번 맞춤 이수표 진단하기</span>
+                <i class="ph ph-caret-right"></i>
+              </a>
+            </div>
+          </article>
+
+          <!-- Module 3: Interactive Smart Library Seat Finder (Span 5) -->
+          <article class="dark-module-card span-5 apple-reveal" id="mod-library" style="--reveal-delay: 260ms;">
+            <div>
+              <div class="module-eyebrow">FACILITY TELEMETRY</div>
+              <h3 class="type-display-md module-title">중앙도서관 열람실 좌석 파인더</h3>
+              <p class="type-body module-desc">층별 열람실을 클릭해 실시간 잔여석과 콘센트 좌석 비율을 확인하세요.</p>
+            </div>
+
+            <div class="dark-interactive-stage">
+              <div class="library-floor-grid numeric-spec">
+                <button type="button" class="floor-card-btn active" onclick="selectLibraryFloor('3층 제1자유열람실', 42, '석 여유', '콘센트 좌석 68% 가용 · 노트북 타이핑 허용', this)">
+                  <span class="type-fine-print" style="color:var(--color-body-muted);">3층 제1자유열람실</span>
+                  <span class="floor-seats">42석 여유</span>
+                </button>
+                <button type="button" class="floor-card-btn" onclick="selectLibraryFloor('4층 제2정숙열람실', 19, '석 여유', '콘센트 좌석 45% 가용 · 초정숙 집중 환경', this)">
+                  <span class="type-fine-print" style="color:var(--color-body-muted);">4층 제2정숙열람실</span>
+                  <span class="floor-seats">19석 여유</span>
+                </button>
+                <button type="button" class="floor-card-btn" onclick="selectLibraryFloor('2층 창의미디어존', 11, '석 여유', '듀얼 모니터석 5석 남음 · 팀플 협업 가능', this)">
+                  <span class="type-fine-print" style="color:var(--color-body-muted);">2층 창의미디어존</span>
+                  <span class="floor-seats">11석 여유</span>
+                </button>
+                <button type="button" class="floor-card-btn" onclick="selectLibraryFloor('5층 그룹스터디룸', 3, '실 가능', '4~8인실 전자칠판 구비 · 즉시 예약 가능', this)">
+                  <span class="type-fine-print" style="color:var(--color-body-muted);">5층 그룹스터디룸</span>
+                  <span class="floor-seats">3실 가능</span>
+                </button>
+              </div>
+              <div class="type-fine-print" id="libraryFloorDetail" style="color: var(--color-body-muted);">
+                선택됨: 3층 제1자유열람실 (42석 여유 · 콘센트 좌석 68% 가용 · 노트북 타이핑 허용)
+              </div>
+            </div>
+          </article>
+
+          <!-- Module 4: Interactive Peer-Oreum Scholarship Calculator (Span 7) -->
+          <article class="dark-module-card span-7 apple-reveal" id="mod-mileage" style="--reveal-delay: 320ms;">
+            <div>
+              <div class="module-eyebrow">SCHOLARSHIP RADAR</div>
+              <h3 class="type-display-md module-title">피어오름 비교과 마일리지 장학 계산기</h3>
+              <p class="type-body module-desc">슬라이더를 움직여 보유하신 비교과 마일리지 포인트에 따른 예상 장학금 환산액과 신청 마감일을 확인하세요.</p>
+            </div>
+
+            <div class="dark-interactive-stage numeric-spec">
+              <div class="mileage-slider-row">
+                <div style="display:flex; justify-content:space-between; align-items:center;">
+                  <label for="mileageRange" class="type-caption" style="color:var(--color-body-muted);">보유 피어오름 포인트 설정</label>
+                  <span class="type-tagline" id="mileagePointsDisplay" style="color:var(--color-on-dark);">160 P</span>
+                </div>
+                <input type="range" id="mileageRange" class="apple-range-input" min="40" max="300" step="10" value="160" oninput="updateMileageCalc(this.value)">
+              </div>
+
+              <div class="shuttle-readout">
+                <div>
+                  <div class="type-caption-strong" id="mileagePayoutText" style="color: var(--color-primary-on-dark);">예상 지급 장학금: 160,000원 (수혜 자격 충족)</div>
+                  <div class="type-fine-print" style="color: var(--color-body-muted); margin-top: 4px;">이번 학기 증빙 업로드 마감 D-3 · 최소 120P 이상 전액 환산 지급</div>
+                </div>
+                <a href="#simulator" class="text-link-on-dark type-caption-strong" onclick="injectPromptFromLab('이번 학기 피어오름 마일리지 장학금 신청 조건이랑 마감일 알려줘')">
+                  <span>장학 신청 안내 보기</span>
+                  <i class="ph ph-caret-right"></i>
+                </a>
+              </div>
+            </div>
+          </article>
+        </div>
+      </div>
+    </section>
+
+    <!-- ======================================================================
+         SECTION 3: PARCHMENT CONFIGURATOR & STORE UTILITY GRID
+         ====================================================================== -->
+    <section class="product-tile-parchment" id="configurator">
+      <div class="container-wide">
+        <div class="tile-header-centered apple-reveal">
+          <p class="type-tagline" style="color: var(--color-primary);">STUDENT PROMPT CONFIGURATOR</p>
+          <h2 class="type-display-lg">학우들이 가장 많이 찾는 질문 카탈로그.</h2>
+          <p class="type-lead" style="color: var(--color-ink-muted-80);">키워드로 검색하거나 카테고리를 선택한 뒤 카드를 누르면 상단 수뭉봇에서 즉시 시뮬레이션됩니다.</p>
+        </div>
+
+        <div class="configurator-controls-stack apple-reveal" style="--reveal-delay: 80ms;">
+          <div class="search-input-wrapper">
+            <i class="ph ph-magnifying-glass search-input-icon" aria-hidden="true"></i>
+            <input type="search" id="promptSearchInput" class="search-input" placeholder="질문 키워드 검색 (예: 셔틀, 복수전공, 학식, 도서관, 장학금)" oninput="filterCatalog()" aria-label="질문 키워드 검색">
+          </div>
+
+          <div class="configurator-chip-row" role="group" aria-label="질문 카테고리 필터">
+            <button type="button" class="configurator-option-chip configurator-option-chip-selected" data-cat="all" onclick="selectCatalogCategory('all', this)">
+              <span>전체 카탈로그</span>
+              <span class="chip-delta">6개 시나리오</span>
+            </button>
+            <button type="button" class="configurator-option-chip" data-cat="campus" onclick="selectCatalogCategory('campus', this)">
+              <span>캠퍼스 이동 · 식단</span>
+              <span class="chip-delta">실시간 연동</span>
+            </button>
+            <button type="button" class="configurator-option-chip" data-cat="academic" onclick="selectCatalogCategory('academic', this)">
+              <span>수강 · 성적 · 졸업</span>
+              <span class="chip-delta">학칙 엔진</span>
+            </button>
+            <button type="button" class="configurator-option-chip" data-cat="facility" onclick="selectCatalogCategory('facility', this)">
+              <span>도서관 · 장학 · 시설</span>
+              <span class="chip-delta">좌석/마일리지</span>
+            </button>
+          </div>
+        </div>
+
+        <div class="store-utility-grid" id="catalogGrid">
+          <article class="store-utility-card apple-reveal" style="--reveal-delay: 60ms;" data-cat="campus" data-keywords="셔틀 버스 비탈길 정문 경복궁역 배차 도착">
+            <div>
+              <div class="utility-card-media">
+                <div class="utility-product-artifact">
+                  <div class="artifact-icon"><i class="ph-fill ph-bus"></i></div>
+                  <div>
+                    <div class="type-caption-strong">정문 노선 GPS</div>
+                    <div class="type-fine-print" style="color:var(--color-ink-muted-48);">평균 대기 3분 단축</div>
+                  </div>
+                </div>
+              </div>
+              <p class="type-fine-print" style="color:var(--color-ink-muted-48); margin-top:16px; margin-bottom:6px;">캠퍼스 이동</p>
+              <h3 class="type-body-strong" style="margin-bottom:8px;">"비 오는데 오늘 정문 셔틀버스 몇 분 간격으로 다녀?"</h3>
+              <p class="type-caption" style="color:var(--color-ink-muted-80);">경복궁역과 정문 회차점을 오가는 실시간 버스의 위치와 우천 시 배차 간격을 즉시 브리핑합니다.</p>
+            </div>
+            <div class="utility-card-footer">
+              <button type="button" class="button-pearl-capsule" onclick="injectPromptFromLab('비 오는데 오늘 정문 셔틀버스 몇 분 간격으로 다녀?')">시뮬레이터 실행</button>
+              <a href="#simulator" class="text-link type-caption-strong" onclick="injectPromptFromLab('비 오는데 오늘 정문 셔틀버스 몇 분 간격으로 다녀?')">
+                <span>질문하기</span>
+                <i class="ph ph-caret-right"></i>
+              </a>
+            </div>
+          </article>
+
+          <article class="store-utility-card apple-reveal" style="--reveal-delay: 120ms;" data-cat="academic" data-keywords="부전공 복수전공 학점 졸업 중복 인정 이수">
+            <div>
+              <div class="utility-card-media">
+                <div class="utility-product-artifact">
+                  <div class="artifact-icon"><i class="ph-fill ph-graduation-cap"></i></div>
+                  <div>
+                    <div class="type-caption-strong">다전공 학칙 검증</div>
+                    <div class="type-fine-print" style="color:var(--color-ink-muted-48);">학번별 자동 대조</div>
+                  </div>
+                </div>
+              </div>
+              <p class="type-fine-print" style="color:var(--color-ink-muted-48); margin-top:16px; margin-bottom:6px;">학사 및 다전공</p>
+              <h3 class="type-body-strong" style="margin-bottom:8px;">"부전공 이수 학점이랑 주전공 중복 인정 학점 어떻게 돼?"</h3>
+              <p class="type-caption" style="color:var(--color-ink-muted-80);">복잡한 다전공 이수 규정과 학번별 교양 필수 충족 여부를 3초 만에 표로 요약해 드립니다.</p>
+            </div>
+            <div class="utility-card-footer">
+              <button type="button" class="button-pearl-capsule" onclick="injectPromptFromLab('부전공 이수 학점이랑 주전공 중복 인정 학점 어떻게 돼?')">시뮬레이터 실행</button>
+              <a href="#simulator" class="text-link type-caption-strong" onclick="injectPromptFromLab('부전공 이수 학점이랑 주전공 중복 인정 학점 어떻게 돼?')">
+                <span>질문하기</span>
+                <i class="ph ph-caret-right"></i>
+              </a>
+            </div>
+          </article>
+
+          <article class="store-utility-card apple-reveal" style="--reveal-delay: 180ms;" data-cat="facility" data-keywords="중앙도서관 멀티미디어실 듀얼 모니터 좌석 예약 열람실">
+            <div>
+              <div class="utility-card-media">
+                <div class="utility-product-artifact">
+                  <div class="artifact-icon"><i class="ph-fill ph-desktop"></i></div>
+                  <div>
+                    <div class="type-caption-strong">도서관 미디어존</div>
+                    <div class="type-fine-print" style="color:var(--color-ink-muted-48);">실시간 잔여 11석</div>
+                  </div>
+                </div>
+              </div>
+              <p class="type-fine-print" style="color:var(--color-ink-muted-48); margin-top:16px; margin-bottom:6px;">시설 예약</p>
+              <h3 class="type-body-strong" style="margin-bottom:8px;">"중앙도서관 멀티미디어실에서 듀얼 모니터 자리 예약 가능해?"</h3>
+              <p class="type-caption" style="color:var(--color-ink-muted-80);">각 층별 자유열람실과 창의미디어존의 잔여 좌석 및 모바일 학생증 배정 방법을 안내합니다.</p>
+            </div>
+            <div class="utility-card-footer">
+              <button type="button" class="button-pearl-capsule" onclick="injectPromptFromLab('중앙도서관 멀티미디어실에서 듀얼 모니터 자리 예약 가능해?')">시뮬레이터 실행</button>
+              <a href="#simulator" class="text-link type-caption-strong" onclick="injectPromptFromLab('중앙도서관 멀티미디어실에서 듀얼 모니터 자리 예약 가능해?')">
+                <span>질문하기</span>
+                <i class="ph ph-caret-right"></i>
+              </a>
+            </div>
+          </article>
+
+          <article class="store-utility-card apple-reveal" style="--reveal-delay: 240ms;" data-cat="campus" data-keywords="웰빙관 학생식당 교직원 식당 학식 점심 메뉴 돈카츠">
+            <div>
+              <div class="utility-card-media">
+                <div class="utility-product-artifact">
+                  <div class="artifact-icon"><i class="ph-fill ph-fork-knife"></i></div>
+                  <div>
+                    <div class="type-caption-strong">금일의 캠퍼스 식단</div>
+                    <div class="type-fine-print" style="color:var(--color-ink-muted-48);">11:30 - 14:00 운영</div>
+                  </div>
+                </div>
+              </div>
+              <p class="type-fine-print" style="color:var(--color-ink-muted-48); margin-top:16px; margin-bottom:6px;">식단 안내</p>
+              <h3 class="type-body-strong" style="margin-bottom:8px;">"오늘 웰빙관 교직원 식당이랑 학생식당 점심 메뉴 알려줘"</h3>
+              <p class="type-caption" style="color:var(--color-ink-muted-80);">일품 코너 메뉴와 가격, 혼잡 시간대 및 천안캠퍼스 한누리관 식단까지 한눈에 비교합니다.</p>
+            </div>
+            <div class="utility-card-footer">
+              <button type="button" class="button-pearl-capsule" onclick="injectPromptFromLab('오늘 웰빙관 교직원 식당이랑 학생식당 점심 메뉴 알려줘')">시뮬레이터 실행</button>
+              <a href="#simulator" class="text-link type-caption-strong" onclick="injectPromptFromLab('오늘 웰빙관 교직원 식당이랑 학생식당 점심 메뉴 알려줘')">
+                <span>질문하기</span>
+                <i class="ph ph-caret-right"></i>
+              </a>
+            </div>
+          </article>
+
+          <article class="store-utility-card apple-reveal" style="--reveal-delay: 300ms;" data-cat="facility" data-keywords="마일리지 장학금 피어오름 국가장학금 신청 조건 마감">
+            <div>
+              <div class="utility-card-media">
+                <div class="utility-product-artifact">
+                  <div class="artifact-icon"><i class="ph-fill ph-coins"></i></div>
+                  <div>
+                    <div class="type-caption-strong">피어오름 장학 레이더</div>
+                    <div class="type-fine-print" style="color:var(--color-ink-muted-48);">1P = 1,000원 환산</div>
+                  </div>
+                </div>
+              </div>
+              <p class="type-fine-print" style="color:var(--color-ink-muted-48); margin-top:16px; margin-bottom:6px;">장학 안내</p>
+              <h3 class="type-body-strong" style="margin-bottom:8px;">"이번 학기 마일리지 장학금 최소 신청 조건이 뭐야?"</h3>
+              <p class="type-caption" style="color:var(--color-ink-muted-80);">놓치기 쉬운 비교과 포인트 전환 기간과 교내외 장학금 D-Day 일정을 빠짐없이 챙겨드립니다.</p>
+            </div>
+            <div class="utility-card-footer">
+              <button type="button" class="button-pearl-capsule" onclick="injectPromptFromLab('이번 학기 마일리지 장학금 최소 신청 조건이 뭐야?')">시뮬레이터 실행</button>
+              <a href="#simulator" class="text-link type-caption-strong" onclick="injectPromptFromLab('이번 학기 마일리지 장학금 최소 신청 조건이 뭐야?')">
+                <span>질문하기</span>
+                <i class="ph ph-caret-right"></i>
+              </a>
+            </div>
+          </article>
+
+          <article class="store-utility-card apple-reveal" style="--reveal-delay: 360ms;" data-cat="academic" data-keywords="계절학기 수강 신청 취소 학점 환불 기간">
+            <div>
+              <div class="utility-card-media">
+                <div class="utility-product-artifact">
+                  <div class="artifact-icon"><i class="ph-fill ph-calendar-check"></i></div>
+                  <div>
+                    <div class="type-caption-strong">학사 일정 가이드</div>
+                    <div class="type-fine-print" style="color:var(--color-ink-muted-48);">최대 6학점 수강</div>
+                  </div>
+                </div>
+              </div>
+              <p class="type-fine-print" style="color:var(--color-ink-muted-48); margin-top:16px; margin-bottom:6px;">계절학기 규정</p>
+              <h3 class="type-body-strong" style="margin-bottom:8px;">"계절학기 최대 수강 신청 가능 학점이랑 취소 기간 알려줘"</h3>
+              <p class="type-caption" style="color:var(--color-ink-muted-80);">계절학기 등록금 환불 기준일과 학점 교류 신청 절차를 공지사항 검색 없이 바로 확인하세요.</p>
+            </div>
+            <div class="utility-card-footer">
+              <button type="button" class="button-pearl-capsule" onclick="injectPromptFromLab('계절학기 최대 수강 신청 가능 학점이랑 취소 기간 알려줘')">시뮬레이터 실행</button>
+              <a href="#simulator" class="text-link type-caption-strong" onclick="injectPromptFromLab('계절학기 최대 수강 신청 가능 학점이랑 취소 기간 알려줘')">
+                <span>질문하기</span>
+                <i class="ph ph-caret-right"></i>
+              </a>
+            </div>
+          </article>
+        </div>
+      </div>
+    </section>
+
+    <!-- ======================================================================
+         SECTION 4: ENVIRONMENT-QUOTE-CARD (Photographic Dark Canvas + Verified Stories)
+         ====================================================================== -->
+    <section class="environment-quote-card" id="stories">
+      <div class="quote-stage-inner apple-reveal">
+        <div class="smu-2026-emblem">
+          <i class="ph-fill ph-shield-check" style="color: #2997ff;"></i>
+          <span>SMU AI 2026 · 재학생 1,200명 검증 완료</span>
+        </div>
+
+        <blockquote class="type-display-lg story-quote-display" id="activeStoryQuote">
+          "비탈길 오르막을 오를 때마다 셔틀이 언제 오는지 몰라 늘 뛰었는데, 수뭉봇으로 정문 도착 시간을 미리 확인하고부터 통학길이 한결 여유로워졌습니다."
+        </blockquote>
+
+        <p class="type-body story-attribution" id="activeStoryAuthor">
+          소프트웨어학과 3학년 김학우 · 서울캠퍼스 재학
+        </p>
+
+        <div class="story-controls-row">
+          <button type="button" class="button-icon-circular" onclick="stepStory(-1)" aria-label="이전 학우 후기">
+            <i class="ph-bold ph-caret-left"></i>
+          </button>
+          <div class="story-dots" role="tablist" aria-label="후기 선택">
+            <button type="button" class="story-dot-btn active" onclick="setStory(0)" aria-label="1번 후기"></button>
+            <button type="button" class="story-dot-btn" onclick="setStory(1)" aria-label="2번 후기"></button>
+            <button type="button" class="story-dot-btn" onclick="setStory(2)" aria-label="3번 후기"></button>
+          </div>
+          <button type="button" class="button-icon-circular" onclick="stepStory(1)" aria-label="다음 학우 후기">
+            <i class="ph-bold ph-caret-right"></i>
+          </button>
+        </div>
+
+        <button type="button" class="btn-apple button-store-hero" id="storyTryBtn" onclick="tryCurrentStoryPrompt()">
+          이 학우의 질문 직접 체험하기
+        </button>
+      </div>
+    </section>
+  </main>
+
+  <!-- ========================================================================
+       APPLE PARCHMENT FOOTER (footer: #f5f5f7, 64px padding, dense-link 2.41)
+       ======================================================================== -->
+  <footer class="apple-footer">
+    <div class="container-narrow">
+      <div class="footer-footnotes">
+        <p class="type-fine-print">1. 실시간 셔틀버스 도착 예측 시간은 캠퍼스 주변 도로 교통 상황 및 기상 여건에 따라 1~2분 내외의 오차가 발생할 수 있습니다.</p>
+        <p class="type-fine-print">2. 졸업 사정 시뮬레이션 결과는 참고용 학사 보조 지표이며, 최종 졸업 요건 충족 여부는 상명대학교 샘물통합정보시스템 공식 사정표를 기준으로 확정됩니다.</p>
+        <p class="type-micro-legal">본 서비스는 디지털창업서비스기획과마케팅 프로젝트의 일환으로 기획된 상명대학교 지능형 AI 캠퍼스 어시스턴트 웹 경험입니다.</p>
+      </div>
+
+      <div class="footer-columns">
+        <div>
+          <h4 class="type-caption-strong footer-col-title">수뭉봇 Pro 탐색</h4>
+          <ul class="footer-col-list">
+            <li><a href="#simulator" class="type-dense-link">아이폰 대화 시뮬레이터</a></li>
+            <li><a href="#telemetry" class="type-dense-link">셔틀버스 실시간 레이더</a></li>
+            <li><a href="#telemetry" class="type-dense-link">졸업 학점 사정 진단</a></li>
+            <li><a href="#telemetry" class="type-dense-link">중앙도서관 좌석 파인더</a></li>
+          </ul>
+        </div>
+        <div>
+          <h4 class="type-caption-strong footer-col-title">캠퍼스 데이터베이스</h4>
+          <ul class="footer-col-list">
+            <li><a href="#simulator" class="type-dense-link" onclick="switchCampus('seoul')">서울캠퍼스 (종로구 홍지문)</a></li>
+            <li><a href="#simulator" class="type-dense-link" onclick="switchCampus('cheonan')">천안캠퍼스 (동남구 안서동)</a></li>
+            <li><a href="#configurator" class="type-dense-link">웰빙관 및 한누리관 식단</a></li>
+            <li><a href="#configurator" class="type-dense-link">피어오름 비교과 마일리지</a></li>
+          </ul>
+        </div>
+        <div>
+          <h4 class="type-caption-strong footer-col-title">상명대학교 공식 연계</h4>
+          <ul class="footer-col-list">
+            <li><a href="https://www.smu.ac.kr" target="_blank" rel="noopener" class="type-dense-link">상명대학교 대표 홈페이지</a></li>
+            <li><a href="https://smul.smu.ac.kr" target="_blank" rel="noopener" class="type-dense-link">샘물통합정보시스템</a></li>
+            <li><a href="https://lib.smu.ac.kr" target="_blank" rel="noopener" class="type-dense-link">상명대학교 학술정보관</a></li>
+            <li><a href="#stories" class="type-dense-link">재학생 베타 테스트 리포트</a></li>
+          </ul>
+        </div>
+        <div>
+          <h4 class="type-caption-strong footer-col-title">디자인 시스템 사양</h4>
+          <ul class="footer-col-list">
+            <li><a href="#hero" class="type-dense-link">SF Pro 타이포그래피 위계</a></li>
+            <li><a href="#hero" class="type-dense-link">Action Blue 단일 인터랙션</a></li>
+            <li><a href="#telemetry" class="type-dense-link">라이트·다크 풀블리드 타일</a></li>
+            <li><a href="#configurator" class="type-dense-link">스토어 유틸리티 카드 그리드</a></li>
+          </ul>
+        </div>
+      </div>
+
+      <div class="footer-legal-row type-fine-print">
+        <span>Copyright © 2026 Sangmyung University AI Assistant Project (수뭉봇 Pro). All rights reserved.</span>
+        <div class="footer-legal-links">
+          <a href="#simulator">개인정보처리방침</a>
+          <a href="#simulator">학사데이터 이용약관</a>
+          <a href="#simulator">시스템 상태: 정상 가동중</a>
+        </div>
+      </div>
+    </div>
+  </footer>
+
+  <!-- ========================================================================
+       FLOATING STICKY BAR (floating-sticky-bar: 64px height, frosted parchment)
+       ======================================================================== -->
+  <aside class="floating-sticky-bar" aria-label="실시간 캠퍼스 요약 및 빠른 실행 바">
+    <div class="sticky-bar-inner">
+      <div class="sticky-bar-status">
+        <span class="type-body-strong" id="stickyCampusName">수뭉봇 Pro · 서울캠퍼스</span>
+        <span class="type-caption sticky-hide-mobile" id="stickyLiveSummary" style="color: var(--color-ink-muted-80);">
+          정문 셔틀 3분 전 · 중앙도서관 3층 42석 여유 · 내추럴 티타늄
+        </span>
+      </div>
+      <div class="sticky-bar-actions">
+        <button type="button" class="button-dark-utility sticky-hide-mobile" onclick="toggleCampusQuick()">캠퍼스 전환</button>
+        <a href="#simulator" class="btn-apple button-primary" style="padding: 8px 18px; font-size: 14px;" onclick="document.getElementById('userChatInput').focus()">수뭉봇에게 질문하기</a>
+      </div>
+    </div>
+  </aside>
+
+  <!-- ========================================================================
+       INTERACTIVE APPLICATION & MOTION LOGIC
+       ======================================================================== -->
+  <script>
+    let currentCampus = 'seoul';
+    let currentFinishName = '내추럴 티타늄';
+    let islandIndex = 0;
+    let currentStoryIndex = 0;
+    let tiltEnabled = true;
+
+    const CAMPUS_CONFIG = {
+      seoul: {
+        name: '서울캠퍼스',
+        tagline: '상명대학교 서울캠퍼스 AI 어시스턴트',
+        simSubtitle: '서울캠퍼스 실시간 학사 연동됨',
+        stations: [
+          { name: '경복궁역', pos: '12.5%', fill: '0%', eta: '경복궁역 정류장 5분 후 도착 (7016·셔틀 연계)', meta: '대기 인원: 보통 · 정문까지 약 8분 소요' },
+          { name: '정문 회차점', pos: '37.5%', fill: '25%', eta: '정문 회차점 진입 3분 전 (배차 간격 6분)', meta: '현재 차내 혼잡도: 여유 (잔여 18석) · 구간 경사도 14%' },
+          { name: '밀레니엄관', pos: '62.5%', fill: '50%', eta: '밀레니엄관 앞 2분 후 통과 예정', meta: '인문사회과학대학·경영경제대학 하차 구간' },
+          { name: '상명아트센터', pos: '87.5%', fill: '75%', eta: '상명아트센터 종점 4분 후 도착 예정', meta: '최정상 회차 구간 · 도서관 도보 1분 연결' }
+        ],
+        islandMessages: [
+          { badge: 'SHUTTLE', text: '정문 셔틀 3분 후 도착' },
+          { badge: 'LIBRARY', text: '중앙도서관 3층 42석 여유' },
+          { badge: 'LUNCH', text: '웰빙관 눈꽃치즈 돈카츠 5,500원' }
+        ]
+      },
+      cheonan: {
+        name: '천안캠퍼스',
+        tagline: '상명대학교 천안캠퍼스 AI 어시스턴트',
+        simSubtitle: '천안캠퍼스 실시간 학사 연동됨',
+        stations: [
+          { name: '두정역', pos: '12.5%', fill: '0%', eta: '두정역 1번 출구 셔틀 4분 후 출발', meta: '등교 시간대 집중 배차 · 잔여 22석 여유' },
+          { name: '천안아산역', pos: '37.5%', fill: '25%', eta: '천안아산역 KTX 연계 셔틀 8분 후 도착', meta: '통학 버스 노선 정상 운행중' },
+          { name: '정문(계당관)', pos: '62.5%', fill: '50%', eta: '계당관 정류장 2분 후 진입 예정', meta: '디자인대학·예술대학 인접 정류소' },
+          { name: '한누리관', pos: '87.5%', fill: '75%', eta: '한누리관 종점 대기중 (5분 뒤 출발)', meta: '학생식당 및 공과대학 연결 거점' }
+        ],
+        islandMessages: [
+          { badge: 'SHUTTLE', text: '두정역 셔틀 4분 후 출발' },
+          { badge: 'LIBRARY', text: '천안 학술정보관 64석 여유' },
+          { badge: 'LUNCH', text: '한누리관 직화제육덮밥 5,000원' }
+        ]
+      }
+    };
+
+    const SMU_KNOWLEDGE = {
+      shuttle: {
+        keywords: ['셔틀', '버스', '도착', '정문', '오르막', '비탈길', '통학', '두정역', '경복궁'],
+        getResponse: () => currentCampus === 'seoul'
+          ? '현재 서울캠퍼스 정문 회차 셔틀버스는 경복궁역을 지나 상명대 정문 진입 3분 전입니다. 우천 및 통학 시간대에는 6분 간격으로 집중 배차되며 차내 잔여 좌석은 18석으로 여유롭습니다.'
+          : '현재 천안캠퍼스 두정역 셔틀버스는 출발 4분 전이며, 계당관 정류장행 버스는 2분 후 진입합니다. 잔여 좌석은 22석으로 여유롭게 탑승 가능합니다.',
+        getCard: () => ({
+          label: currentCampus === 'seoul' ? '서울캠퍼스 정문 노선' : '천안캠퍼스 두정역 노선',
+          val: currentCampus === 'seoul' ? '3분 후 도착 (잔여 18석)' : '4분 후 출발 (잔여 22석)',
+          actionText: '정류장별 실시간 위치표 열기',
+          detailTitle: '실시간 셔틀버스 GPS 관제 리포트',
+          detailBody: currentCampus === 'seoul'
+            ? '현재 운행 중인 셔틀버스 3대가 경복궁역, 홍지문, 상명아트센터 구간을 정상 순환하고 있습니다. 다음 배차는 6분 뒤 도착합니다.'
+            : '두정역-계당관-한누리관 순환 셔틀 및 천안아산역 연계 노선이 정시 운행 중입니다.'
+        })
+      },
+      graduation: {
+        keywords: ['졸업', '학점', '이수', '교양', '전공', '사정', '부전공', '복수전공'],
+        getResponse: () => '학우님의 2023학번 기준 총 졸업 요구학점은 130학점입니다. 심화전공 시 주전공 66학점, 복수전공 시 주전공 45학점 + 복수전공 45학점 이수가 필요하며, 부전공은 21학점(주전공과 최대 6학점 중복 인정 검토)이 적용됩니다.',
+        getCard: () => ({
+          label: '졸업 사정 시뮬레이션',
+          val: '전공 54/66 · 교양 28/33',
+          actionText: '상세 졸업 이수 기준표 확인',
+          detailTitle: '학번별 전공·교양 이수 기준 상세',
+          detailBody: '상명핵심역량교양(사고와표현, 컴퓨팅사고와데이터의이해 등) 필수 과목 이수 완료 상태입니다. 균형교양 5대 영역 중 자연·공학 영역 3학점만 추가 이수하면 교양 졸업 요건을 100% 충족합니다.'
+        })
+      },
+      cafeteria: {
+        keywords: ['학식', '식당', '메뉴', '점심', '웰빙관', '한누리관', '밥', '식단'],
+        getResponse: () => currentCampus === 'seoul'
+          ? '오늘 서울캠퍼스 웰빙관 학생식당 일품 코너는 [눈꽃치즈 돈카츠 & 미니우동 세트, 5,500원], 교직원 식당은 [소고기 버섯전골 백반, 7,000원]입니다. 운영시간은 11:30부터 14:00까지입니다.'
+          : '오늘 천안캠퍼스 한누리관 학생식당 일품 코너는 [직화제육덮밥 & 계란국 세트, 5,000원], 양식 코너는 [크림빠네파스타, 6,000원]입니다.',
+        getCard: () => ({
+          label: '오늘의 캠퍼스 중식',
+          val: currentCampus === 'seoul' ? '눈꽃치즈 돈카츠 (5,500원)' : '직화제육덮밥 세트 (5,000원)',
+          actionText: '주간 식단표 및 영양정보 보기',
+          detailTitle: '주간 캠퍼스 식당 운영 안내',
+          detailBody: '모바일 학생증 앱(샘물페이)으로 키오스크 대기 없이 사전 결제가 가능하며, 12:15~12:45 사이가 가장 혼잡하므로 11:40 또는 13:00 방문을 권장합니다.'
+        })
+      },
+      library: {
+        keywords: ['도서관', '열람실', '좌석', '자리', '스터디룸', '중앙도서관', '멀티미디어', '듀얼'],
+        getResponse: () => '현재 중앙도서관 3층 제1자유열람실은 42석 여유(콘센트석 68% 가용), 4층 제2정숙열람실은 19석 여유가 있습니다. 2층 창의미디어존 듀얼 모니터석은 현재 5석 즉시 예약 가능합니다.',
+        getCard: () => ({
+          label: '실시간 학술정보관 현황',
+          val: '3층 42석 · 미디어존 11석 여유',
+          actionText: '좌석 배정 및 스터디룸 예약 안내',
+          detailTitle: '중앙도서관 모바일 좌석 배정 가이드',
+          detailBody: '상명대학교 학술정보관 앱에서 원하는 좌석을 선택한 뒤 15분 이내에 열람실 입구 게이트에 모바일 학생증을 태그하면 배정이 확정됩니다.'
+        })
+      },
+      scholarship: {
+        keywords: ['장학', '마일리지', '피어오름', '국가장학금', '포인트'],
+        getResponse: () => '이번 학기 피어오름 비교과 마일리지 장학금 신청 마감은 금요일 18:00(D-3)입니다. 학기 중 비교과 프로그램으로 120P 이상 적립한 재학생이라면 1P당 1,000원(예: 160P = 160,000원)으로 환산 지급됩니다.',
+        getCard: () => ({
+          label: '피어오름 마일리지 장학',
+          val: '신청 마감 D-3 (1P = 1,000원)',
+          actionText: '마일리지 장학 제출 서류 확인',
+          detailTitle: '피어오름 비교과 장학금 신청 요건',
+          detailBody: '샘물통합정보시스템 > 학생기본 > 비교과마일리지 메뉴에서 이수 수료증을 확인하고 계좌 정보를 등록하면 별도 서류 방문 제출 없이 신청이 완료됩니다.'
+        })
+      },
+      seasonal: {
+        keywords: ['계절학기', '취소', '환불', '수강'],
+        getResponse: () => '계절학기는 학기당 최대 6학점까지 수강 신청할 수 있습니다. 개강 전 전액 환불 취소는 개강일 하루 전 23:59까지 가능하며, 개강 후 1/3선 이전 취소 시 수업료의 2/3가 환불됩니다.',
+        getCard: () => ({
+          label: '계절학기 학사 규정',
+          val: '최대 6학점 · 개강 전 100% 환불',
+          actionText: '계절학기 주요 일정표 열람',
+          detailTitle: '2026학년도 계절학기 수강 및 취소 일정',
+          detailBody: '본 수강신청 기간 이후 폐강 확정 과목 수강생에게는 별도 정정 기간(2일)이 부여되며, 샘물포털에서 온라인으로 즉시 취소 및 환불 계좌 신청이 가능합니다.'
+        })
+      }
+    };
+
+    const STUDENT_STORIES = [
+      {
+        quote: '"비탈길 오르막을 오를 때마다 셔틀이 언제 오는지 몰라 늘 뛰었는데, 수뭉봇으로 정문 도착 시간을 미리 확인하고부터 통학길이 한결 여유로워졌습니다."',
+        author: '소프트웨어학과 3학년 김학우 · 서울캠퍼스 재학',
+        prompt: '지금 비탈길 셔틀버스 언제 와?'
+      },
+      {
+        quote: '"복수전공과 부전공 교양 필수 규정이 학번마다 달라 늘 헷갈렸는데, 수뭉봇이 내 학번 기준 잔여 학점을 3초 만에 표로 정리해 줘서 명쾌했습니다."',
+        author: '경영학부 4학년 이학우 · 서울캠퍼스 재학',
+        prompt: '부전공 이수 학점이랑 주전공 중복 인정 학점 어떻게 돼?'
+      },
+      {
+        quote: '"시험 기간마다 도서관 자리가 있는지 올라가 봐야 했는데, 이제는 3층 열람실 콘센트 좌석 여유분부터 마일리지 장학 마감일까지 한 번에 확인합니다."',
+        author: '디자인학부 2학년 박학우 · 천안캠퍼스 재학',
+        prompt: '중앙도서관 열람실 좌석 남아있어?'
+      }
+    ];
+
+    /* 1. IntersectionObserver Scroll-Reveal Initialization */
+    function initScrollReveal() {
+      const revealEls = document.querySelectorAll('.apple-reveal');
+      if (!('IntersectionObserver' in window)) {
+        revealEls.forEach(el => el.classList.add('is-visible'));
+        return;
+      }
+      const observer = new IntersectionObserver((entries) => {
+        entries.forEach(entry => {
+          if (entry.isIntersecting) {
+            entry.target.classList.add('is-visible');
+            observer.unobserve(entry.target);
+          }
+        });
+      }, { threshold: 0.14 });
+
+      revealEls.forEach(el => observer.observe(el));
+    }
+
+    /* 2. Pointer-Responsive 3D Hardware Tilt on Hero iPhone Render */
+    function initHardwareTilt() {
+      const stage = document.getElementById('heroProductStage');
+      const phone = document.getElementById('iphoneRender');
+      if (!stage || !phone) return;
+
+      let rafId = null;
+      stage.addEventListener('mousemove', (e) => {
+        if (!tiltEnabled) return;
+        if (rafId) cancelAnimationFrame(rafId);
+        rafId = requestAnimationFrame(() => {
+          const rect = phone.getBoundingClientRect();
+          const centerX = rect.left + rect.width / 2;
+          const centerY = rect.top + rect.height / 2;
+          const deltaX = (e.clientX - centerX) / (rect.width / 2);
+          const deltaY = (e.clientY - centerY) / (rect.height / 2);
+          const clampX = Math.max(-1, Math.min(1, deltaX));
+          const clampY = Math.max(-1, Math.min(1, deltaY));
+          phone.style.setProperty('--tilt-y', `${(clampX * 5.5).toFixed(2)}deg`);
+          phone.style.setProperty('--tilt-x', `${(-clampY * 4.5).toFixed(2)}deg`);
+        });
+      });
+
+      stage.addEventListener('mouseleave', () => {
+        phone.style.setProperty('--tilt-x', '0deg');
+        phone.style.setProperty('--tilt-y', '0deg');
+      });
+    }
+
+    function toggleHardwareTilt() {
+      tiltEnabled = !tiltEnabled;
+      const phone = document.getElementById('iphoneRender');
+      const btn = document.getElementById('tiltToggleBtn');
+      if (!tiltEnabled) {
+        phone.style.setProperty('--tilt-x', '0deg');
+        phone.style.setProperty('--tilt-y', '0deg');
+        btn.textContent = '3D 틸트 꺼짐';
+      } else {
+        btn.textContent = '3D 틸트 활성됨';
+      }
+    }
+
+    /* 3. Smooth Number Count-Up Utility */
+    function animateNumberValue(el, startVal, endVal, suffix, duration = 380) {
+      const startTime = performance.now();
+      function step(now) {
+        const progress = Math.min((now - startTime) / duration, 1);
+        const eased = 1 - Math.pow(1 - progress, 3);
+        const current = Math.round(startVal + (endVal - startVal) * eased);
+        el.textContent = current.toLocaleString() + suffix;
+        if (progress < 1) {
+          requestAnimationFrame(step);
+        }
+      }
+      requestAnimationFrame(step);
+    }
+
+    function toggleMobileNav() {
+      const drawer = document.getElementById('mobileNavDrawer');
+      drawer.classList.toggle('open');
+    }
+
+    function setPhoneFinish(finishKey, finishLabel, btnEl) {
+      currentFinishName = finishLabel;
+      document.getElementById('iphoneRender').setAttribute('data-finish', finishKey);
+      document.getElementById('finishNameLabel').textContent = '마감 - ' + finishLabel;
+
+      document.querySelectorAll('.finish-swatch-btn').forEach(b => b.classList.remove('active'));
+      btnEl.classList.add('active');
+      updateStickyBarSummary();
+    }
+
+    function switchCampus(campus) {
+      currentCampus = campus;
+      const cfg = CAMPUS_CONFIG[campus];
+
+      document.getElementById('tab-seoul').classList.toggle('active', campus === 'seoul');
+      document.getElementById('tab-seoul').setAttribute('aria-selected', campus === 'seoul');
+      document.getElementById('tab-cheonan').classList.toggle('active', campus === 'cheonan');
+      document.getElementById('tab-cheonan').setAttribute('aria-selected', campus === 'cheonan');
+
+      document.getElementById('heroCampusTagline').textContent = cfg.tagline;
+      document.getElementById('simCampusSubtitle').textContent = cfg.simSubtitle;
+
+      cfg.stations.forEach((st, idx) => {
+        const el = document.getElementById('st-name-' + idx);
+        if (el) el.textContent = st.name;
+      });
+      const stationBtns = document.querySelectorAll('.station-btn');
+      selectShuttleStation(1, stationBtns[1]);
+
+      islandIndex = 0;
+      updateIslandDisplay();
+      updateStickyBarSummary();
+
+      appendBotMessage(cfg.name + ' 학사 및 셔틀 데이터베이스로 전환되었습니다. 궁금한 점을 질문해 보세요.');
+    }
+
+    function toggleCampusQuick() {
+      switchCampus(currentCampus === 'seoul' ? 'cheonan' : 'seoul');
+    }
+
+    function updateStickyBarSummary() {
+      const cfg = CAMPUS_CONFIG[currentCampus];
+      document.getElementById('stickyCampusName').textContent = '수뭉봇 Pro · ' + cfg.name;
+      document.getElementById('stickyLiveSummary').textContent =
+        cfg.islandMessages[0].text + ' · ' + cfg.islandMessages[1].text + ' · ' + currentFinishName;
+    }
+
+    function cycleIslandTelemetry() {
+      const cfg = CAMPUS_CONFIG[currentCampus];
+      islandIndex = (islandIndex + 1) % cfg.islandMessages.length;
+      updateIslandDisplay();
+    }
+
+    function updateIslandDisplay() {
+      const cfg = CAMPUS_CONFIG[currentCampus];
+      const msg = cfg.islandMessages[islandIndex];
+      const pill = document.getElementById('dynamicIsland');
+      pill.classList.add('expanded');
+      document.getElementById('islandBadge').textContent = msg.badge;
+      document.getElementById('islandText').textContent = msg.text;
+      setTimeout(() => pill.classList.remove('expanded'), 1600);
+    }
+
+    function handleUserChatSubmit(event) {
+      event.preventDefault();
+      const input = document.getElementById('userChatInput');
+      const text = input.value.trim();
+      if (!text) return;
+      appendUserMessage(text);
+      input.value = '';
+      processBotResponse(text);
+    }
+
+    function appendUserMessage(text) {
+      const stream = document.getElementById('chatStream');
+      const row = document.createElement('div');
+      row.className = 'sim-msg-row user';
+      const timeStr = new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+      row.innerHTML = `
+        <div class="sim-bubble">${escapeHtml(text)}</div>
+        <span class="sim-msg-meta">${timeStr}</span>
+      `;
+      stream.appendChild(row);
+      stream.scrollTop = stream.scrollHeight;
+    }
+
+    function appendBotMessage(text, cardObj) {
+      const stream = document.getElementById('chatStream');
+      const row = document.createElement('div');
+      row.className = 'sim-msg-row bot';
+      const timeStr = new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+
+      let cardHtml = '';
+      if (cardObj) {
+        const safeTitle = escapeHtml(cardObj.detailTitle || cardObj.label);
+        const safeBody = escapeHtml(cardObj.detailBody || text);
+        cardHtml = `
+          <div class="sim-inline-card">
+            <div class="sim-inline-row">
+              <span class="sim-inline-label">${escapeHtml(cardObj.label)}</span>
+              <span class="sim-inline-value">${escapeHtml(cardObj.val)}</span>
+            </div>
+            <button type="button" class="sim-inline-cta" onclick="openDetailSheet('${safeTitle}', '${safeBody}')">
+              ${escapeHtml(cardObj.actionText)}
+            </button>
+          </div>
+        `;
+      }
+
+      row.innerHTML = `
+        <div class="sim-bubble">
+          ${escapeHtml(text)}
+          ${cardHtml}
+        </div>
+        <span class="sim-msg-meta">${timeStr}</span>
+      `;
+      stream.appendChild(row);
+      stream.scrollTop = stream.scrollHeight;
+    }
+
+    /* Animated Typing Indicator + Response Dispatch */
+    function processBotResponse(query) {
+      const stream = document.getElementById('chatStream');
+      const pill = document.getElementById('dynamicIsland');
+      const badge = document.getElementById('islandBadge');
+      const textEl = document.getElementById('islandText');
+
+      pill.classList.add('expanded');
+      badge.textContent = 'AI';
+      textEl.textContent = '학사 신경망 검색중...';
+
+      const existingTyping = document.getElementById('simTypingRow');
+      if (existingTyping) existingTyping.remove();
+
+      const typingRow = document.createElement('div');
+      typingRow.className = 'sim-msg-row bot';
+      typingRow.id = 'simTypingRow';
+      typingRow.innerHTML = `
+        <div class="sim-bubble" style="padding: 10px 16px;">
+          <div class="sim-typing-dots" aria-label="수뭉봇 답변 작성중">
+            <span class="sim-typing-dot"></span>
+            <span class="sim-typing-dot"></span>
+            <span class="sim-typing-dot"></span>
+          </div>
+        </div>
+      `;
+      stream.appendChild(typingRow);
+      stream.scrollTop = stream.scrollHeight;
+
+      setTimeout(() => {
+        const ind = document.getElementById('simTypingRow');
+        if (ind) ind.remove();
+
+        let matched = null;
+        for (const key in SMU_KNOWLEDGE) {
+          const item = SMU_KNOWLEDGE[key];
+          if (item.keywords.some(kw => query.includes(kw))) {
+            matched = item;
+            break;
+          }
+        }
+
+        if (matched) {
+          appendBotMessage(matched.getResponse(), matched.getCard());
+        } else {
+          appendBotMessage(
+            `"${query}"에 대한 상명대학교 ${CAMPUS_CONFIG[currentCampus].name} 학사 데이터베이스를 조회했습니다. 셔틀버스, 졸업학점, 학식 메뉴, 도서관 좌석, 마일리지 장학금 키워드로 질문하시면 실시간 연동 카드를 함께 확인하실 수 있습니다.`
+          );
+        }
+        updateIslandDisplay();
+      }, 560);
+    }
+
+    function openDetailSheet(title, body) {
+      document.getElementById('sheetTitle').textContent = title;
+      document.getElementById('sheetBody').textContent = body;
+      const sheet = document.getElementById('simDetailSheet');
+      sheet.classList.add('open');
+      sheet.setAttribute('aria-hidden', 'false');
+    }
+
+    function closeDetailSheet() {
+      const sheet = document.getElementById('simDetailSheet');
+      sheet.classList.remove('open');
+      sheet.setAttribute('aria-hidden', 'true');
+    }
+
+    function triggerQuickPrompt(promptText) {
+      closeDetailSheet();
+      appendUserMessage(promptText);
+      processBotResponse(promptText);
+    }
+
+    function triggerDailyBriefing() {
+      const cfg = CAMPUS_CONFIG[currentCampus];
+      appendBotMessage(
+        `[오늘의 ${cfg.name} 실시간 브리핑] 1) ${cfg.islandMessages[0].text}, 2) ${cfg.islandMessages[1].text}, 3) ${cfg.islandMessages[2].text}. 피어오름 비교과 마일리지 장학 신청 마감은 D-3입니다.`
+      );
+    }
+
+    function resetChatSimulator() {
+      closeDetailSheet();
+      const stream = document.getElementById('chatStream');
+      stream.innerHTML = `
+        <div class="sim-msg-row bot">
+          <div class="sim-bubble">
+            대화창이 초기화되었습니다. ${CAMPUS_CONFIG[currentCampus].name} 생활과 관련해 무엇이든 물어보세요.
+          </div>
+          <span class="sim-msg-meta">방금 전</span>
+        </div>
+      `;
+    }
+
+    function injectPromptFromLab(promptText) {
+      const sim = document.getElementById('simulator');
+      sim.scrollIntoView({ behavior: 'smooth' });
+      setTimeout(() => {
+        triggerQuickPrompt(promptText);
+      }, 360);
+    }
+
+    function highlightTelemetry(targetId, btnEl) {
+      document.querySelectorAll('.telemetry-tab-btn').forEach(b => b.classList.remove('active'));
+      btnEl.classList.add('active');
+
+      const map = {
+        shuttle: 'mod-shuttle',
+        audit: 'mod-audit',
+        library: 'mod-library',
+        mileage: 'mod-mileage'
+      };
+
+      document.querySelectorAll('.dark-module-card').forEach(card => {
+        if (targetId !== 'all' && card.id === map[targetId]) {
+          card.classList.add('highlighted');
+        } else {
+          card.classList.remove('highlighted');
+        }
+      });
+    }
+
+    function selectShuttleStation(index, btnEl) {
+      document.querySelectorAll('.station-btn').forEach(b => b.classList.remove('active'));
+      if (btnEl) btnEl.classList.add('active');
+      const st = CAMPUS_CONFIG[currentCampus].stations[index];
+      document.getElementById('shuttleEtaText').textContent = st.eta;
+      document.getElementById('shuttleMetaText').textContent = st.meta;
+
+      const marker = document.getElementById('shuttleMovingMarker');
+      const fill = document.getElementById('shuttleTrackFill');
+      if (marker) marker.style.left = st.pos;
+      if (fill) fill.style.width = st.fill;
+    }
+
+    let prevMajorCredits = 66;
+    let prevSubCredits = 0;
+
+    function updateAuditSim(mode, btnEl) {
+      document.querySelectorAll('.audit-pill-btn').forEach(b => b.classList.remove('active'));
+      btnEl.classList.add('active');
+
+      const majorEl = document.getElementById('auditMajorCredits');
+      const subEl = document.getElementById('auditSubCredits');
+      const subLabel = document.getElementById('auditSubLabel');
+
+      let targetMajor = 66;
+      let targetSub = 0;
+
+      if (mode === 'single') {
+        targetMajor = 66;
+        targetSub = 0;
+        subLabel.textContent = '심화 단일전공';
+      } else if (mode === 'double') {
+        targetMajor = 45;
+        targetSub = 45;
+        subLabel.textContent = '복수전공 필수';
+      } else {
+        targetMajor = 60;
+        targetSub = 21;
+        subLabel.textContent = '부전공 필수';
+      }
+
+      animateNumberValue(majorEl, prevMajorCredits, targetMajor, '학점', 360);
+      animateNumberValue(subEl, prevSubCredits, targetSub, '학점', 360);
+      prevMajorCredits = targetMajor;
+      prevSubCredits = targetSub;
+    }
+
+    function selectLibraryFloor(floorName, countNum, unitText, detailText, btnEl) {
+      document.querySelectorAll('.floor-card-btn').forEach(b => b.classList.remove('active'));
+      btnEl.classList.add('active');
+      const seatSpan = btnEl.querySelector('.floor-seats');
+      if (seatSpan) {
+        animateNumberValue(seatSpan, 0, countNum, unitText, 340);
+      }
+      document.getElementById('libraryFloorDetail').textContent =
+        `선택됨: ${floorName} (${countNum}${unitText} · ${detailText})`;
+    }
+
+    function updateMileageCalc(pointsVal) {
+      const pts = parseInt(pointsVal, 10);
+      document.getElementById('mileagePointsDisplay').textContent = pts + ' P';
+      const payoutEl = document.getElementById('mileagePayoutText');
+      if (pts >= 120) {
+        const krw = (pts * 1000).toLocaleString();
+        payoutEl.textContent = `예상 지급 장학금: ${krw}원 (수혜 자격 충족)`;
+      } else {
+        const needed = 120 - pts;
+        payoutEl.textContent = `수혜 기준까지 ${needed}P 부족 (최소 120P 이상 신청 가능)`;
+      }
+    }
+
+    let selectedCatalogCat = 'all';
+
+    function selectCatalogCategory(cat, btnEl) {
+      selectedCatalogCat = cat;
+      document.querySelectorAll('.configurator-option-chip').forEach(b => {
+        b.classList.remove('configurator-option-chip-selected');
+      });
+      btnEl.classList.add('configurator-option-chip-selected');
+      filterCatalog();
+    }
+
+    function filterCatalog() {
+      const query = document.getElementById('promptSearchInput').value.trim().toLowerCase();
+      const cards = document.querySelectorAll('#catalogGrid .store-utility-card');
+
+      cards.forEach(card => {
+        const cat = card.getAttribute('data-cat');
+        const kw = (card.getAttribute('data-keywords') + ' ' + card.innerText).toLowerCase();
+        const catMatch = selectedCatalogCat === 'all' || cat === selectedCatalogCat;
+        const kwMatch = !query || kw.includes(query);
+        card.style.display = (catMatch && kwMatch) ? 'flex' : 'none';
+      });
+    }
+
+    function focusPromptSearch() {
+      const input = document.getElementById('promptSearchInput');
+      input.scrollIntoView({ behavior: 'smooth', block: 'center' });
+      setTimeout(() => input.focus(), 350);
+    }
+
+    function setStory(index) {
+      currentStoryIndex = index;
+      const item = STUDENT_STORIES[index];
+      const quoteEl = document.getElementById('activeStoryQuote');
+      const authorEl = document.getElementById('activeStoryAuthor');
+
+      quoteEl.classList.add('story-fade-out');
+      authorEl.classList.add('story-fade-out');
+
+      setTimeout(() => {
+        quoteEl.textContent = item.quote;
+        authorEl.textContent = item.author;
+        quoteEl.classList.remove('story-fade-out');
+        authorEl.classList.remove('story-fade-out');
+      }, 180);
+
+      document.querySelectorAll('.story-dot-btn').forEach((dot, i) => {
+        dot.classList.toggle('active', i === index);
+      });
+    }
+
+    function stepStory(delta) {
+      const next = (currentStoryIndex + delta + STUDENT_STORIES.length) % STUDENT_STORIES.length;
+      setStory(next);
+    }
+
+    function tryCurrentStoryPrompt() {
+      const item = STUDENT_STORIES[currentStoryIndex];
+      injectPromptFromLab(item.prompt);
+    }
+
+    function escapeHtml(str) {
+      return String(str)
+        .replace(/&/g, '&amp;')
+        .replace(/</g, '&lt;')
+        .replace(/>/g, '&gt;')
+        .replace(/"/g, '&quot;')
+        .replace(/'/g, '&#039;');
+    }
+
+    document.addEventListener('DOMContentLoaded', () => {
+      initScrollReveal();
+      initHardwareTilt();
+    });
+  </script>
+</body>
+</html>

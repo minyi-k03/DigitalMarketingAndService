@@ -1,0 +1,11 @@
+{
+  "name": "smu-ai-apple-edition",
+  "compatibility_date": "2025-10-01",
+  "main": "worker.js",
+  "assets": {
+    "directory": ".",
+    "binding": "ASSETS",
+    "run_worker_first": true
+  }
+}
+
