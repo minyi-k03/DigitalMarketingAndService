@@ -51,7 +51,7 @@
 
 ---
 
-## 🛠 기술 스택 (Tech Stack)
+##  기술 스택 (Tech Stack)
 
 * **Platform**: Mobile-First Responsive Web (PWA)
 * **Runtime & Framework**: Cloudflare Workers (Single Worker API + Static Assets), TypeScript
