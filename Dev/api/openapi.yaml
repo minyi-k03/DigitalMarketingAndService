@@ -1,0 +1,1190 @@
+openapi: 3.1.0
+info:
+  title: SubCut (구독컷) API
+  version: 0.1.0-p0-draft
+  description: |
+    SPEC.md v1.10 D-06에 따른 HTTP 계약 초안 (P0 범위).
+    - 요청·응답 필드 이름은 SPEC §19 도메인 타입을 따른다.
+    - 날짜는 KST `YYYY-MM-DD`, 시각은 UTC ISO 8601이다.
+    - 오류는 RFC 9457 problem+json에 `code`를 더한 형태다 (docs/architecture.md §8).
+    - P1·P2 엔드포인트는 D-12와 해당 [제안] 확정 후 추가한다.
+servers:
+  - url: /
+security:
+  - sessionCookie: []
+tags:
+  - name: auth
+  - name: me
+  - name: catalog
+  - name: trials
+  - name: bridge
+  - name: admin
+
+paths:
+  # ---------------------------------------------------------------- auth
+  /auth/kakao/login:
+    get:
+      tags: [auth]
+      summary: 카카오 로그인 시작 (SPEC §15)
+      security: []
+      parameters:
+        - name: returnTo
+          in: query
+          required: false
+          description: 로그인 후 돌아갈 내부 경로. `/`로 시작하고 `//`로 시작하지 않아야 한다.
+          schema: { type: string, example: /bridge/tr_123 }
+      responses:
+        '302':
+          description: 카카오 인가 화면으로 이동 (state에 서명된 returnTo 포함)
+  /auth/kakao/callback:
+    get:
+      tags: [auth]
+      summary: 카카오 로그인 콜백
+      security: []
+      parameters:
+        - { name: code, in: query, required: true, schema: { type: string } }
+        - { name: state, in: query, required: true, schema: { type: string } }
+      responses:
+        '302':
+          description: 세션 쿠키(sc_session) 발급 후 returnTo 또는 `/`로 이동
+          headers:
+            Set-Cookie:
+              schema: { type: string }
+              description: sc_session; HttpOnly; Secure; SameSite=Lax; Max-Age=2592000
+        '400': { $ref: '#/components/responses/ValidationFailed' }
+  /auth/logout:
+    post:
+      tags: [auth]
+      summary: 로그아웃 (세션 행 삭제)
+      responses:
+        '204': { description: 로그아웃됨 }
+
+  # ---------------------------------------------------------------- me
+  /api/me:
+    get:
+      tags: [me]
+      summary: 내 계정 조회
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/Me' }
+        '401': { $ref: '#/components/responses/Unauthenticated' }
+    delete:
+      tags: [me]
+      summary: 회원 탈퇴 (SPEC §15, D-08·D-14, 스토리 45)
+      description: 예약 알림 취소와 식별 정보·관련 기록 전체 삭제를 하나의 batch로 처리한다.
+      responses:
+        '204': { description: 탈퇴 완료, 세션 쿠키 제거 }
+        '401': { $ref: '#/components/responses/Unauthenticated' }
+  /api/me/notification-settings:
+    put:
+      tags: [me]
+      summary: 알림 수신 설정 (SPEC §6, §15, 스토리 44)
+      description: 끄는 요청은 클라이언트 확인 창(V-07)을 거친 뒤에만 보낸다.
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [notificationEnabled]
+              properties:
+                notificationEnabled: { type: boolean }
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/Me' }
+        '401': { $ref: '#/components/responses/Unauthenticated' }
+
+  # ---------------------------------------------------------------- catalog
+  /api/catalog:
+    get:
+      tags: [catalog]
+      summary: 카탈로그 목록·검색 (SPEC §2 D-11, §7, 스토리 1·2, V-01)
+      description: PUBLISHED·UNPUBLISHED 항목만 반환한다. escapeLink 등 관리 필드는 포함하지 않는다.
+      security: []
+      parameters:
+        - name: category
+          in: query
+          required: false
+          schema: { $ref: '#/components/schemas/ServiceCategory' }
+        - name: q
+          in: query
+          required: false
+          description: 서비스명 검색어
+          schema: { type: string, maxLength: 100 }
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                type: object
+                required: [items]
+                properties:
+                  items:
+                    type: array
+                    items: { $ref: '#/components/schemas/CatalogItemPublicView' }
+  /api/catalog/{catalogItemId}:
+    get:
+      tags: [catalog]
+      summary: 카탈로그 상세 (SPEC §7, V-03, V-08)
+      security: []
+      parameters:
+        - $ref: '#/components/parameters/CatalogItemId'
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/CatalogItemPublicView' }
+        '404': { $ref: '#/components/responses/NotFound' }
+
+  # ---------------------------------------------------------------- trials
+  /api/trials:
+    get:
+      tags: [trials]
+      summary: 내 체험 목록 (SPEC §13, 스토리 41)
+      parameters:
+        - name: tab
+          in: query
+          required: true
+          schema: { type: string, enum: [ACTIVE, PAST] }
+      responses:
+        '200':
+          description: 정렬된 목록과 상단 요약
+          content:
+            application/json:
+              schema:
+                type: object
+                required: [items, savedAmountTotal, activeCount]
+                properties:
+                  items:
+                    type: array
+                    items: { $ref: '#/components/schemas/TrialRecordView' }
+                  savedAmountTotal: { type: integer, description: savedAmount 합계 (원) }
+                  activeCount: { type: integer, description: 진행 중 건수 }
+        '401': { $ref: '#/components/responses/Unauthenticated' }
+    post:
+      tags: [trials]
+      summary: 체험 기록 생성 - 1초 간편 등록 (SPEC §3, §4, 스토리 7·8·46)
+      description: |
+        startDate·trialDays를 생략하면 서버가 오늘(KST)과 defaultTrialDays를 주입한다.
+        P0에서 source는 MANUAL_CATALOG_SELECT만 허용한다 (SPONSORED_OUTBOUND_PROMPT는 P1).
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: '#/components/schemas/CreateTrialRecordRequest' }
+      responses:
+        '201':
+          description: 생성됨
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/TrialRecordView' }
+        '400': { $ref: '#/components/responses/ValidationFailed' }
+        '401': { $ref: '#/components/responses/Unauthenticated' }
+        '404': { $ref: '#/components/responses/NotFound' }
+        '409': { $ref: '#/components/responses/Conflict' }
+        '422': { $ref: '#/components/responses/Unprocessable' }
+  /api/trials/{trialRecordId}:
+    parameters:
+      - $ref: '#/components/parameters/TrialRecordId'
+    get:
+      tags: [trials]
+      summary: 체험 기록 상세
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/TrialRecordView' }
+        '401': { $ref: '#/components/responses/Unauthenticated' }
+        '404': { $ref: '#/components/responses/NotFound' }
+    patch:
+      tags: [trials]
+      summary: 체험 기록 수정 (SPEC §5 수정 범위, §6 재예약, 스토리 42)
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: '#/components/schemas/UpdateTrialRecordRequest' }
+      responses:
+        '200':
+          description: 재계산·재예약 완료
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/TrialRecordView' }
+        '400': { $ref: '#/components/responses/ValidationFailed' }
+        '401': { $ref: '#/components/responses/Unauthenticated' }
+        '404': { $ref: '#/components/responses/NotFound' }
+        '409': { $ref: '#/components/responses/Conflict' }
+        '422': { $ref: '#/components/responses/Unprocessable' }
+  /api/trials/{trialRecordId}/cancel-attempts:
+    parameters:
+      - $ref: '#/components/parameters/TrialRecordId'
+    post:
+      tags: [bridge]
+      summary: 사유 선택 = ExitPoll 응답 + CANCEL_ATTEMPTED 전이 (SPEC §5, §7, 스토리 20·21·25)
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [exitReason]
+              properties:
+                exitReason: { $ref: '#/components/schemas/ExitReason' }
+      responses:
+        '200':
+          description: 이동할 직링크 정보
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/StartCancelAttemptResult' }
+        '401': { $ref: '#/components/responses/Unauthenticated' }
+        '404': { $ref: '#/components/responses/NotFound' }
+        '409': { $ref: '#/components/responses/Conflict' }
+  /api/trials/{trialRecordId}/confirm-cancel:
+    parameters:
+      - $ref: '#/components/parameters/TrialRecordId'
+    post:
+      tags: [trials]
+      summary: 해지 완료 확정 (SPEC §5, §8, 스토리 28·30)
+      description: TRACKING에서 확정하면 exitReason이 필수다 (없으면 422 EXIT_POLL_REQUIRED).
+      requestBody:
+        required: false
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                exitReason: { $ref: '#/components/schemas/ExitReason' }
+      responses:
+        '200':
+          description: CANCELED_CONFIRMED
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/TrialRecordView' }
+        '401': { $ref: '#/components/responses/Unauthenticated' }
+        '404': { $ref: '#/components/responses/NotFound' }
+        '409': { $ref: '#/components/responses/Conflict' }
+        '422': { $ref: '#/components/responses/Unprocessable' }
+  /api/trials/{trialRecordId}/keep:
+    parameters:
+      - $ref: '#/components/parameters/TrialRecordId'
+    post:
+      tags: [trials]
+      summary: 유지 결정 (SPEC §5, 스토리 29)
+      responses:
+        '200':
+          description: KEPT
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/TrialRecordView' }
+        '401': { $ref: '#/components/responses/Unauthenticated' }
+        '404': { $ref: '#/components/responses/NotFound' }
+        '409': { $ref: '#/components/responses/Conflict' }
+  /api/trials/{trialRecordId}/void:
+    parameters:
+      - $ref: '#/components/parameters/TrialRecordId'
+    post:
+      tags: [trials]
+      summary: 등록 취소 '가입 안 했어요' (SPEC §3, §5, 스토리 10)
+      responses:
+        '200':
+          description: VOIDED
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/TrialRecordView' }
+        '401': { $ref: '#/components/responses/Unauthenticated' }
+        '404': { $ref: '#/components/responses/NotFound' }
+        '409': { $ref: '#/components/responses/Conflict' }
+  /api/trials/{trialRecordId}/billing-resolution:
+    parameters:
+      - $ref: '#/components/parameters/TrialRecordId'
+    post:
+      tags: [trials]
+      summary: 결제 확인 정정 (SPEC §5, 스토리 31)
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [resolution]
+              properties:
+                resolution:
+                  type: string
+                  enum: [BILLED, CANCELED_BEFORE_BILLING, KEEP_USING]
+                exitReason:
+                  $ref: '#/components/schemas/ExitReason'
+                  description: CANCELED_BEFORE_BILLING이고 기존 응답이 없으면 필수
+      responses:
+        '200':
+          description: BILLED_CONFIRMED / CANCELED_CONFIRMED / KEPT
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/TrialRecordView' }
+        '401': { $ref: '#/components/responses/Unauthenticated' }
+        '404': { $ref: '#/components/responses/NotFound' }
+        '409': { $ref: '#/components/responses/Conflict' }
+        '422': { $ref: '#/components/responses/Unprocessable' }
+
+  # ---------------------------------------------------------------- bridge & recovery
+  /api/trials/{trialRecordId}/bridge:
+    parameters:
+      - $ref: '#/components/parameters/TrialRecordId'
+    get:
+      tags: [bridge]
+      summary: 해지 브릿지 화면 데이터 (SPEC §7, D-09, 스토리 16~19·22~24)
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/BridgeView' }
+        '401': { $ref: '#/components/responses/Unauthenticated' }
+        '404': { $ref: '#/components/responses/NotFound' }
+        '422': { $ref: '#/components/responses/Unprocessable' }
+  /api/trials/{trialRecordId}/refund-template:
+    parameters:
+      - $ref: '#/components/parameters/TrialRecordId'
+    get:
+      tags: [bridge]
+      summary: 환불 요청 템플릿 (SPEC §9, 스토리 32)
+      description: MISSED_BILLED·BILLED_CONFIRMED 기록에서만 제공한다.
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/RefundTemplate' }
+        '401': { $ref: '#/components/responses/Unauthenticated' }
+        '404': { $ref: '#/components/responses/NotFound' }
+        '422': { $ref: '#/components/responses/Unprocessable' }
+  /api/trials/{trialRecordId}/broken-link-reports:
+    parameters:
+      - $ref: '#/components/parameters/TrialRecordId'
+    post:
+      tags: [bridge]
+      summary: 경로 오류 제보 (SPEC §10, 스토리 34)
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [target]
+              properties:
+                target: { type: string, enum: [ESCAPE_LINK, ESCAPE_GUIDE] }
+      responses:
+        '201':
+          description: 새 제보 접수
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/BrokenLinkReportReceipt' }
+        '200':
+          description: 24시간 내 같은 제보가 있어 기존 제보를 반환 (duplicate = true)
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/BrokenLinkReportReceipt' }
+        '401': { $ref: '#/components/responses/Unauthenticated' }
+        '404': { $ref: '#/components/responses/NotFound' }
+
+  # ---------------------------------------------------------------- admin (OPERATOR+, Cloudflare Access)
+  /api/admin/catalog-items:
+    get:
+      tags: [admin]
+      summary: 관리용 카탈로그 목록 (모든 게시 상태)
+      parameters:
+        - name: publicationStatus
+          in: query
+          required: false
+          schema: { $ref: '#/components/schemas/PublicationStatus' }
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                type: object
+                required: [items]
+                properties:
+                  items:
+                    type: array
+                    items: { $ref: '#/components/schemas/CatalogItem' }
+        '401': { $ref: '#/components/responses/Unauthenticated' }
+        '403': { $ref: '#/components/responses/Forbidden' }
+    post:
+      tags: [admin]
+      summary: 카탈로그 항목 등록 (SPEC §2, 스토리 38)
+      description: darkPatternLevel은 서버가 원점수로 계산한다. GUARDED_SERVICE는 PUBLISHED로 생성된다.
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: '#/components/schemas/CatalogItemInput' }
+      responses:
+        '201':
+          description: 생성됨
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/CatalogItem' }
+        '400': { $ref: '#/components/responses/ValidationFailed' }
+        '401': { $ref: '#/components/responses/Unauthenticated' }
+        '403': { $ref: '#/components/responses/Forbidden' }
+  /api/admin/catalog-items/{catalogItemId}:
+    parameters:
+      - $ref: '#/components/parameters/CatalogItemId'
+    get:
+      tags: [admin]
+      summary: 관리용 카탈로그 상세
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/CatalogItem' }
+        '401': { $ref: '#/components/responses/Unauthenticated' }
+        '403': { $ref: '#/components/responses/Forbidden' }
+        '404': { $ref: '#/components/responses/NotFound' }
+    patch:
+      tags: [admin]
+      summary: 카탈로그 항목 수정 (SPEC §2 반영 규칙, §16 변경 이력, 스토리 47·48)
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [changes]
+              properties:
+                changes: { $ref: '#/components/schemas/CatalogItemPatch' }
+                applyBufferToActiveRecords:
+                  type: boolean
+                  default: false
+                  description: isGlobalTimeZoneBufferRequired 변경을 진행 중 기록에도 적용할지
+                markVerified:
+                  type: boolean
+                  default: false
+                  description: 해지 경로를 직접 확인했으면 lastVerifiedAt을 오늘로 갱신
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/CatalogItem' }
+        '400': { $ref: '#/components/responses/ValidationFailed' }
+        '401': { $ref: '#/components/responses/Unauthenticated' }
+        '403': { $ref: '#/components/responses/Forbidden' }
+        '404': { $ref: '#/components/responses/NotFound' }
+  /api/admin/catalog-items/{catalogItemId}/publication-status:
+    parameters:
+      - $ref: '#/components/parameters/CatalogItemId'
+    post:
+      tags: [admin]
+      summary: 게시 상태 변경 (SPEC §2)
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [to]
+              properties:
+                to: { $ref: '#/components/schemas/PublicationStatus' }
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/CatalogItem' }
+        '401': { $ref: '#/components/responses/Unauthenticated' }
+        '403': { $ref: '#/components/responses/Forbidden' }
+        '404': { $ref: '#/components/responses/NotFound' }
+        '409': { $ref: '#/components/responses/Conflict' }
+  /api/admin/catalog-items/{catalogItemId}/logo:
+    parameters:
+      - $ref: '#/components/parameters/CatalogItemId'
+    put:
+      tags: [admin]
+      summary: 로고 업로드 (R2, SPEC §2)
+      requestBody:
+        required: true
+        content:
+          image/png: { schema: { type: string, format: binary } }
+          image/webp: { schema: { type: string, format: binary } }
+          image/jpeg: { schema: { type: string, format: binary } }
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/CatalogItem' }
+        '400': { $ref: '#/components/responses/ValidationFailed' }
+        '401': { $ref: '#/components/responses/Unauthenticated' }
+        '403': { $ref: '#/components/responses/Forbidden' }
+  /api/admin/catalog-items/{catalogItemId}/change-logs:
+    parameters:
+      - $ref: '#/components/parameters/CatalogItemId'
+    get:
+      tags: [admin]
+      summary: 변경 이력 (SPEC §16)
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                type: object
+                required: [items]
+                properties:
+                  items:
+                    type: array
+                    items: { $ref: '#/components/schemas/CatalogChangeLog' }
+        '401': { $ref: '#/components/responses/Unauthenticated' }
+        '403': { $ref: '#/components/responses/Forbidden' }
+  /api/admin/change-logs/{changeLogId}/revert:
+    parameters:
+      - name: changeLogId
+        in: path
+        required: true
+        schema: { type: string }
+    post:
+      tags: [admin]
+      summary: 이전 값으로 되돌리기 - 새 변경으로 기록 (SPEC §16, V-06)
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/CatalogItem' }
+        '401': { $ref: '#/components/responses/Unauthenticated' }
+        '403': { $ref: '#/components/responses/Forbidden' }
+        '404': { $ref: '#/components/responses/NotFound' }
+  /api/admin/broken-link-reports:
+    get:
+      tags: [admin]
+      summary: 경로 오류 제보 목록 (SPEC §10, 스토리 40)
+      parameters:
+        - name: status
+          in: query
+          required: false
+          schema: { type: string, enum: [OPEN, FIXED, REJECTED] }
+        - name: catalogItemId
+          in: query
+          required: false
+          schema: { type: string }
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                type: object
+                required: [items]
+                properties:
+                  items:
+                    type: array
+                    items: { $ref: '#/components/schemas/BrokenLinkReport' }
+        '401': { $ref: '#/components/responses/Unauthenticated' }
+        '403': { $ref: '#/components/responses/Forbidden' }
+  /api/admin/broken-link-reports/{reportId}:
+    parameters:
+      - name: reportId
+        in: path
+        required: true
+        schema: { type: string }
+    patch:
+      tags: [admin]
+      summary: 제보 처리 상태 변경
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [status]
+              properties:
+                status: { type: string, enum: [FIXED, REJECTED] }
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/BrokenLinkReport' }
+        '401': { $ref: '#/components/responses/Unauthenticated' }
+        '403': { $ref: '#/components/responses/Forbidden' }
+        '404': { $ref: '#/components/responses/NotFound' }
+  /api/admin/catalog-items/{catalogItemId}/broken-link-reports/mark-fixed:
+    parameters:
+      - $ref: '#/components/parameters/CatalogItemId'
+    post:
+      tags: [admin]
+      summary: 해당 항목의 OPEN 제보 일괄 FIXED (SPEC §10)
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                type: object
+                required: [updatedCount]
+                properties:
+                  updatedCount: { type: integer }
+        '401': { $ref: '#/components/responses/Unauthenticated' }
+        '403': { $ref: '#/components/responses/Forbidden' }
+  /api/admin/users/{userId}/role:
+    parameters:
+      - name: userId
+        in: path
+        required: true
+        schema: { type: string }
+    put:
+      tags: [admin]
+      summary: 역할 부여 (ADMIN 전용, SPEC §16)
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [role]
+              properties:
+                role: { $ref: '#/components/schemas/UserRole' }
+      responses:
+        '204': { description: 변경됨 }
+        '401': { $ref: '#/components/responses/Unauthenticated' }
+        '403': { $ref: '#/components/responses/Forbidden' }
+        '404': { $ref: '#/components/responses/NotFound' }
+  /api/admin/settings:
+    get:
+      tags: [admin]
+      summary: 운영 설정 조회 (발송 시각, 템플릿 코드표 등)
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/AppSettings' }
+        '401': { $ref: '#/components/responses/Unauthenticated' }
+        '403': { $ref: '#/components/responses/Forbidden' }
+    patch:
+      tags: [admin]
+      summary: 운영 설정 변경 (ADMIN 전용)
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: '#/components/schemas/AppSettings' }
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/AppSettings' }
+        '400': { $ref: '#/components/responses/ValidationFailed' }
+        '401': { $ref: '#/components/responses/Unauthenticated' }
+        '403': { $ref: '#/components/responses/Forbidden' }
+  /api/admin/dark-pattern-rubric:
+    put:
+      tags: [admin]
+      summary: 다크패턴 기준표 경계값 변경 후 전체 등급 재계산 (ADMIN 전용, SPEC §2, 스토리 39)
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: '#/components/schemas/DarkPatternRubric' }
+      responses:
+        '200':
+          description: 재계산된 항목 수
+          content:
+            application/json:
+              schema:
+                type: object
+                required: [recalculatedCount]
+                properties:
+                  recalculatedCount: { type: integer }
+        '400': { $ref: '#/components/responses/ValidationFailed' }
+        '401': { $ref: '#/components/responses/Unauthenticated' }
+        '403': { $ref: '#/components/responses/Forbidden' }
+
+components:
+  securitySchemes:
+    sessionCookie:
+      type: apiKey
+      in: cookie
+      name: sc_session
+
+  parameters:
+    CatalogItemId:
+      name: catalogItemId
+      in: path
+      required: true
+      schema: { type: string }
+    TrialRecordId:
+      name: trialRecordId
+      in: path
+      required: true
+      schema: { type: string }
+
+  responses:
+    ValidationFailed:
+      description: 입력 검증 실패 (VALIDATION_FAILED)
+      content:
+        application/problem+json:
+          schema: { $ref: '#/components/schemas/Problem' }
+    Unauthenticated:
+      description: 세션 없음 (UNAUTHENTICATED). loginUrl 포함
+      content:
+        application/problem+json:
+          schema: { $ref: '#/components/schemas/Problem' }
+    Forbidden:
+      description: 역할 부족 (FORBIDDEN)
+      content:
+        application/problem+json:
+          schema: { $ref: '#/components/schemas/Problem' }
+    NotFound:
+      description: 없거나 본인 소유가 아님 (NOT_FOUND)
+      content:
+        application/problem+json:
+          schema: { $ref: '#/components/schemas/Problem' }
+    Conflict:
+      description: INVALID_TRANSITION / DUPLICATE_ACTIVE_RECORD / CONFLICT
+      content:
+        application/problem+json:
+          schema: { $ref: '#/components/schemas/Problem' }
+    Unprocessable:
+      description: EXIT_POLL_REQUIRED / CATALOG_ITEM_NOT_PUBLISHED / TRIAL_ALREADY_ENDED / BRIDGE_NOT_AVAILABLE
+      content:
+        application/problem+json:
+          schema: { $ref: '#/components/schemas/Problem' }
+
+  schemas:
+    # ---------- 공통
+    KstDate:
+      type: string
+      pattern: '^\d{4}-\d{2}-\d{2}$'
+      description: KST 달력 날짜
+    UtcInstant:
+      type: string
+      format: date-time
+      description: UTC ISO 8601
+    Problem:
+      type: object
+      required: [type, title, status, code]
+      properties:
+        type: { type: string, example: 'https://subcut.app/problems/invalid-transition' }
+        title: { type: string }
+        status: { type: integer }
+        detail: { type: string }
+        code:
+          type: string
+          enum:
+            - VALIDATION_FAILED
+            - UNAUTHENTICATED
+            - FORBIDDEN
+            - NOT_FOUND
+            - INVALID_TRANSITION
+            - DUPLICATE_ACTIVE_RECORD
+            - CONFLICT
+            - EXIT_POLL_REQUIRED
+            - CATALOG_ITEM_NOT_PUBLISHED
+            - TRIAL_ALREADY_ENDED
+            - BRIDGE_NOT_AVAILABLE
+        errors:
+          type: array
+          description: VALIDATION_FAILED일 때 필드별 오류
+          items:
+            type: object
+            required: [field, message]
+            properties:
+              field: { type: string }
+              message: { type: string }
+        existingTrialRecordId:
+          type: string
+          description: DUPLICATE_ACTIVE_RECORD일 때 기존 진행 중 기록
+        loginUrl:
+          type: string
+          description: UNAUTHENTICATED일 때 returnTo가 포함된 로그인 경로
+
+    # ---------- 열거형 (SPEC §19)
+    CatalogItemKind: { type: string, enum: [GUARDED_SERVICE, SPONSORED_TRIAL] }
+    PublicationStatus: { type: string, enum: [SUBMITTED, PUBLISHED, REJECTED, UNPUBLISHED] }
+    ServiceCategory: { type: string, enum: [BIGTECH, AI, DELIVERY, OTT, CLOUD, LEARNING, ETC] }
+    DarkPatternLevel: { type: string, enum: [HIGH, MEDIUM, LOW] }
+    EscapePattern: { type: string, enum: [DIRECT_LINK, SPA_MODAL_GUIDE, PC_OR_APP_FORCED] }
+    ForcedChannel: { type: string, enum: [APP, PC_WEB] }
+    AccessRetentionPolicy: { type: string, enum: [RETAIN_UNTIL_END, IMMEDIATE_TERMINATION] }
+    ExitReason:
+      type: string
+      enum: [PRICE_BURDEN, LACK_OF_FEATURES, COMPLEX_UX, SHORT_TERM_GOAL_MET, MOVED_TO_ALTERNATIVE]
+    TrialStatus:
+      type: string
+      enum: [TRACKING, CANCEL_ATTEMPTED, CANCELED_CONFIRMED, KEPT, MISSED_BILLED, BILLED_CONFIRMED, VOIDED]
+    TrialSource: { type: string, enum: [MANUAL_CATALOG_SELECT, SPONSORED_OUTBOUND_PROMPT] }
+    UserRole: { type: string, enum: [USER, OPERATOR, ADMIN] }
+
+    # ---------- identity
+    Me:
+      type: object
+      required: [id, role, notificationEnabled, hasRecipient]
+      properties:
+        id: { type: string }
+        nickname: { type: string, description: 카카오 프로필 닉네임 (선택, G6 확정) }
+        role: { $ref: '#/components/schemas/UserRole' }
+        notificationEnabled: { type: boolean }
+        notificationConsentAt: { $ref: '#/components/schemas/UtcInstant' }
+        hasRecipient:
+          type: boolean
+          description: 알림톡 수신 번호 확보 여부 (확보 방식은 FN §4 결정 후)
+
+    # ---------- catalog
+    DarkPatternScores:
+      type: object
+      required: [menuDepth, persuasionPopups, forcedPcOrApp]
+      properties:
+        menuDepth: { type: integer, enum: [0, 1, 2] }
+        persuasionPopups: { type: integer, enum: [0, 1, 2] }
+        forcedPcOrApp: { type: integer, enum: [0, 2] }
+    SupportContact:
+      type: object
+      description: email·url 중 하나 이상
+      properties:
+        email: { type: string, format: email }
+        url: { type: string, format: uri }
+    EduBenefit:
+      type: object
+      required: [description, url]
+      properties:
+        description: { type: string }
+        url: { type: string, format: uri }
+    CatalogItemPublicView:
+      type: object
+      description: SPEC §19. escapeLink·escapeLinkFallbackUrl·ownerPartnerId·darkPatternScores 제외
+      required:
+        - id
+        - kind
+        - name
+        - publicationStatus
+        - serviceCategory
+        - monthlyPrice
+        - defaultTrialDays
+        - isGlobalTimeZoneBufferRequired
+        - darkPatternLevel
+        - escapePattern
+        - escapeGuideSteps
+        - accessRetentionPolicy
+        - supportContact
+        - lastVerifiedAt
+      properties:
+        id: { type: string }
+        kind: { $ref: '#/components/schemas/CatalogItemKind' }
+        name: { type: string }
+        logoUrl: { type: string }
+        signupUrl:
+          type: string
+          description: UNPUBLISHED이면 클라이언트는 버튼을 표시하지 않는다 (D-13)
+        publicationStatus: { type: string, enum: [PUBLISHED, UNPUBLISHED] }
+        serviceCategory: { $ref: '#/components/schemas/ServiceCategory' }
+        monthlyPrice: { type: integer }
+        defaultTrialDays: { type: integer }
+        isGlobalTimeZoneBufferRequired: { type: boolean }
+        darkPatternLevel: { $ref: '#/components/schemas/DarkPatternLevel' }
+        escapePattern: { $ref: '#/components/schemas/EscapePattern' }
+        forcedChannel: { $ref: '#/components/schemas/ForcedChannel' }
+        escapeGuideSteps:
+          type: array
+          minItems: 1
+          maxItems: 3
+          items: { type: string }
+        accessRetentionPolicy: { $ref: '#/components/schemas/AccessRetentionPolicy' }
+        backupChecklist:
+          type: array
+          items: { type: string }
+        eduBenefit: { $ref: '#/components/schemas/EduBenefit' }
+        supportContact: { $ref: '#/components/schemas/SupportContact' }
+        lastVerifiedAt: { $ref: '#/components/schemas/KstDate' }
+    CatalogItemInput:
+      type: object
+      description: 등록 입력. darkPatternLevel·lastVerifiedAt(오늘)은 서버가 정한다
+      required:
+        - kind
+        - name
+        - serviceCategory
+        - monthlyPrice
+        - defaultTrialDays
+        - isGlobalTimeZoneBufferRequired
+        - darkPatternScores
+        - escapePattern
+        - escapeGuideSteps
+        - escapeLink
+        - accessRetentionPolicy
+        - supportContact
+      properties:
+        kind: { $ref: '#/components/schemas/CatalogItemKind' }
+        name: { type: string, minLength: 1 }
+        signupUrl: { type: string, description: SPONSORED_TRIAL이면 필수, https만 허용 }
+        ownerPartnerId: { type: string, description: SPONSORED_TRIAL이면 필수 }
+        serviceCategory: { $ref: '#/components/schemas/ServiceCategory' }
+        monthlyPrice: { type: integer, minimum: 0 }
+        defaultTrialDays: { type: integer, minimum: 1, maximum: 365 }
+        isGlobalTimeZoneBufferRequired: { type: boolean }
+        darkPatternScores: { $ref: '#/components/schemas/DarkPatternScores' }
+        escapePattern: { $ref: '#/components/schemas/EscapePattern' }
+        forcedChannel:
+          $ref: '#/components/schemas/ForcedChannel'
+          description: PC_OR_APP_FORCED이면 필수, 그 밖에는 비워 둠 (D-15)
+        escapeGuideSteps:
+          type: array
+          minItems: 1
+          maxItems: 3
+          items: { type: string, minLength: 1 }
+        escapeLink: { type: string, description: https 또는 forcedChannel = APP일 때 allowedDeepLinkSchemes에 등록된 스킴 (G4 확정) }
+        escapeLinkFallbackUrl: { type: string, description: forcedChannel = APP이면 필수, https만 허용 }
+        accessRetentionPolicy: { $ref: '#/components/schemas/AccessRetentionPolicy' }
+        backupChecklist:
+          type: array
+          items: { type: string }
+        eduBenefit: { $ref: '#/components/schemas/EduBenefit' }
+        supportContact: { $ref: '#/components/schemas/SupportContact' }
+    CatalogItemPatch:
+      type: object
+      description: CatalogItemInput의 부분 집합 (kind는 변경 불가)
+      properties:
+        name: { type: string, minLength: 1 }
+        signupUrl: { type: string }
+        ownerPartnerId: { type: string }
+        serviceCategory: { $ref: '#/components/schemas/ServiceCategory' }
+        monthlyPrice: { type: integer, minimum: 0 }
+        defaultTrialDays: { type: integer, minimum: 1, maximum: 365 }
+        isGlobalTimeZoneBufferRequired: { type: boolean }
+        darkPatternScores: { $ref: '#/components/schemas/DarkPatternScores' }
+        escapePattern: { $ref: '#/components/schemas/EscapePattern' }
+        forcedChannel: { $ref: '#/components/schemas/ForcedChannel' }
+        escapeGuideSteps:
+          type: array
+          minItems: 1
+          maxItems: 3
+          items: { type: string, minLength: 1 }
+        escapeLink: { type: string }
+        escapeLinkFallbackUrl: { type: string }
+        accessRetentionPolicy: { $ref: '#/components/schemas/AccessRetentionPolicy' }
+        backupChecklist:
+          type: array
+          items: { type: string }
+        eduBenefit: { $ref: '#/components/schemas/EduBenefit' }
+        supportContact: { $ref: '#/components/schemas/SupportContact' }
+    CatalogItem:
+      description: 관리용 전체 항목 (SPEC §19 CatalogItem)
+      allOf:
+        - $ref: '#/components/schemas/CatalogItemInput'
+        - type: object
+          required: [id, publicationStatus, darkPatternLevel, lastVerifiedAt]
+          properties:
+            id: { type: string }
+            logoUrl: { type: string }
+            publicationStatus: { $ref: '#/components/schemas/PublicationStatus' }
+            darkPatternLevel: { $ref: '#/components/schemas/DarkPatternLevel' }
+            lastVerifiedAt: { $ref: '#/components/schemas/KstDate' }
+    CatalogChangeLog:
+      type: object
+      required: [id, catalogItemId, changedBy, changedAt, changes, appliedToActiveRecords]
+      properties:
+        id: { type: string }
+        catalogItemId: { type: string }
+        changedBy: { type: string }
+        changedAt: { $ref: '#/components/schemas/UtcInstant' }
+        changes:
+          type: array
+          items:
+            type: object
+            required: [field]
+            properties:
+              field: { type: string }
+              before: {}
+              after: {}
+        appliedToActiveRecords: { type: boolean }
+    DarkPatternRubric:
+      type: object
+      description: 합산 점수 등급 경계. 기본값 LOW 0~1, MEDIUM 2~3, HIGH 4 이상 (SPEC §2)
+      required: [mediumMin, highMin]
+      properties:
+        mediumMin: { type: integer, minimum: 1, default: 2 }
+        highMin: { type: integer, minimum: 2, default: 4 }
+    AppSettings:
+      type: object
+      properties:
+        notificationSendTime:
+          type: string
+          pattern: '^\d{2}:\d{2}$'
+          default: '10:00'
+          description: 기본 발송 시각 (KST). 변경 이후 생성·재예약되는 슬롯부터 적용하고 기존 PENDING 행은 유지 (G5 확정)
+        notificationTemplates:
+          type: object
+          description: (kind, variant, retentionPolicy) → 알림톡 템플릿 코드
+          additionalProperties: { type: string }
+        allowedDeepLinkSchemes:
+          type: array
+          items: { type: string }
+          default: []
+          description: forcedChannel = APP일 때 escapeLink에 허용할 커스텀 딥링크 스킴 목록 (G4 확정)
+
+    # ---------- trials
+    CreateTrialRecordRequest:
+      type: object
+      required: [catalogItemId]
+      properties:
+        catalogItemId: { type: string }
+        startDate:
+          $ref: '#/components/schemas/KstDate'
+          description: 생략 시 오늘(KST)
+        trialDays:
+          type: integer
+          minimum: 1
+          maximum: 365
+          description: 생략 시 CatalogItem.defaultTrialDays
+        source:
+          $ref: '#/components/schemas/TrialSource'
+          description: 기본값 MANUAL_CATALOG_SELECT. P0에서는 이 값만 허용
+    UpdateTrialRecordRequest:
+      type: object
+      minProperties: 1
+      properties:
+        startDate: { $ref: '#/components/schemas/KstDate' }
+        trialDays: { type: integer, minimum: 1, maximum: 365 }
+    TrialAction:
+      type: string
+      enum:
+        - GO_TO_BRIDGE
+        - GO_TO_BRIDGE_GUIDE
+        - KEEP
+        - VOID
+        - CONFIRM_CANCEL
+        - RESOLVE_BILLED
+        - RESOLVE_CANCELED_BEFORE_BILLING
+        - RESOLVE_KEEP_USING
+        - VIEW_REFUND_TEMPLATE
+    TrialRecordView:
+      type: object
+      description: SPEC §19 TrialRecord (userId 제외) + 화면 표시용 필드 (§13)
+      required:
+        - id
+        - catalogItemId
+        - catalogItemName
+        - source
+        - startDate
+        - trialDays
+        - bufferApplied
+        - billingDate
+        - safeEndDate
+        - status
+        - savedAmount
+        - statusChangedAt
+        - actions
+      properties:
+        id: { type: string }
+        catalogItemId: { type: string }
+        catalogItemName: { type: string }
+        catalogItemLogoUrl: { type: string }
+        source: { $ref: '#/components/schemas/TrialSource' }
+        startDate: { $ref: '#/components/schemas/KstDate' }
+        trialDays: { type: integer }
+        bufferApplied: { type: boolean }
+        billingDate: { $ref: '#/components/schemas/KstDate' }
+        safeEndDate: { $ref: '#/components/schemas/KstDate' }
+        status: { $ref: '#/components/schemas/TrialStatus' }
+        exitReason: { $ref: '#/components/schemas/ExitReason' }
+        cancelAttemptedAt: { $ref: '#/components/schemas/UtcInstant' }
+        confirmedAt: { $ref: '#/components/schemas/UtcInstant' }
+        savedAmount: { type: [integer, 'null'] }
+        statusChangedAt: { $ref: '#/components/schemas/UtcInstant' }
+        dDayLabel:
+          type: [string, 'null']
+          description: "'D-n' / 'D-Day' / '결제 예정일' / null (SPEC §13)"
+        actions:
+          type: array
+          items: { $ref: '#/components/schemas/TrialAction' }
+
+    # ---------- bridge & recovery
+    StartCancelAttemptResult:
+      type: object
+      required: [escapeLink, escapePattern]
+      properties:
+        escapeLink: { type: string }
+        escapeLinkFallbackUrl: { type: string }
+        escapePattern: { $ref: '#/components/schemas/EscapePattern' }
+        forcedChannel:
+          $ref: '#/components/schemas/ForcedChannel'
+          description: SPEC §19 (G2 확정). PC_OR_APP_FORCED일 때 앱/PC 웹 클라이언트 분기용
+    BridgeView:
+      type: object
+      required:
+        - mode
+        - trialRecordId
+        - catalogItemName
+        - escapePattern
+        - escapeGuideSteps
+        - accessRetentionPolicy
+        - backupFirst
+        - lastVerifiedAt
+      properties:
+        mode:
+          type: string
+          enum: [POLL, REENTRY, GUIDE_ONLY]
+          description: TRACKING → POLL, CANCEL_ATTEMPTED → REENTRY, MISSED_BILLED·BILLED_CONFIRMED → GUIDE_ONLY
+        trialRecordId: { type: string }
+        catalogItemName: { type: string }
+        catalogItemLogoUrl: { type: string }
+        escapePattern: { $ref: '#/components/schemas/EscapePattern' }
+        forcedChannel: { $ref: '#/components/schemas/ForcedChannel' }
+        escapeGuideSteps:
+          type: array
+          items: { type: string }
+        accessRetentionPolicy: { $ref: '#/components/schemas/AccessRetentionPolicy' }
+        backupChecklist:
+          type: array
+          items: { type: string }
+        backupFirst:
+          type: boolean
+          description: IMMEDIATE_TERMINATION이고 backupChecklist가 있으면 true (V-05)
+        exitReasons:
+          type: array
+          description: POLL 모드에서만 제공
+          items: { $ref: '#/components/schemas/ExitReason' }
+        escapeLink:
+          type: string
+          description: REENTRY·GUIDE_ONLY 모드에서만 제공 (§7 비노출 규칙)
+        escapeLinkFallbackUrl: { type: string }
+        lastVerifiedAt: { $ref: '#/components/schemas/KstDate' }
+    RefundTemplate:
+      type: object
+      required: [ko, en, referenceBillingDate]
+      properties:
+        ko: { type: string, description: 실제 결제일·결제 금액·이름은 빈칸 }
+        en: { type: string }
+        referenceBillingDate:
+          $ref: '#/components/schemas/KstDate'
+          description: '공식 결제 예정일 참고 표시용. 실제 결제일 칸에 자동 기입하지 않는다 (§9)'
+    BrokenLinkReportReceipt:
+      type: object
+      required: [id, duplicate]
+      properties:
+        id: { type: string }
+        duplicate: { type: boolean }
+    BrokenLinkReport:
+      type: object
+      required: [id, userId, catalogItemId, trialRecordId, target, status, createdAt]
+      properties:
+        id: { type: string }
+        userId: { type: string }
+        catalogItemId: { type: string }
+        trialRecordId: { type: string }
+        target: { type: string, enum: [ESCAPE_LINK, ESCAPE_GUIDE] }
+        status: { type: string, enum: [OPEN, FIXED, REJECTED] }
+        createdAt: { $ref: '#/components/schemas/UtcInstant' }
+        resolvedAt: { $ref: '#/components/schemas/UtcInstant' }

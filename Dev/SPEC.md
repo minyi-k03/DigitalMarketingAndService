@@ -1,8 +1,10 @@
-# 구독컷 (SubCut) 요구사항 명세서 (v1.9 - 검수·교차 검증 반영본)
+# 구독컷 (SubCut) 요구사항 명세서 (v1.11 - 발표용 범위 반영본)
 
 > **Triage Label**: `ready-for-agent` `[v1.9]` (워크플로우 2단계 구현 계획부터 착수 가능. 남은 `[결정 필요]` 항목은 Further Notes §7의 결정 시점에 확정하며, 그 전에는 해당 작업을 시작하지 않습니다.)  
 > **기준 문서** `[v1.9]`: `Glossary.md` (`Dev/Glossary.md`, 구독컷 도메인 용어집 v1.4, 4장에 `ADR-0001` ~ `ADR-0005` 요약 포함). ADR을 별도 디렉터리(`docs/adr/` 등)로 분리하면 이 줄의 경로를 함께 고칩니다.  
 > **기준 우선순위** `[v1.9]`: 요구사항과 동작이 용어집·ADR과 다르면 이 SPEC이 우선합니다. 용어 정의는 Further Notes §2에 따라 용어집 v1.5로 동기화합니다. 차이가 발견되면 구현 에이전트는 추측하지 않고 보고합니다.  
+> **v1.11 변경 요약** (2026-10-27, 발표 일정 반영): 발표일(2026-12-09)과 1인 개발 조건에 맞춰 발표용 범위를 확정했습니다(`docs/implementation-plan.md` §7). 사업자 미등록으로 알림톡을 쓸 수 없어, 발표용 알림 채널을 카카오 '나에게 보내기' 메시지 API로 정했고(D-16), 발표용 B2B 화면 4종을 실데이터 단순 집계로 만들기로 정했습니다(D-17). D-02(MVP 성공 기준)를 발표용 기준으로 바꿨습니다. 변경 위치는 `[v1.11]`로 표시했습니다.  
+> **v1.10 변경 요약** (2026-10-23, 워크플로우 2단계 구현 계획): D-06(API 계약은 `api/openapi.yaml`에서 정의), D-07(React + Vite SPA, `docs/adr/ADR-0008-cloudflare-stack-and-frontend.md`), D-09(`MISSED_BILLED` 카드에 '다음 달 결제 막기' 추가) 및 구현 계획 중 발견한 SPEC 갭 G2(`StartCancelAttemptResult.forcedChannel` 추가)·G3(`CANCEL_ATTEMPTED` 재예약 시 당일 해지 확인 알림 규칙 적용)·G4(`escapeLink` 딥링크 허용 스킴 설정)·G5(발송 시각 변경은 신규·재예약 슬롯부터 적용)·G6(`User.nickname` 선택 필드 추가)를 확정해 반영했습니다. 아키텍처는 `docs/architecture.md`, 작업 분할은 `docs/tasks.md`에 있습니다. Testing Decisions에 G3·G4·G5 검증 항목을 추가했습니다. 변경 위치는 `[v1.10]`으로 표시했습니다.  
 > **v1.9 변경 요약**: 검수 반영. 기준 문서 경로와 우선순위, `[결정 필요]` 표기 도입, Goals·성공 기준·핵심 시나리오 절 추가, 스토리 27을 §6 v1.8 규칙과 일치하도록 수정, §6의 용어집 Avoid 표현('결제일') 수정, §19에 API 계약 미정 사항 표시, §20 스토리 추적표 추가, Non-functional Requirements 절 추가, Testing Decisions에 누락 검증 항목 추가, Further Notes에 용어집 차이·위험 요소·결정 필요 목록 추가. 변경 위치는 `[v1.9]`으로 표시했습니다. **교차 검증 r1**(Gemini 4 Argon, High): 지적 6건을 모두 확인했으며, `CatalogItemPublicView` 타입 모순 수정, `PC_OR_APP_FORCED` 구분 기준(D-15) 신설 후 명시 필드 `forcedChannel`로 확정, P1 데이터 모델 누락(D-12) 확장을 반영했습니다. 나머지 3건(D-06·D-09·D-12의 기존 범위)은 이미 결정 대기로 분리되어 있었습니다.  
 > **v1.8 변경 요약**: 누락 항목 보강. `CatalogItem` 표시·가입 필드(`name`, `logoUrl`, `signupUrl`, `lastVerifiedAt`), 기록 수정 전이와 공통 알림 재예약 규칙, 카탈로그 변경의 진행 중 기록 반영 규칙(`bufferApplied` 스냅샷), `SavedAmount` 금액 스냅샷, 국내 항목의 당일 해지 확인 알림 시점, 카탈로그 상세의 `EscapeLink` 비노출, 내 체험 목록(대시보드), 카탈로그 추가 요청(`CatalogRequest`), 회원·알림 수신 설정·탈퇴, 운영자 권한·변경 이력·피처드 슬롯 구성, `ChurnReport` 코호트·분모·발급 방식, 기술 스택·배포(Cloudflare), MVP 우선순위, 누락 타입(`ExitPollResponse`, `BrokenLinkReport`, `Partner`, `User` 등) 추가. 사용자 스토리의 변경 위치는 `[v1.8 신규]`·`[v1.8 수정]`으로 표시했습니다.  
 > **v1.7 변경 요약**: 최종 검수 피드백 반영. 늦은 등록 알림 조건 오류 수정, `ExitPoll` 응답 저장을 `CANCEL_ATTEMPTED` 전이와 단일 명령으로 통합, 결제 추정 정정 시 `ExitPoll` 필수화, `BILLED_CONFIRMED` 종료 상태 추가, 알림 3종(탈출·해지 확인·결제 확인) 분리, 파트너 소유 항목(`ownerPartnerId`)과 `SponsoredTrial` 제출·검수 흐름, 피처드 노출 이벤트(`FeaturedEvent`), `AlternativeMatch` 후보 선정, `EscapePattern`별 브릿지 동작, 기록 상세의 브릿지 진입 경로, `DarkPatternLevel` 원점수 저장, `RefundTemplate` 결제일 기입 방식 수정. 사용자 스토리의 변경 위치는 `[v1.7 신규]`·`[v1.7 수정]`으로 표시했습니다.  
@@ -63,6 +65,11 @@
 
 ### 2. 성공 기준 `[v1.9: D-02 확정]`
 * **MVP 성공 기준**: 카카오 알림톡 템플릿(알림 3종과 문구 분기, Further Notes §3)이 사전 심사를 통과한다.
+* **발표용 성공 기준** `[v1.11: D-02 변경]`: 사업자 미등록으로 알림톡 심사를 받을 수 없으므로, 2026-12-09 발표에서는 다음을 기준으로 삼습니다. 위 MVP 성공 기준은 사업자 등록 뒤에 다시 적용합니다.
+  * 핵심 시나리오 S-01~S-05를 Cloudflare에 배포된 서비스(§17, production 환경)에서 시연할 수 있다.
+  * 알림 3종(`ESCAPE_ALERT`, `CANCEL_CONFIRM_CHECK`, `BILLING_CHECK`)이 카카오 '나에게 보내기'(D-16)로 발표자의 카카오톡에 실제로 도착하고, 링크가 브릿지·기록 화면으로 연결된다.
+  * B2B 화면 4종(D-17)이 실제 저장 데이터로 동작한다.
+  * 알림톡 템플릿 문안(3종 × 문구 분기)은 작성까지만 한다.
 
 ### 3. 핵심 시나리오 (구현·테스트 참고 흐름)
 아래 시나리오는 본문 규칙만으로 구성했으며 새 규칙을 추가하지 않습니다.
@@ -168,7 +175,7 @@
 * **해지 가이드라인(`EscapeGuide`)**: 1~3개의 단계로만 저장할 수 있으며, 4단계 이상은 등록 시 검증 오류로 거부합니다.
 * **소유 파트너(`ownerPartnerId`)** `[제안]`: `CatalogItem`과 `Partner`의 소유 연결이며 `ChurnReport` 열람 권한의 기준입니다. `SPONSORED_TRIAL`은 필수이고, `GUARDED_SERVICE`는 리포트만 구매하는 파트너가 운영자의 소유 검증을 통과한 경우에만 연결합니다.
 * **게시 상태(`publicationStatus`)와 `SponsoredTrial` 제출·검수 흐름** `[확정: 상태 값]` `[제안: 제출·검수 흐름(P1)]`: 파트너가 등록 정보를 제출하면 `SUBMITTED`가 되고(MVP에서는 파트너 계정 없이 이메일 등으로 받은 정보를 운영자가 콘솔에 대리 입력합니다 `[v1.8 제안]`), 운영자가 해지 경로·`EscapeGuide`·`EscapeLink`·`DarkPatternLevel` 원점수 등을 직접 검증해 `PUBLISHED` 또는 `REJECTED`로 처리합니다. 운영자는 게시 중인 항목을 `UNPUBLISHED`로 내릴 수 있습니다. `GUARDED_SERVICE`는 운영자가 직접 등록하므로 `PUBLISHED`로 생성합니다. 전용 라운지·피처드 슬롯·`AlternativeMatch` 후보는 `PUBLISHED` 항목만 대상이며, 게시가 중단된 항목의 기존 체험 기록은 추적과 브릿지 안내를 계속 받습니다. `[v1.9: D-11 확정]` 일반 카탈로그 목록·검색에는 `PUBLISHED`와 `UNPUBLISHED` 항목을 노출하고, `SUBMITTED`·`REJECTED` 항목은 노출하지 않습니다. `[v1.9: D-13 확정]` `UNPUBLISHED` 항목은 목록·검색과 상세 화면에 '게시 중단' 안내와 함께 표시하되, 새 체험 기록은 만들 수 없습니다. 경로 A 등록, 경로 B 프롬프트, '이미 가입했어요'가 모두 해당하며, 이 경우 `SponsoredTrial`의 무료체험 시작하기 버튼(`signupUrl`)도 표시하지 않습니다. 이미 만들어진 기록은 위와 같이 추적과 브릿지 안내를 계속 받습니다.
-* **해지 최단 직링크 대체 URL(`escapeLinkFallbackUrl`)**: `EscapeLink`가 전용 앱 딥링크인 항목은 앱 미설치 시 연결할 앱마켓 또는 웹 URL을 필수로 등록합니다. `[v1.9: D-15 확정]` 딥링크 여부는 아래 `forcedChannel`로 판별하며, `forcedChannel = APP`이면 이 URL이 필수입니다.
+* **해지 최단 직링크 대체 URL(`escapeLinkFallbackUrl`)과 URL 스킴 검증**: `EscapeLink`가 전용 앱 딥링크인 항목은 앱 미설치 시 연결할 앱마켓 또는 웹 URL을 필수로 등록합니다. `[v1.9: D-15 확정]` 딥링크 여부는 아래 `forcedChannel`로 판별하며, `forcedChannel = APP`이면 이 URL이 필수입니다. `[v1.10: G4 확정]` `signupUrl`, `supportContact.url`, `eduBenefit.url`, `escapeLinkFallbackUrl`, `CatalogRequest.serviceUrl`은 `https:` 스킴만 허용합니다. `escapeLink`는 기본적으로 `https:`(Universal Links·App Links 포함)만 허용하되, `forcedChannel = APP`인 항목에 한해 운영 설정(`catalog.allowedDeepLinkSchemes`, 기본값 `[]`)에 등록된 커스텀 앱 스킴도 허용합니다.
 * **강제 접속 채널(`forcedChannel`)** `[v1.9: D-15 확정]`: `escapePattern = PC_OR_APP_FORCED`인 항목은 해지가 전용 앱에서만 되는지(`APP`), PC 웹에서만 되는지(`PC_WEB`)를 운영자가 등록할 때 반드시 고릅니다. 그 밖의 `EscapePattern` 항목에서는 비워 둡니다. 브릿지 동작(§7)과 대체 URL 필수 검증은 이 값으로 판단합니다.
 * **다크패턴 난이도(`DarkPatternLevel`) 산정 기준표** `[확정]`: 세 항목 점수를 합산해 등급을 정합니다.
 
@@ -241,7 +248,7 @@ v1.6의 6개 상태에 사용자가 결제를 확인한 `BILLED_CONFIRMED`를 �
 | 해지 확인 알림 | `CANCEL_CONFIRM_CHECK` | 해지 시도 후 완료 여부 확인 ("해지를 마치셨나요?") | `CANCEL_ATTEMPTED` |
 | 결제 확인 알림 | `BILLING_CHECK` | `BillingDate` 경과 후 상태 정정 요청 | `MISSED_BILLED` |
 
-* **발송 시각**: 운영 설정값으로 두며 기본값은 오전 10:00 KST입니다 `[확정]`.
+* **발송 시각**: 운영 설정값으로 두며 기본값은 오전 10:00 KST입니다 `[확정]`. `[v1.10: G5 확정]` 운영 설정의 기본 발송 시각을 바꾸면 변경 이후 새로 만들어지거나 재예약되는 슬롯부터 적용하고, 이미 예약된 `PENDING` 행의 `sendAt`은 그대로 둡니다.
 * **D-3 알림**(`SafeEndDate - 3일`): `TRACKING` 상태에만 `ESCAPE_ALERT`를 발송합니다.
 * **D-1 알림**(`SafeEndDate - 1일`): 기록당 1회만 발송하며, `TRACKING`이면 `ESCAPE_ALERT`, `CANCEL_ATTEMPTED`이면 `CANCEL_CONFIRM_CHECK`를 보냅니다. ADR-0003의 "1회 더"는 D-1 탈출 알림을 해지 확인 알림으로 교체하는 것으로 해석합니다 `[확정]`.
 * **당일 해지 확인 알림** `[v1.8 수정]`: D-1 발송 시각 이후에 `CANCEL_ATTEMPTED`가 된 기록에 `CANCEL_CONFIRM_CHECK`를 1회 더 보냅니다. 국내 항목은 `SafeEndDate`가 곧 공식 결제 예정일(`BillingDate`)이라 `[v1.9: 용어집 Avoid 표현 수정]` 저녁 발송이 늦을 수 있으므로 항목 종류에 따라 시점을 나눕니다 `[확정: 발송 시각]`.
@@ -254,13 +261,16 @@ v1.6의 6개 상태에 사용자가 결제를 확인한 `BILLED_CONFIRMED`를 �
 * **문구 분기**: `ESCAPE_ALERT`는 `AccessRetentionPolicy`가 `RETAIN_UNTIL_END`이면 "지금 해지해도 만료일까지 이용 가능, 조기 해지 권장", `IMMEDIATE_TERMINATION`이면 "해지 즉시 이용 종료, `BackupChecklist` 확인 후 D-1 해지 권장"을 포함합니다. 늦은 등록의 경고 문구 두 가지에서는 `IMMEDIATE_TERMINATION` 안내를 "백업 후 바로 해지"로 바꿉니다.
 * **결제 확인 알림**: `MISSED_BILLED` 전이 시 `BillingDate + 1일` 발송 시각에 `BILLING_CHECK`를 1회 발송하며, 세 가지 정정 선택지 화면으로 연결합니다.
 * **알림 취소**: 종료 상태로 전이하면 예약된 모든 알림을 취소합니다.
-* **알림 재예약 규칙** `[v1.8 신규]` `[확정]`: 기록 수정이나 버퍼 변경으로 `SafeEndDate`가 바뀌면, 아직 발송되지 않은 예약 알림을 모두 취소하고 새 날짜 기준으로 다시 계산합니다. 새 날짜 기준으로 미래인 슬롯은 이전에 같은 슬롯을 보낸 적이 있어도 다시 예약합니다(마감일이 바뀌었기 때문입니다). 새 날짜 기준으로 정규 슬롯이 모두 지났고 오늘이 `BillingDate` 이하이면 늦은 등록 규칙에 따라 즉시 1회 발송합니다. 중복 발송 방지 키에 `safeEndDate`를 포함하므로(§17) 같은 마감일의 같은 슬롯은 한 번만 나갑니다.
+* **알림 재예약 규칙** `[v1.8 신규]` `[확정]`: 기록 수정이나 버퍼 변경으로 `SafeEndDate`가 바뀌면, 아직 발송되지 않은 예약 알림을 모두 취소하고 새 날짜 기준으로 다시 계산합니다. 새 날짜 기준으로 미래인 슬롯은 이전에 같은 슬롯을 보낸 적이 있어도 다시 예약합니다(마감일이 바뀌었기 때문입니다). 새 날짜 기준으로 정규 슬롯이 모두 지났고 오늘이 `BillingDate` 이하이면 기록 상태에 따라 다음과 같이 처리합니다 `[v1.10: G3 확정]`.
+  * `TRACKING`: 늦은 등록 규칙에 따라 `ESCAPE_ALERT`(`LATE_REGISTRATION`)를 즉시 1회 발송합니다.
+  * `CANCEL_ATTEMPTED`: 당일 해지 확인 알림(`SAME_DAY_CONFIRM`, `CANCEL_CONFIRM_CHECK`) 규칙을 적용합니다. 당일 확인 마감 시각(글로벌 항목: `SafeEndDate` 당일 20:00 KST, 국내 항목: `SafeEndDate` 당일 21:00 KST) 이전이면 `SAME_DAY_CONFIRM`을 1회 예약·발송하고(국내 항목은 변경일이 `SafeEndDate` 전날이면 당일 기본 발송 시각에, `SafeEndDate` 당일이면 변경 시각 1시간 뒤에 발송), 마감 시각 이후이면 추가 알림 없이 결제 확인 흐름(`BILLING_CHECK`)으로 이어집니다.
+  * 중복 발송 방지 키에 `safeEndDate`를 포함하므로(§17) 같은 마감일의 같은 슬롯은 한 번만 나갑니다.
 * **알림 수신 거부** `[v1.8 신규]`: 사용자가 알림 수신을 끈 동안에는 알림톡을 보내지 않고 해당 슬롯을 `SKIPPED`로 기록합니다. 상태 전이와 결제 확인 배치는 그대로 진행되며, '내 체험' 화면의 상태 표시와 행동 버튼으로 대신 안내합니다. 수신을 다시 켜면 그 시점 이후의 슬롯부터 발송합니다.
 * 모든 알림 링크는 외부 URL이 아니라 `EscapeBridge` 또는 구독컷 내부 화면으로 연결합니다 (`ADR-0001`).
 
 ### 7. 해지 브릿지(`EscapeBridge`) 및 1초 이탈 투표(`ExitPoll`) 규칙 (`ADR-0001`)
 * `EscapeBridge`는 `EscapePattern`별 우회 안내, `EscapeGuide`(1~3단계), `BackupChecklist`(해당 항목에 있을 때), `ExitPoll`, `EscapeLink`, `BrokenLinkReport` 버튼을 한 화면에 제공합니다. `IMMEDIATE_TERMINATION` 항목은 `BackupChecklist`를 `ExitPoll` 위에 우선 배치합니다.
-* **진입 경로**: `ESCAPE_ALERT`·`CANCEL_CONFIRM_CHECK`의 링크와, `TRACKING`·`CANCEL_ATTEMPTED` 기록 상세 화면의 '해지하러 가기' 버튼입니다. `MISSED_BILLED`·`BILLED_CONFIRMED` 기록은 다음 달 결제를 막기 위한 해지가 여전히 필요하므로, 투표와 상태 변화 없이 `EscapeGuide`·`EscapeLink`·`BrokenLinkReport`만 쓰는 안내 모드로 진입합니다 `[확정]`. 그 밖의 종료 상태 기록은 브릿지에 진입할 수 없습니다. `[v1.9]` `MISSED_BILLED` 기록이 안내 모드로 들어가는 화면상 진입 지점은 정의되어 있지 않습니다(§13의 `MISSED_BILLED` 카드에는 정정 선택지만 있음) `[결정 필요 D-09]`.
+* **진입 경로**: `ESCAPE_ALERT`·`CANCEL_CONFIRM_CHECK`의 링크와, `TRACKING`·`CANCEL_ATTEMPTED` 기록 상세 화면의 '해지하러 가기' 버튼입니다. `MISSED_BILLED`·`BILLED_CONFIRMED` 기록은 다음 달 결제를 막기 위한 해지가 여전히 필요하므로, 투표와 상태 변화 없이 `EscapeGuide`·`EscapeLink`·`BrokenLinkReport`만 쓰는 안내 모드로 진입합니다 `[확정]`. 그 밖의 종료 상태 기록은 브릿지에 진입할 수 없습니다. `[v1.10: D-09 확정]` `MISSED_BILLED` 기록은 §13 카드의 '다음 달 결제 막기' 버튼으로 안내 모드에 진입합니다.
 * **투표와 이동의 단일 명령**: `TRACKING` 기록으로 진입하면 `EscapeLink` 버튼 대신 `ExitReason` 사유 버튼 5개를 표시합니다. 사유 버튼 클릭 한 번으로 Trial Tracking 모듈의 `StartCancelAttempt` 명령이 응답 저장과 `CANCEL_ATTEMPTED` 전이를 하나의 트랜잭션으로 처리하고 이동할 `EscapeLink`를 반환하며, 클라이언트는 즉시 이동합니다. 투표만 하고 이동하지 않은 중간 상태는 존재하지 않습니다.
 * **재진입**: `CANCEL_ATTEMPTED` 기록은 투표 단계 없이 `EscapeLink` 버튼을 바로 표시하며, 클릭해도 상태는 바뀌지 않습니다.
 * **`EscapePattern`별 동작** `[확정]`:
@@ -313,7 +323,7 @@ v1.6의 6개 상태에 사용자가 결제를 확인한 `BILLED_CONFIRMED`를 �
 * **카드 구성**: 서비스명·로고, 상태 배지, D-Day, 상태별 행동 버튼입니다. 카드를 누르면 기록 상세(수정 포함)로 이동합니다.
   * `TRACKING`: '해지하러 가기'(브릿지), '계속 쓸래요', '가입 안 했어요'.
   * `CANCEL_ATTEMPTED`: '해지 완료했어요', '다시 해지하러 가기', '계속 쓸래요'.
-  * `MISSED_BILLED`: 결제 확인 정정 세 가지 선택지.
+  * `MISSED_BILLED`: 결제 확인 정정 세 가지 선택지, '다음 달 결제 막기'(브릿지 안내 모드) `[v1.10: D-09 확정]`.
   * `BILLED_CONFIRMED`: '다음 달 결제 막기'(브릿지 안내 모드), 환불 요청 템플릿 보기.
   * 그 밖의 종료 상태: 버튼 없음.
 * 화면 상단에 누적 방어 금액(`savedAmount` 합계)과 진행 중 건수를 표시합니다.
@@ -324,7 +334,7 @@ v1.6의 6개 상태에 사용자가 결제를 확인한 `BILLED_CONFIRMED`를 �
 * 운영자가 항목을 등록해 요청을 `ADDED`로 처리하면 요청자에게 서비스 내 알림(다음 접속 시 표시)으로 알립니다. 알림톡은 쓰지 않습니다 `[제안]`. 반려할 때는 `REJECTED`와 사유를 남깁니다. `[v1.9]` 이 서비스 내 알림을 저장하고 확인(읽음) 여부를 남길 데이터 모델은 §19에 없습니다 `[결정 필요 D-12]` (P1).
 
 ### 15. 회원·알림 수신·탈퇴 (Identity & Account Module) `[v1.8 신규]`
-* **로그인** `[확정]`: 카카오 로그인을 기본안으로 합니다. 알림 링크는 카카오톡 인앱 브라우저에서 열리므로, 세션이 없으면 카카오 로그인 한 번으로 원래 화면(브릿지·정정 화면)으로 돌아옵니다. 알림 링크에는 로그인 토큰을 넣지 않고 기록 ID만 넣습니다. 알림톡 수신 번호 확보 방법은 Further Notes §4에서 확정합니다.
+* **로그인** `[확정]`: 카카오 로그인을 기본안으로 합니다. 알림 링크는 카카오톡 인앱 브라우저에서 열리므로, 세션이 없으면 카카오 로그인 한 번으로 원래 화면(브릿지·정정 화면)으로 돌아옵니다. 알림 링크에는 로그인 토큰을 넣지 않고 기록 ID만 넣습니다. 알림톡 수신 번호 확보 방법은 Further Notes §4에서 확정합니다. `[v1.11: D-16]` 발표용으로는 카카오 로그인 때 '카카오톡 메시지 전송'(`talk_message`) 동의를 함께 받습니다. 받은 refresh token은 암호화해 저장하고, 탈퇴하면 삭제합니다.
 * **세션** `[확정]`: HttpOnly·Secure·SameSite=Lax 쿠키로 관리하며 만료 기한은 30일입니다.
 * **알림 수신 설정**: 가입 시 알림톡 수신 안내와 동의를 받으며 기본값은 켜짐입니다. 설정에서 끌 수 있고, 끌 때 '알림이 없으면 결제 직전 경고를 받지 못해요' 확인 창을 띄웁니다. 수신 거부 중의 동작은 §6을 따릅니다.
 * **회원 탈퇴** `[v1.9: D-08 확정]`: 진행 중 기록의 예약 알림을 모두 취소하고, 카카오 계정 ID·전화번호·닉네임 등 식별 정보를 즉시 삭제합니다. 이어서 해당 사용자의 `TrialRecord`, `NotificationSchedule`, `ExitPollResponse`, `FeaturedEvent`, `BrokenLinkReport`, `CatalogRequest`를 모두 삭제하고, 통계용으로 남기지 않습니다. 이미 삭제된 기록은 이후 생성하는 `ChurnReport` 집계에서도 빠지므로, 같은 기간의 리포트를 다시 생성하면 이전 값과 달라질 수 있습니다. `[v1.9: D-14 확정]` 운영자 계정(`OPERATOR`·`ADMIN`)이 탈퇴하면 그 계정이 남긴 `CatalogChangeLog`와 `ReportGrant`도 함께 삭제합니다. 따라서 해당 운영자가 만든 카탈로그 변경은 이력에서 추적하거나 되돌릴 수 없고(§16), 삭제된 발급권 범위의 리포트는 새로 생성할 수 없습니다(§12).
@@ -343,13 +353,18 @@ v1.6의 6개 상태에 사용자가 결제를 확인한 `BILLED_CONFIRMED`를 �
 ### 17. 기술 스택 및 배포 (Cloudflare) `[v1.8 신규]`
 MVP는 Cloudflare에 최종 배포합니다. 이 절의 `[제안]` 항목은 구현 에이전트가 임의로 바꾸지 않으며, 바꿀 필요가 있으면 이 문서를 먼저 수정합니다. 확정 전에 구현 기준으로 쓸 수 있는지는 머리말의 `[제안]` 효력 규칙(D-01)을 따릅니다 `[v1.9]`.
 * **플랫폼** `[확정]`: 모바일 우선 반응형 웹(PWA 설치 지원)으로 만듭니다. 알림 링크가 카카오톡 인앱 브라우저에서 열리고, 대리 해지 없이 외부 링크로 보내는 구조라 네이티브 앱이 꼭 필요하지 않습니다. 이 문서에서 '앱 내'는 구독컷 웹 화면을 뜻합니다.
-* **런타임·언어** `[확정]`: Cloudflare Workers 하나에서 API와 정적 프런트엔드(Workers 정적 자산)를 함께 제공합니다. 언어는 TypeScript이며 §19의 타입을 그대로 씁니다. 프런트엔드 프레임워크는 정적 빌드가 가능한 것 중에서 고르며, 아직 정하지 않았습니다 `[v1.9]` `[결정 필요 D-07]`. 구현 에이전트가 임의로 고르지 않습니다.
+* **런타임·언어** `[확정]`: Cloudflare Workers 하나에서 API와 정적 프런트엔드(Workers 정적 자산)를 함께 제공합니다. 언어는 TypeScript이며 §19의 타입을 그대로 씁니다. 프런트엔드는 React + Vite SPA(정적 빌드)입니다 `[v1.10: D-07 확정]`. 근거와 구현 라이브러리 선택은 `docs/adr/ADR-0008-cloudflare-stack-and-frontend.md`에 있습니다.
 * **데이터** `[확정]`: 관계형 데이터는 Cloudflare D1, 로고 이미지는 R2에 저장합니다. D1 스키마 변경은 `wrangler` 마이그레이션 파일로만 합니다. 하나의 트랜잭션이 필요한 처리(`StartCancelAttempt`, 확정·정정 시 `ExitPoll` 응답 저장 등)는 D1의 batch(원자적 실행)로 구현합니다.
 * **스케줄러** `[확정]`:
   * 알림 예약은 `NotificationSchedule` 행(발송 예정 시각은 UTC)으로 저장하고, Cron Trigger가 10분마다 실행되어 발송 시각이 지난 `PENDING` 행을 처리합니다. Cron 표현식은 UTC 기준이므로 KST 시각을 그대로 쓰지 않습니다.
   * `MISSED_BILLED` 전이 배치는 매일 00:10 KST(= 전날 15:10 UTC)에 `BillingDate`가 오늘(KST)보다 이전인 `TRACKING`·`CANCEL_ATTEMPTED` 기록을 전이하고, 같은 날 기본 발송 시각에 `BILLING_CHECK`를 예약합니다.
 * **발송 멱등성** `[확정]`: `NotificationSchedule`은 (`trialRecordId`, `slot`, `safeEndDate`)에 유일 제약을 둡니다. 발송할 때는 `PENDING → SENDING`을 조건부 UPDATE로 선점한 행만 보내고, 성공하면 `SENT`, 실패하면 재시도 횟수를 올려 다시 `PENDING`으로 둡니다. 3회 실패하면 `FAILED`, 슬롯이 의미를 잃은 뒤(예: `BillingDate`가 지난 `ESCAPE_ALERT`)에는 `EXPIRED`로 닫습니다. `SENDING`으로 15분 넘게 남은 행은 `PENDING`으로 되돌리며, 이 경우에 한해 중복 발송 가능성을 허용합니다. `MISSED_BILLED` 전이도 상태 조건부 UPDATE로 처리해 배치가 겹쳐 실행돼도 한 번만 일어나게 합니다.
 * **외부 연동** `[확정]`: 카카오 알림톡은 비즈메시지 딜러사의 HTTP API를 Workers에서 호출하고, 템플릿 코드는 알림 종류·문구 분기별 설정값으로 둡니다. 발송은 포트(인터페이스) 뒤에 구현해 테스트 더블로 바꿀 수 있게 합니다.
+* **발표용 알림 채널** `[v1.11: D-16 확정]`: 사업자 등록 전까지는 알림톡 대신 카카오 '나에게 보내기' 메시지 API(`talk_message` 동의항목)로 발송합니다.
+  * 사용자 본인의 '나와의 채팅'으로 보냅니다. 문구 분기와 알림 링크 규칙(§6)은 알림톡과 같습니다.
+  * 발송하려면 사용자별 카카오 토큰이 필요하므로, 로그인 시 받은 refresh token을 애플리케이션 단에서 암호화해 저장합니다(§19 `KakaoMessageToken`). 동의하지 않았거나 토큰이 만료된 사용자의 슬롯은 수신 번호가 없는 경우와 같이 `SKIPPED`로 기록합니다.
+  * 검수 전 카카오 앱에서는 앱 팀원 계정만 받을 수 있으므로 발표 시연은 발표자 계정으로 합니다.
+  * 같은 `NotificationSender` 포트 뒤에 어댑터로 둡니다. 알림톡 어댑터(T31)는 사업자 등록 뒤에 추가합니다.
 * **비밀값과 개인정보**: 알림톡 API 키, 카카오 로그인 Client Secret, 세션 서명 키는 Workers Secrets로 관리하며 저장소에 커밋하지 않습니다. 전화번호는 애플리케이션 단에서 암호화해 저장합니다 `[확정]`.
 * **환경** `[확정]`: `dev`(로컬 `wrangler dev`), `staging`, `production` 세 환경을 두고 D1·R2·비밀값을 환경별로 분리합니다. `staging`에서는 알림톡을 실제로 보내지 않고 로그로 대체합니다.
 * **시계 주입**: 모든 '현재 시각'은 주입 가능한 시계에서 얻습니다(Testing Decisions와 같음).
@@ -365,10 +380,11 @@ MVP는 Cloudflare에 최종 배포합니다. 이 절의 `[제안]` 항목은 구
 * P0만 배포해도 `ExitPoll` 응답은 쌓이므로, P2 리포트의 최소 표본을 미리 확보할 수 있습니다.
 * 데이터 모델(§19)은 P0 단계부터 `kind`, `publicationStatus`, `ownerPartnerId`를 포함해 만들어, P1·P2 추가 시 핵심 테이블을 바꾸지 않게 합니다.
 * P1·P2를 MVP 배포 일정에 넣을지는 사업계획서 일정에 맞춰 확정합니다.
+* **발표용 범위** `[v1.11]`: 2026-12-09 발표에는 P0 일부를 간소화·보류한 범위와 B2B 화면 4종의 단순 버전(D-17)을 넣습니다. TASK별 범위는 `docs/implementation-plan.md` §7에 있습니다. 발표용 B2B 화면은 P1·P2 정식 구현(T41~T52)을 대신하지 않습니다.
 
 ### 19. 도메인 타입 형태 (v1.5 프로토타입 스니펫 기반, 결정 부분만 발췌, v1.8 갱신)
 
-> `[v1.9]` 아래는 모듈 명령·조회의 입력 타입입니다. HTTP 엔드포인트(경로·메서드)와 오류 응답 규격(상태 코드, 오류 코드 형식, 허용되지 않은 전이·검증 실패의 반환 형태)은 아직 정하지 않았습니다 `[결정 필요 D-06]`. 또 §16의 피처드 슬롯 구성(항목·순서), 전용 라운지의 '최근 게시 순' 정렬에 필요한 데이터(예: 게시 시각), §14 `CatalogRequest` `ADDED` 시 서비스 내 알림과 확인(읽음) 여부를 담는 타입이 없습니다 `[결정 필요 D-12]` (P1).
+> `[v1.9]` 아래는 모듈 명령·조회의 입력 타입입니다. `[v1.10: D-06 확정]` HTTP 엔드포인트(경로·메서드)와 오류 응답 규격(상태 코드, 오류 코드 형식, 허용되지 않은 전이·검증 실패의 반환 형태)은 `api/openapi.yaml`에서 정의하며, 이 절은 그 파일을 참조합니다. 또 §16의 피처드 슬롯 구성(항목·순서), 전용 라운지의 '최근 게시 순' 정렬에 필요한 데이터(예: 게시 시각), §14 `CatalogRequest` `ADDED` 시 서비스 내 알림과 확인(읽음) 여부를 담는 타입이 없습니다 `[결정 필요 D-12]` (P1).
 
 ```ts
 type CatalogItemKind = 'GUARDED_SERVICE' | 'SPONSORED_TRIAL';  // 방어 대상 서비스 vs 제휴 피처드 체험 (v1.5의 CatalogCategory를 개명)
@@ -423,6 +439,8 @@ interface CatalogItem {
   eduBenefit?: { description: string; url: string };
   supportContact: { email?: string; url?: string };
   lastVerifiedAt: string;                  // [v1.8] YYYY-MM-DD (KST), 운영자 최종 검증일
+  publishedAt?: string;                    // [v1.11: D-12 일부] PUBLISHED가 된 시각(UTC), 라운지 '최근 게시 순' 정렬
+  featuredOrder?: number;                  // [v1.11: D-12 일부] 피처드 슬롯 순서(1~슬롯 수, 유일), 없으면 슬롯 미노출
 }
 
 // [v1.8] 카탈로그 목록·상세 조회 응답: 직링크와 내부 관리 필드는 노출하지 않음 (§7)
@@ -470,6 +488,7 @@ interface StartCancelAttemptResult {
   escapeLink: string;
   escapeLinkFallbackUrl?: string;
   escapePattern: EscapePattern; // 클라이언트가 PC 안내 표시 여부를 결정
+  forcedChannel?: 'APP' | 'PC_WEB'; // [v1.10: G2 확정] PC_OR_APP_FORCED일 때 앱/PC 웹 분기 판단용
 }
 
 // 해지 완료 확정: 기록에 응답이 없으면(TRACKING에서 확정) exitReason 필수
@@ -536,6 +555,7 @@ type UserRole = 'USER' | 'OPERATOR' | 'ADMIN';
 interface User {
   id: string;
   kakaoId: string;
+  nickname?: string;             // [v1.10: G6 확정] 카카오 프로필 닉네임(선택), 탈퇴 시 삭제(§15)
   phoneNumberEncrypted?: string; // 알림톡 수신 번호 (암호화 저장)
   notificationEnabled: boolean;
   notificationConsentAt?: string;
@@ -558,6 +578,15 @@ interface NotificationSchedule {
   status: 'PENDING' | 'SENDING' | 'SENT' | 'FAILED' | 'EXPIRED' | 'CANCELED' | 'SKIPPED';
   attempts: number;
   lastAttemptAt?: string;
+}
+
+// [v1.11: D-16] 카카오 '나에게 보내기' 발송용 토큰. 사용자당 1건, 탈퇴 시 삭제 (§15)
+interface KakaoMessageToken {
+  userId: string;
+  refreshTokenEncrypted: string;   // 애플리케이션 단 암호화 저장
+  refreshTokenExpiresAt: string;   // UTC ISO 8601
+  scopes: string[];                // talk_message 포함 여부로 발송 가능 판단
+  updatedAt: string;
 }
 
 interface CatalogRequest {
@@ -678,11 +707,12 @@ interface CatalogChangeLog {
   * `ExitPoll` 불변식: `StartCancelAttempt`에서 응답 저장과 전이가 함께 반영되거나 함께 실패하는지, `TRACKING`·`MISSED_BILLED`에서 응답 없이 `CANCELED_CONFIRMED`로 가는 요청 거부, `CANCEL_ATTEMPTED`에서 넘어간 기록의 기존 응답 보존.
   * 알림 스케줄: D-3/D-1 발송 대상, `CANCEL_ATTEMPTED` 시 D-1을 `CANCEL_CONFIRM_CHECK`로 교체, 당일 20:00 해지 확인 알림과 그 이후 시도 기록의 미발송, 늦은 등록 즉시 알림(`BillingDate` 당일 등록 포함)과 세 가지 문구 분기(글로벌·국내 각각), 종료 상태 전이 시 알림 취소, `AccessRetentionPolicy`별 문구 분기.
   * `SavedAmount`: `SafeEndDate` 당일 확정 포함, 다음 날 확정·정정 확정·`BILLED_CONFIRMED` 제외, 합산 후 `monthlyPrice`를 바꿔도 `savedAmount`가 바뀌지 않음.
-  * `[v1.8]` 기록 수정: 허용 상태(`TRACKING`·`CANCEL_ATTEMPTED`)와 거부 상태, 수정 후 `BillingDate`가 과거이면 거부, 재계산과 알림 재예약(미래 슬롯 재예약, 정규 슬롯이 모두 지났을 때 즉시 1회).
+  * `[v1.8]` 기록 수정: 허용 상태(`TRACKING`·`CANCEL_ATTEMPTED`)와 거부 상태, 수정 후 `BillingDate`가 과거이면 거부, 재계산과 알림 재예약(미래 슬롯 재예약, 정규 슬롯이 모두 지났을 때 즉시 1회). `[v1.10: G3]` 정규 슬롯이 모두 지난 경우 상태별 처리: `TRACKING`은 `LATE_REGISTRATION` 즉시 1회, `CANCEL_ATTEMPTED`는 당일 확인 마감 시각 이전이면 `SAME_DAY_CONFIRM` 1회(글로벌 20:00, 국내는 변경일이 전날이면 당일 10:00·당일이면 1시간 뒤), 마감 시각 이후이면 추가 알림 없음. `CANCEL_ATTEMPTED` 기록에 `ESCAPE_ALERT`가 예약되지 않는지도 확인합니다.
   * `[v1.8]` 버퍼 변경 적용: 적용을 선택하면 `BillingDate`가 지나지 않은 진행 중 기록만 재계산, 선택하지 않으면 기존 기록 불변.
   * `[v1.8]` 국내 항목 당일 해지 확인 알림: 전날 시도 → 당일 10:00, 당일 시도 → 1시간 뒤, 21:00 이후 시도 → 미발송. 글로벌 항목은 20:00 유지.
   * `[v1.8]` 알림 수신 거부: `SKIPPED` 기록과 상태 전이 지속, 다시 켠 뒤에는 이후 슬롯만 발송.
   * `[v1.8]` 발송 멱등성: Cron이 겹쳐 실행되거나 `MISSED_BILLED` 배치가 두 번 돌아도 알림·전이가 한 번만 일어나는지, 00:00~09:00 KST(= 전날 UTC) 구간의 '오늘(KST)' 계산.
+  * `[v1.10: G5]` 발송 시각 설정 변경: 기본 발송 시각을 바꾼 뒤 이미 예약된 `PENDING` 행의 `sendAt`은 그대로이고, 변경 이후 새로 만들거나 재예약한 슬롯만 새 시각을 쓰는지.
   * `[v1.8]` 내 체험 목록: 탭 구분, 정렬, D-Day 표기, 상태별 행동 버튼.
 * **EscapeBridge & Recovery Module**:
   * `TRACKING` 진입 시 사유 버튼만 표시, 사유 선택 한 번으로 `EscapeLink` 반환, 재진입 시 투표 생략, 상태별 진입 허용 범위와 `MISSED_BILLED`·`BILLED_CONFIRMED` 안내 모드.
@@ -695,7 +725,7 @@ interface CatalogChangeLog {
   * `ChurnReport`: 지표 계산, `VOIDED` 제외, 최소 표본 미달 시 미발행, 소유하지 않은 항목 열람 차단, 리포트 전용 파트너의 소유 항목 열람.
   * `FeaturedEvent`: 노출 하루 1회 중복 제거.
   * `[v1.8]` `ChurnReport` 코호트(`BillingDate` 월 기준)와 분모, `ReportGrant` 범위 밖 생성 거부, 최소 표본 미달 시 생성 불가.
-* **Catalog & Marketplace Module**: `EscapeGuide` 4단계 이상 거부, `DarkPatternLevel` 원점수→등급 변환과 기준표 변경 시 재계산, `PC_OR_APP_FORCED` 항목의 `forcedChannel` 필수·그 밖의 유형에서 비어 있음 검증, `forcedChannel = APP` 항목의 대체 URL 필수 검증 `[v1.9: D-15]`, `SPONSORED_TRIAL`의 `ownerPartnerId` 필수 검증, 게시 상태 전이(`SUBMITTED → PUBLISHED`·`REJECTED`, `PUBLISHED → UNPUBLISHED`), `[v1.8]` `name`·`lastVerifiedAt` 필수와 `SPONSORED_TRIAL`의 `signupUrl` 필수 검증, 필드별 진행 중 기록 반영 규칙, 변경 이력 기록, `CatalogRequest` 중복 처리와 `ADDED` 시 요청자 알림.
+* **Catalog & Marketplace Module**: `EscapeGuide` 4단계 이상 거부, `DarkPatternLevel` 원점수→등급 변환과 기준표 변경 시 재계산, `PC_OR_APP_FORCED` 항목의 `forcedChannel` 필수·그 밖의 유형에서 비어 있음 검증, `forcedChannel = APP` 항목의 대체 URL 필수 검증 `[v1.9: D-15]`, `[v1.10: G4]` URL 스킴 검증(`signupUrl`·`supportContact.url`·`eduBenefit.url`·`escapeLinkFallbackUrl`·`CatalogRequest.serviceUrl`은 `https:` 외 거부, `escapeLink`의 커스텀 스킴은 `forcedChannel = APP`이고 `catalog.allowedDeepLinkSchemes`에 등록된 경우에만 허용, 기본값 `[]`에서는 거부), `SPONSORED_TRIAL`의 `ownerPartnerId` 필수 검증, 게시 상태 전이(`SUBMITTED → PUBLISHED`·`REJECTED`, `PUBLISHED → UNPUBLISHED`), `[v1.8]` `name`·`lastVerifiedAt` 필수와 `SPONSORED_TRIAL`의 `signupUrl` 필수 검증, 필드별 진행 중 기록 반영 규칙, 변경 이력 기록, `CatalogRequest` 중복 처리와 `ADDED` 시 요청자 알림.
 * **Identity & Account Module** `[v1.8 신규]`: 역할별 관리 API 접근 차단, 탈퇴 시 식별 정보 삭제·예약 알림 취소·관련 기록 전체 삭제(삭제 후 해당 기록이 배치·알림 예약·`ChurnReport` 집계에 나타나지 않음) `[v1.9]`, 세션 없이 알림 링크로 들어온 경우 로그인 후 원래 화면 복귀.
 * **v1.9 추가 검증 항목** `[v1.9]`: 기존 Testing Decisions에 대응 항목이 없던 스토리를 위한 검증입니다. 모두 본문 규칙을 확인하며 새 규칙을 만들지 않습니다.
   * **V-01** (스토리 2): `serviceCategory`로 조회하면 해당 분야 항목만 반환하는지. 또 목록·검색 결과에 `PUBLISHED`·`UNPUBLISHED` 항목만 포함되고 `SUBMITTED`·`REJECTED` 항목은 제외되는지(D-11).
@@ -707,6 +737,8 @@ interface CatalogChangeLog {
   * **V-08** (스토리 7, 8, 46, D-13): `UNPUBLISHED` 항목은 목록·상세에 '게시 중단' 안내와 함께 표시되고, 경로 A·경로 B·'이미 가입했어요' 어느 경로로도 새 기록이 만들어지지 않으며, `signupUrl` 버튼이 표시되지 않는지. 그 항목의 기존 기록은 알림과 브릿지 안내를 계속 받는지. 목록·상세 응답의 `publicationStatus`가 `PUBLISHED`·`UNPUBLISHED` 중 하나로만 내려가는지.
   * **V-09** (스토리 45, 47, D-14): 운영자 계정이 탈퇴하면 그 계정의 `CatalogChangeLog`·`ReportGrant`가 삭제되고, 삭제된 발급권 범위로는 리포트를 생성할 수 없는지.
   * **V-07** (스토리 44): 알림 수신을 끌 때 확인 창이 표시되고, 확인해야만 `notificationEnabled = false`가 되는지.
+* **v1.11 추가 검증 항목** `[v1.11]`:
+  * **V-10** (D-16): '나에게 보내기' 어댑터는 발송 전에 만료된 access token을 refresh token으로 갱신합니다. Kakao가 새 refresh token을 주면 암호화해 교체 저장합니다. `talk_message` 동의가 없거나 refresh token이 만료된 사용자의 슬롯은 `SKIPPED`이고, API 오류는 기존 재시도 규칙(§17)을 따릅니다. 카카오 API를 모의한 테스트로 확인하며 실제 발송 테스트는 만들지 않습니다.
 * **선행 사례(Prior art)**: 신규 코드베이스이므로 참고할 기존 테스트가 없습니다. 첫 구현 시 Trial Tracking 모듈의 테스트를 이후 모듈의 기준 사례로 삼습니다.
 
 ---
@@ -743,7 +775,7 @@ interface CatalogChangeLog {
 * `[P2]` `ownerPartnerId`로 리포트 전용 파트너를 `GuardedService`에 연결하는 방식. 용어집의 `GuardedService`는 운영자가 구축한 대중적 서비스로 정의되어 있어, 스타트업 제품이 피처드 등록 없이 리포트만 구매하는 경우 어느 종류로 등록할지 별도 결정이 필요합니다. (필드 자체는 §18에 따라 P0 데이터 모델에 포함)
 * `[P0]` `[확정: 상태 값]` `SponsoredTrial` 제출·검수 흐름과 `PublicationStatus` 값. (`PublicationStatus` 값은 P0 검색 노출 범위(D-11)에 쓰이므로 P0, 제출·검수 흐름은 P1)
 * `[P0]` `[확정]` `EscapePattern`별 브릿지 동작, `MISSED_BILLED`·`BILLED_CONFIRMED` 기록의 브릿지 안내 모드.
-* `[P1]` `FeaturedEvent` 노출 중복 제거 기준, `AlternativeMatch` 후보 선정 순서.
+* `[P1]` `[v1.11: 확정]` `FeaturedEvent` 노출 중복 제거 기준, `AlternativeMatch` 후보 선정 순서. (발표용 D-17 구현에 제안값 그대로 사용)
 * `[P1]` `MOVED_TO_ALTERNATIVE` 사유를 `AlternativeMatch` 대상에 포함하는 것은 용어집 규칙을 따랐지만, 이미 대체 서비스로 이동한 사용자라 매칭 효과가 낮을 수 있어 재검토를 권합니다.
 * `[P0]` `[확정]` `[v1.8]` `CatalogItem` 표시 필드와 로고 저장 방식, 카탈로그 변경의 필드별 진행 중 기록 반영 규칙.
 * `[P0]` `[확정]` `[v1.8]` 기록 수정 허용 상태, 알림 재예약 규칙, 국내 항목의 당일 해지 확인 알림 시점(전날 시도 10:00, 당일 시도 1시간 뒤, 21:00 이후 미발송).
@@ -776,6 +808,7 @@ interface CatalogChangeLog {
 알림톡은 정보성 메시지 전용 채널이므로 `ESCAPE_ALERT`, `CANCEL_CONFIRM_CHECK`, `BILLING_CHECK`만 보내고, `AlternativeMatch` 같은 추천·홍보성 내용은 포함하지 않습니다. 알림톡 템플릿은 사전 심사가 필요하므로 세 알림 종류, `AccessRetentionPolicy`별 문구 분기, 늦은 등록 경고 문구까지 템플릿 단위로 준비해야 합니다. 발송 실패 시 대체 채널(SMS 등) 여부는 미결입니다.
 
 ### 4. 사용자 식별 및 온보딩 (미결)
+`[v1.11]` 발표용으로는 D-16에 따라 전화번호 없이 카카오 계정의 '나에게 보내기'로 발송하므로 이 항목이 발표를 막지 않습니다. 아래 결정은 사업자 등록 후 알림톡을 도입할 때 합니다.
 알림톡 발송에는 전화번호 또는 카카오 계정 연결이 필요합니다. v1.8에서 카카오 로그인을 기본안으로 제안했습니다(§15). 남은 결정은 알림톡 수신 번호 확보 방법입니다. 카카오 로그인 동의항목으로 전화번호를 받으려면 비즈 앱 전환과 별도 검수가 필요할 수 있으므로, 그 전까지 가입 직후 전화번호를 직접 입력·인증받는 대안을 함께 검토해야 합니다. 어느 방식이든 1초 간편 등록 전에 거치는 단계는 한 화면 이내로 제한합니다.
 
 ### 5. 개인정보 및 데이터 판매
@@ -801,19 +834,21 @@ interface CatalogChangeLog {
 | ID | 결정할 내용 | 관련 위치 | 선택지 예시 | 결정 시점 |
 | :--- | :--- | :--- | :--- | :--- |
 | D-01 | `[제안]` 항목의 효력 | 머리말, §17, Further Notes §1 | **확정**: (B) P0 범위의 `[제안]`은 구현 전 확정, P1·P2는 해당 기능 착수 전 확정 | 확정 |
-| D-02 | MVP 성공 기준 | Goals §2 | **확정**: 알림톡 템플릿 사전 심사 통과 | 확정 |
+| D-02 | MVP 성공 기준 | Goals §2 | **확정**: 알림톡 템플릿 사전 심사 통과. `[v1.11]` 발표용 기준을 따로 둠(Goals §2) | 확정 |
 | D-03 | 비용 상한 | NFR 비용 | 알림톡 월 예산, Cloudflare 요금제 | 배포 전 (권장) |
 | D-04 | 성능 목표 | NFR 성능 | 목표 없음 / 주요 API 응답 시간 등 지표 지정 | 배포 전 (권장) |
 | D-05 | 접근성 기준 | NFR 접근성 | 기준 없음 / 적용할 기준 지정 | 배포 전 (권장) |
-| D-06 | HTTP 엔드포인트와 오류 응답 규격 | §19 | 이 문서에서 정함 / 구현 계획 단계의 API 계약(`api/openapi.yaml` 등)에서 정하고 이 문서는 참조 | 2단계 구현 계획 |
-| D-07 | 프런트엔드 프레임워크 | §17 | 구현 계획 단계에서 정하고 ADR(`ADR-0008` 후보 등)에 기록 | 2단계 구현 계획 |
+| D-06 | HTTP 엔드포인트와 오류 응답 규격 | §19 | **확정** `[v1.10]`: `api/openapi.yaml`에서 정하고 이 문서는 참조 | 확정 |
+| D-07 | 프런트엔드 프레임워크 | §17 | **확정** `[v1.10]`: React + Vite SPA, `docs/adr/ADR-0008-cloudflare-stack-and-frontend.md`에 기록 | 확정 |
 | D-08 | 탈퇴 사용자의 기록 처리 | §5, §15, §17, §12 | **확정**: 탈퇴 시 해당 사용자의 모든 기록 삭제 | 확정 |
-| D-09 | `MISSED_BILLED` 기록의 브릿지 안내 모드 진입 지점 | §7, §13 | 정정 화면·카드에 '다음 달 결제 막기' 추가 / 정정 후(`BILLED_CONFIRMED`)에만 제공 | 내 체험 목록·브릿지 화면 구현 전 (P0) |
+| D-09 | `MISSED_BILLED` 기록의 브릿지 안내 모드 진입 지점 | §7, §13 | **확정** `[v1.10]`: `MISSED_BILLED` 카드에 '다음 달 결제 막기' 추가 | 확정 |
 | D-10 | 스토리 번호 정책 | User Stories, §18, §20 | 현재 번호를 고정하고 새 스토리는 끝 번호부터 부여 / 영역별 고정 ID 도입 | 다음 SPEC 개정 전 |
 | D-11 | 카탈로그 목록·검색에서 게시 상태별 노출 범위 | §2 | **확정**: `PUBLISHED`·`UNPUBLISHED` 노출, `SUBMITTED`·`REJECTED` 비노출 | 확정 |
-| D-12 (P1) | P1 기능의 데이터 모델 보완: 피처드 슬롯 구성, 라운지 정렬 기준 시각, `CatalogRequest` 서비스 내 알림·확인 여부 | §14, §16, §19 | 필드 추가(예: 게시 시각, 알림 확인 시각) / 별도 타입 추가(예: 슬롯 구성, 서비스 내 알림) | P1 착수 전 |
+| D-12 (P1) | P1 기능의 데이터 모델 보완: 피처드 슬롯 구성, 라운지 정렬 기준 시각, `CatalogRequest` 서비스 내 알림·확인 여부 | §14, §16, §19 | 필드 추가(예: 게시 시각, 알림 확인 시각) / 별도 타입 추가(예: 슬롯 구성, 서비스 내 알림) | `[v1.11]` **일부 확정**: `CatalogItem.publishedAt`·`featuredOrder` 필드 추가(§19). `CatalogRequest` 서비스 내 알림은 P1 착수 전 |
 | D-13 | `UNPUBLISHED` 항목의 신규 등록 허용 여부 (D-11에서 파생) | §2, §3 | **확정**: 검색·상세에 '게시 중단' 안내와 함께 표시, 새 기록 생성 불가, `signupUrl` 버튼 비표시 | 확정 |
 | D-14 | 운영자 계정 탈퇴 시 `CatalogChangeLog`·`ReportGrant` 처리 (D-08에서 파생) | §15, §16 | **확정**: 함께 삭제 | 확정 |
 | D-15 | `PC_OR_APP_FORCED` 항목의 '전용 앱 강제'와 'PC 웹 강제' 구분 기준 (교차 검증 r1에서 발견, P0) | §2, §7, §19 | **확정**: 명시 필드 `forcedChannel: 'APP' \| 'PC_WEB'` 추가 (`PC_OR_APP_FORCED`일 때 필수) | 확정 |
+| D-16 `[v1.11]` | 사업자 미등록 상태의 발표용 알림 채널 | §17, §19, FN §4 | **확정**: 카카오 '나에게 보내기' 메시지 API, refresh token 암호화 저장 | 확정 |
+| D-17 `[v1.11]` | 발표용 B2B 화면 범위 | §11, §12, §16, §18 | **확정**: 제휴 체험 라운지·피처드 슬롯, 파트너 대리 제출·검수 콘솔, 대안 매칭 배너, 이탈 분석 리포트 4종을 실데이터 단순 집계로 구현. `ReportGrant`·최소 표본·CSV는 적용하지 않음 | 확정 |
 
 기존 미결 사항인 알림톡 수신 번호 확보 방법(§4)과 법률 검토(§5)도 함께 결정해야 합니다.
