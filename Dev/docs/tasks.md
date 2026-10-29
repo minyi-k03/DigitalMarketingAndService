@@ -36,7 +36,7 @@
 
 ## Phase 1: 기반 (P0)
 
-### T01 프로젝트 스캐폴드 — `대기`
+### T01 프로젝트 스캐폴드 — `완료`
 - **근거**: §17, ADR-0008, AGENTS §4·§7
 - **선행**: T00 (G1 반영 완료)
 - **내용**:
@@ -52,7 +52,7 @@
   - 의존성 설치 전에 사용자 확인을 받습니다.
 - **주요 파일**: `package.json`, `wrangler.jsonc`, `vitest.config.ts`, `eslint.config.js`, `AGENTS.md`
 
-### T02 shared kernel — `대기`
+### T02 shared kernel — `완료`
 - **근거**: §4 시간대 처리, §17 시계 주입, Testing Decisions
 - **선행**: T01
 - **내용**:
@@ -66,7 +66,7 @@
   - `SafeEndDate` 당일 23:59:59 KST와 다음 날 00:00:00 KST 판정 테스트 통과
 - **주요 파일**: `src/shared/kst-date.ts`, `w/platform/clock.ts`, `w/platform/errors.ts`
 
-### T03 마이그레이션 0001 (P0 스키마) — `대기`
+### T03 마이그레이션 0001 (P0 스키마) — `완료`
 - **근거**: §19, §18 (`kind`·`publicationStatus`·`ownerPartnerId` 포함), §17 유일 제약, §5 불변식
 - **선행**: T01
 - **내용**: [architecture.md §7](architecture.md#7-데이터-모델-d1-migrations0001_p0_initsql)의 10개 테이블, CHECK, 부분 UNIQUE, 인덱스, `app_settings` 기본값(발송 시각 10:00, 기준표 2/4, `catalog.allowedDeepLinkSchemes` `[]`)
@@ -77,7 +77,7 @@
   - 원격 적용은 하지 않습니다.
 - **주요 파일**: `migrations/0001_p0_init.sql`
 
-### T04 HTTP 골격 — `대기`
+### T04 HTTP 골격 — `완료`
 - **근거**: D-06, architecture §8
 - **선행**: T02
 - **내용**:
@@ -93,7 +93,7 @@
 
 ## Phase 2: Identity & Account (P0)
 
-### T05 카카오 로그인·세션 — `대기`
+### T05 카카오 로그인·세션 — `완료 (모의 검증. 실제 카카오 로그인은 N8 후 확인 필요)`
 - **근거**: §15 로그인·세션, §19 `User`(G6 확정), S16, IA "알림 링크 로그인 후 복귀"
 - **선행**: T03, T04
 - **내용**:
@@ -114,7 +114,7 @@
   - 만료 세션은 거부합니다.
 - **주요 파일**: `m/identity/*`, `w/ports/kakao-oauth.ts`, `w/adapters/kakao-oauth.ts`
 
-### T06 역할과 관리 API 차단 — `대기 (발표용 간소화: 차단과 ADMIN 시드만)`
+### T06 역할과 관리 API 차단 — `완료 (발표용 간소화: 차단과 ADMIN 시드만. 시드 스크립트는 로컬 D1에서 수동 확인, 원격은 미실행)`
 - **근거**: §16 역할·접근 제어, S47, IA "역할별 관리 API 접근 차단"
 - **선행**: T05
 - **내용**: `requireRole('OPERATOR'|'ADMIN')`, `PUT /api/admin/users/{id}/role`(ADMIN), 최초 ADMIN 부트스트랩 방법(로컬 시드 스크립트)

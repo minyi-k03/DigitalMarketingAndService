@@ -23,7 +23,7 @@
 | `../목업html/`, `../시장분석,사용자분석/`, `../index*.html` | 이전 정적 목업·기획 자료. 구독컷 애플리케이션 구현 코드가 아니다 |
 
 - **Git**: 저장소 루트는 상위 폴더 `디지털창업서비스기획과마케팅/`이고 구독컷 개발 폴더는 `Dev/`다. 작업 때마다 `git status`로 상태를 확인한다.
-- **기술 스택 및 개발 환경** (`SPEC.md` §17, `ADR-0008` 확정): Cloudflare Workers(단일 워커에서 API + 정적 자산 제공), TypeScript, React + Vite SPA(`D-07`), Hono, zod, Cloudflare D1, Cloudflare R2, Cron Trigger(10분 주기 알림 발송, 매일 15:10 UTC `MISSED_BILLED` 배치). 발표(2026-12-09) 전까지 Cloudflare production 환경에 최종 배포하는 것이 필수다(`docs/implementation-plan.md` §7, T32). 현재 Phase 0(설계·계약) 완료 상태이며, `package.json`·TypeScript·테스트 설정은 T01(프로젝트 스캐폴드)에서 구성한다.
+- **기술 스택 및 개발 환경** (`SPEC.md` §17, `ADR-0008` 확정): Cloudflare Workers(단일 워커에서 API + 정적 자산 제공), TypeScript, React + Vite SPA(`D-07`), Hono, zod, Cloudflare D1, Cloudflare R2, Cron Trigger(10분 주기 알림 발송, 매일 15:10 UTC `MISSED_BILLED` 배치). 발표(2026-12-09) 전까지 Cloudflare production 환경에 최종 배포하는 것이 필수다(`docs/implementation-plan.md` §7, T32). Phase 0(설계·계약)과 T01~T04(스캐폴드·shared kernel·마이그레이션 0001·HTTP 골격)가 완료된 상태다. 진행 상태는 `docs/tasks.md`를 따른다.
 
 ## 2. Source of Truth
 
@@ -99,11 +99,23 @@
   - `escapePattern = PC_OR_APP_FORCED`인 항목은 `forcedChannel: 'APP' | 'PC_WEB'`이 필수이며, `forcedChannel = APP`이면 `escapeLinkFallbackUrl`이 필수다(`D-15`).
   - 직링크(`escapeLink`)는 `StartCancelAttempt` 결과, `CANCEL_ATTEMPTED` 재진입(`REENTRY`), `MISSED_BILLED`·`BILLED_CONFIRMED` 안내 모드(`GUIDE_ONLY`, `D-09`)에서만 반환한다.
 - **카탈로그 변경 반영 및 범위 밖 기능 금지**: 필드별 진행 중 기록 반영 규칙(§2), `SavedAmount` 스냅샷 규칙(§8), `CatalogChangeLog`(§16)를 따른다. 대리 해지, 카드·계좌 연동, 해지 화면 크롤링, 환불 대행 발송, 미검증 서비스 직접 등록은 구현하지 않는다(Out of Scope, `ADR-0001`·`0004`·`0005`).
-- **이름 및 코딩 규칙**: 도메인 타입·필드 이름은 `SPEC.md` §19, `api/openapi.yaml`, `Glossary.md`를 따르고 *Avoid* 금지어를 식별자로 쓰지 않는다. T01에서 ESLint·Prettier·TypeScript 설정이 구성되면 확인된 규칙을 이 절에 추가한다.
+- **이름 및 코딩 규칙**: 도메인 타입·필드 이름은 `SPEC.md` §19, `api/openapi.yaml`, `Glossary.md`를 따르고 *Avoid* 금지어를 식별자로 쓰지 않는다.
+- **도구 설정** (T01에서 확인):
+  - 패키지 매니저는 npm이며 `package-lock.json`을 커밋한다. 의존성 버전은 정확한 버전으로 고정한다.
+  - TypeScript는 5.9.3이다. `typescript-eslint` 8.x는 TypeScript `<6.1`, `openapi-typescript` 7.x는 TypeScript `^5.x`를 피어로 요구하기 때문이며(두 도구 자체의 버전이 아니다), `openapi-typescript`가 TypeScript 6.x를 허용하기 전에는 6.x로 올리지 않는다.
+  - Vitest는 4.1.x다. Workers 테스트는 `@cloudflare/vitest-plugin`(`@cloudflare/vitest-pool-workers`의 후속 패키지, ADR-0008 갱신 대상)을 쓴다.
+  - tsconfig는 `tsconfig.worker.json`(`src/worker`·`src/shared`·`tests`)과 `tsconfig.web.json`(`src/web`·`src/shared`)으로 나뉜다.
+  - Prettier는 `*.md`·`docs/`·`api/`를 건드리지 않는다(`.prettierignore`).
+  - ESLint(flat config, `eslint.config.js`)는 다음을 자동 검사한다.
+    - 다른 모듈의 `domain`·`application`·`infra` import 금지(`no-restricted-imports`, `tests/`는 제외)
+    - `src/web`의 `src/worker` import 금지
+    - 모듈 `domain`·`application`의 `new Date()`·`Date.now()` 금지(`no-restricted-syntax`, 인자가 있는 `new Date(x)`와 `Date.UTC`는 허용)
+  - `src/shared/api-types.ts`는 `npm run gen:api`로 생성하며 직접 고치지 않는다.
 
 ## 5. Skills Usage and Multi-Agent Rules
 
 - 작업 목적에 맞는 설치된 Skill만 골라 해당 `SKILL.md`를 읽고 따르며, 상세 절차를 이 문서에 옮겨 적지 않는다.
+- **필수 호출**: 구현은 `tdd`를 따르고, 완료 보고 전에는 `verification-before-completion`을 따르며, 리뷰는 `code-review`를 쓴다. 새 Skill은 설치하지 않는다.
 - **에이전트별 Skill 원본 경로**:
   - Codex / 공통: `C:/Users/june1/.agents/skills/<skill>/SKILL.md`
   - Antigravity: `C:/Users/june1/.gemini/config/skills/<skill>/SKILL.md`
@@ -138,9 +150,20 @@
 
 ## 7. Verification
 
-- **명령어**: 현재 Phase 0 상태라 `package.json`이 없으므로 verify 명령은 **미확정**이다. 명령을 지어내거나 실행하지 않은 검증을 통과했다고 보고하지 않는다. T01 완료 시 실제 확인한 명령(예정: `npm test`, `npm run typecheck`, `npm run lint`, `npm run build`, `npm run gen:api`)을 이 절에 기록한다.
+- **명령어** (T01에서 실제 실행해 확인): 검증 진입점은 `npm run verify`(`lint` → `typecheck` → `test` → `build` 순서)이며 작업 완료 전에 실행한다. 실행하지 않은 검증을 통과했다고 보고하지 않는다.
+
+| 명령 | 내용 |
+| :--- | :--- |
+| `npm run lint` | ESLint (모듈 경계·`Clock` 규칙 포함) |
+| `npm run typecheck` | worker·web tsconfig 각각 `tsc --noEmit` |
+| `npm test` | Vitest + `@cloudflare/vitest-plugin`(로컬 D1, `migrations/` 자동 적용) |
+| `npm run build` | `vite build`(→`dist/web`) 후 `wrangler deploy --dry-run --env production`(원격 배포 없음) |
+| `npm run gen:api` | `api/openapi.yaml` → `src/shared/api-types.ts` |
+| `npm run format` | Prettier 쓰기 모드 |
+| `npm run seed:admin -- <카카오 회원번호> [--remote]` | 먼저 로그인한 계정을 `ADMIN`으로 승격(로컬 D1 기본). `--remote`는 production D1이므로 사용자 승인 후에만 실행 |
+| `npm run dev` / `npm run dev:web` | `wrangler dev`(웹 빌드 후) / Vite 개발 서버(`/api`는 `localhost:8787`로 프록시) |
 - **수용 기준 연결**: 테스트는 `describe('TT 알림 스케줄 [S13][S26]')`, `it('V-08 UNPUBLISHED 항목은 경로 A 생성 거부')`처럼 `SPEC.md` Testing Decisions 항목·`V-01~V-10`·사용자 스토리 번호로 추적할 수 있게 이름 짓는다(`docs/architecture.md` §10, `docs/tasks.md` 추적표 2).
-- **테스트 방식**: Vitest + `@cloudflare/vitest-pool-workers`로 마이그레이션을 적용한 격리 로컬 D1에서 실행한다. 각 모듈 `application/` 명령·조회 핸들러를 테스트 seam(`[확정]`)으로 삼아 관찰 가능한 결과만 검증하고, 경계에서 `FakeClock`, `FakeNotificationSender`, `FakeRecipientResolver`만 테스트 더블로 교체한다. 외부 HTTP 어댑터(`kakao-memo`, 카카오 OAuth, 알림톡)의 단위 테스트만 예외로 `fetch`를 모의한다(V-10). 실제 알림톡이나 카카오 메시지를 보내는 테스트는 만들지 않는다.
+- **테스트 방식**: Vitest + `@cloudflare/vitest-plugin`으로 마이그레이션을 적용한 격리 로컬 D1에서 실행한다. 각 모듈 `application/` 명령·조회 핸들러를 테스트 seam(`[확정]`)으로 삼아 관찰 가능한 결과만 검증하고, 경계에서 `FakeClock`, `FakeNotificationSender`, `FakeRecipientResolver`, `FakeKakaoOAuthClient`(카카오 OAuth 포트)만 테스트 더블로 교체한다. 외부 HTTP 어댑터(`kakao-memo`, 카카오 OAuth, 알림톡)의 단위 테스트만 예외로 `fetch`를 모의한다(V-10). 실제 알림톡이나 카카오 메시지를 보내는 테스트는 만들지 않는다.
 - **반드시 다룰 경계**:
   - 상태 머신의 모든 허용 전이와 대표 불허 전이(`KEPT → CANCEL_ATTEMPTED`, `CANCEL_ATTEMPTED → VOIDED`, `BILLED_CONFIRMED`의 모든 전이), `ExitPoll` 불변식과 D1 `batch` 원자성
   - 글로벌/국내 항목별 `SafeEndDate`, 월말·연말·윤년·평년 경계(`KstDate`)

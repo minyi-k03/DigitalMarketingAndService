@@ -71,7 +71,7 @@ Dev/
           index.ts            #   공개 명령·조회 인터페이스 (다른 모듈은 이것만 import)
     web/                      # React SPA
   tests/
-    support/                  # FakeClock, FakeNotificationSender, FakeRecipientResolver, 픽스처 빌더
+    support/                  # FakeClock, FakeNotificationSender, FakeRecipientResolver, FakeKakaoOAuthClient, 픽스처 빌더
     catalog/ trial-tracking/ escape-bridge/ identity/ analytics/
     http/                     # 소수의 HTTP 계약 테스트
     scenarios/                # S-01 ~ S-05
@@ -155,7 +155,8 @@ Dev/
 
 | 구분 | 이름 | 근거 |
 | :--- | :--- | :--- |
-| 명령 | `loginWithKakao(code, state)` → 세션 발급, `returnTo` | §15 |
+| 명령 | `startKakaoLogin(returnTo?)` → 인가 URL과 `nonce`(HTTP 계층이 쿠키에 심음) | §15 |
+| 명령 | `loginWithKakao(code, state, nonce)` → 세션 발급, `returnTo` | §15 |
 | 명령 | `logout(sessionToken)` | §15 |
 | 명령 | `setNotificationEnabled(userId, enabled)` | §15, V-07 |
 | 명령 | `withdraw(userId)` | §15 D-08·D-14 |
@@ -421,6 +422,7 @@ RETURNING id, safe_end_date, billing_date;
 | 422 | `CATALOG_ITEM_NOT_PUBLISHED` | `UNPUBLISHED` 등 항목에 새 기록 생성 |
 | 422 | `TRIAL_ALREADY_ENDED` | 계산된 `BillingDate`가 오늘 이전 |
 | 422 | `BRIDGE_NOT_AVAILABLE` | 브릿지 진입이 허용되지 않는 상태 |
+| 500 | `INTERNAL_ERROR` | 예상하지 못한 서버 오류. 내부 정보 없이 응답하고 오류 종류(`name`)만 로그에 남김 |
 
 ---
 
@@ -432,6 +434,8 @@ RETURNING id, safe_end_date, billing_date;
   - 상태를 바꾸는 요청은 SameSite=Lax에 더해 `Origin` 헤더가 자기 도메인인지 확인해 CSRF를 막습니다.
 - **카카오 OAuth**
   - `state`는 `{ nonce, returnTo }`를 세션 서명 키(HMAC)로 서명한 값입니다.
+  - 로그인 CSRF를 막기 위해 같은 `nonce`를 로그인 시작 응답의 쿠키(`sc_login_nonce`, HttpOnly·Secure·SameSite=Lax·Path=`/auth/kakao`·Max-Age 10분)에 심고, 콜백에서 쿠키와 `state` 안의 `nonce`가 같을 때만 로그인을 완료합니다.
+  - 사용자가 동의 화면에서 취소해 `error` 쿼리로 돌아오면 `/?loginError=access_denied`(그 밖의 오류는 `failed`)로 이동합니다.
   - `returnTo`는 `/`로 시작하는 내부 경로만 허용합니다(`//` 금지). 열린 리다이렉트를 막기 위해서입니다.
 - **권한**
   - 모든 사용자 API는 `trial_records.user_id = session.userId`를 쿼리 조건에 넣습니다.
@@ -450,8 +454,8 @@ RETURNING id, safe_end_date, billing_date;
 
 ## 10. 테스트 구조 (Testing Decisions)
 
-- **도구**: Vitest와 `@cloudflare/vitest-pool-workers`. 테스트마다 마이그레이션을 적용한 격리 D1에서 돌려 batch 원자성, CHECK·UNIQUE 제약을 실제로 확인합니다.
-- **seam**: 각 모듈 `application/`의 명령·조회 핸들러입니다. 경계에서 교체하는 것은 `FakeClock`, `FakeNotificationSender`, `FakeRecipientResolver`뿐입니다. 순수 함수(알림 계획기·전이표·날짜)도 공개 핸들러를 통해 확인하는 것이 기본입니다. 경계값이 많은 날짜 산정만 예외로 `shared`의 공개 유틸을 직접 테스트합니다.
+- **도구**: Vitest와 `@cloudflare/vitest-plugin`(ADR-0008). 테스트마다 마이그레이션을 적용한 격리 D1에서 돌려 batch 원자성, CHECK·UNIQUE 제약을 실제로 확인합니다.
+- **seam**: 각 모듈 `application/`의 명령·조회 핸들러입니다. 경계에서 교체하는 것은 `FakeClock`, `FakeNotificationSender`, `FakeRecipientResolver`, `FakeKakaoOAuthClient`뿐입니다. 순수 함수(알림 계획기·전이표·날짜)도 공개 핸들러를 통해 확인하는 것이 기본입니다. 경계값이 많은 날짜 산정만 예외로 `shared`의 공개 유틸을 직접 테스트합니다.
 - **이름 규칙**: `describe('TT 알림 스케줄 [S13][S26]')`, `it('V-08 UNPUBLISHED 항목은 경로 A 생성 거부')`처럼 Testing Decisions 항목과 스토리 번호를 붙입니다(AGENTS §7).
 - **HTTP 테스트**는 소수만 둡니다: Auto-fill 기본값 주입, problem+json 형태, 401·403 차단, 공개 응답에 `escapeLink`가 없는지.
 - **시나리오**: `tests/scenarios/S-01 … S-05`는 `FakeClock`을 진행시키며 Cron 핸들러를 직접 호출해 SPEC의 핵심 흐름 전체를 확인합니다.

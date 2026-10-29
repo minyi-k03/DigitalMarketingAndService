@@ -6,6 +6,8 @@
 본 가이드는 **Google Antigravity**, **Claude Code**, **OpenAI Codex** 세 에이전트와 멀티 모델(Gemini, Claude, OpenAI)을 함께 활용하는 **해커톤(24~48시간·6시간 현장)·일반 프로젝트 단계별 워크플로우**와, 에이전트가 안정적으로 코드를 구현·검증할 수 있도록 돕는 **하네스 엔지니어링(Harness Engineering) 구축 지침**을 하나로 통합한 매뉴얼입니다. 팀 협업과 개인 프로젝트 모두에 같은 구조를 적용합니다.
 > 
 > - **기준일:** 2026-10-21 (모델 가용성, 도구 경로, 기능 지원 여부는 이 날짜 기준이며 변경될 수 있습니다)
+> - **Skills 기준일:** 2026-10-28 (단계별 Skills 매핑은 PART 1 §4에서만 관리)
+> - **하네스 원칙 검토일:** 2026-10-28 (OpenAI·Anthropic 공식 사례, martinfowler.com, ICLR 2026 연구, Skills 보안 감사 보고서와 대조. 근거는 문서 끝 「참고한 공식 자료」)
 > - **변경 이력:** 문서 맨 끝의 「문서 변경 이력」 참고
 
 # PART 1. 프로젝트 유형별 개발 워크플로우 및 운영 규칙
@@ -18,11 +20,8 @@
 
 | **등급** | **용도** | **Gemini (Antigravity)** | **Claude (Claude Code · Antigravity)** | **OpenAI (Codex)** |
 | --- | --- | --- | --- | --- |
-| **T1 · 상위 추론** | 설계, 복잡한 버그, 중요 리뷰 | Gemini 4 Argon |  |  |
-| (High) | Claude Opus 5.5 |  |  |  |
-| (High) | GPT-6 Astra |  |  |  |
-| **T2 · 표준** | 일반 구현, 테스트 작성, 일반 리뷰 | Gemini 3.8 Flash (High) | Claude Sonnet 5.5 |  |
-| (High) | GPT-6.1 Sol |  |  |  |
+| **T1 · 상위 추론** | 설계, 복잡한 버그, 중요 리뷰 | Gemini 4 Argon (High) ※1 | Claude Opus 5.5 (High) | GPT-6 Astra ※3 |
+| **T2 · 표준** | 일반 구현, 테스트 작성, 일반 리뷰 | Gemini 3.8 Flash (High) | Claude Sonnet 5.5 (High) | GPT-6.1 Sol |
 | **T3 · 경량** | 아이디어 초안, 단순·반복 작업 | Gemini 3.8 Flash (Low~Medium) | Claude Haiku 5.5 ※2 | GPT-6 Luna |
 - ※1 플랜 조건은 §0-3 참고.
 - ※2 Claude Code 모델 목록(`/model`)에 Haiku 5.5가 없으면 Sonnet 5.5 (low)로 대체합니다.
@@ -89,18 +88,20 @@
 
 - 해커톤에서는 빠른 의사결정과 데모 구현이 핵심이므로 전체 교차 검증은 **2~4회** 내외로 유지합니다.
 - 문서는 최대한 간결하게 작성하며, **각 `.md` 파일은 한 화면 안에 들어오는 분량**이면 충분합니다.
-- 표의 슬래시 명령(`/brainstorming` 등)은 모두 **Skills**입니다. 세 에이전트에서 호출하려면 `.agents/skills/`(원본)와 `.claude/skills/`(동기화 사본)에 모두 존재해야 합니다(PART 3 §4 참고).
+- 표의 슬래시 명령(`/grill-with-docs` 등)은 모두 **Skills**입니다. 세 에이전트에서 호출하려면 `.agents/skills/`(원본)와 `.claude/skills/`(동기화 사본)에 모두 존재해야 합니다(PART 3 §4 참고).
+- 스킬별 출처·적용 조건은 §4에서 관리합니다. **†** 는 추가 설치가 필요한 스킬, **조건부**는 기술 스택이 맞을 때만 쓰는 스킬(React·Next.js → `vercel-react-best-practices`, Postgres → `supabase-postgres-best-practices`, 랜딩·소개 페이지 → `design-taste-frontend`, Vercel 배포 → `/deploy-to-vercel`)입니다.
+- `mattpocock/skills`를 쓰므로 사전에 `/setup-matt-pocock-skills`†를 한 번 실행합니다(§4-3 ①).
 
 | **단계 (명령/스킬)** | **업무** | **주 담당 모델 · 환경** | **추론 수준** | **교차 검증 (횟수)** | **결과물** |
 | --- | --- | --- | --- | --- | --- |
-| **1** (`/brainstorming`) | 주제·심사기준 분석 및 아이디어 브레인스토밍 | Gemini 3.8 Flash · Desktop | High | 생략 (0회) | `docs/00-brainstorm.md` (아이디어 후보, 심사기준별 점수표, 팀원별 사용 가능 모델) |
-| **2** (`/research`, `/grill-with-docs`, `/domain-modeling`, `/grilling`) | 아이디어 확정 및 MVP 범위 정의 | Gemini 4 Argon · Desktop + 팀원 (불가 시 Claude OPUS 5.5) | High | 권장, Claude T1 Medium (1회) ※대체 시 Codex T1 | `docs/01-mvp-scope.md` (문제 정의, 필수/제외 기능, 성공 기준), `docs/reviews/01-review-r1.md` |
-| **3** | 기능 목록·데모 시나리오 작성 및 **`SPEC.md` 생성** | Gemini 4 Argon · Antigravity 생성 후 Claude OPUS 5.5 으로 교차검증 | Medium | 생략 (2회) | `docs/02-features.md`, `docs/02-demo-scenario.md` (데모 클릭 순서, 보여줄 화면), **`SPEC.md`** |
-| **4** | 구현 계획 및 Task 분할 | Claude OPUS 5.5 · Claude Code (Plan 모드) | High | 사용자 승인 필수 (승인 1회, 재승인 최대 1회) | `docs/03-plan.md` (Task 목록, 담당 에이전트·디렉터리), `docs/03-api-contract.md` (엔드포인트, 요청·응답 형식), `AGENTS.md` (공통 규칙), `CLAUDE.md` (`@AGENTS.md` import) |
-| **5** | 프론트엔드·백엔드 병렬 개발 | **주:** Claude T2 · Claude Code / **단순 작업:** Gemini T3 · Antigravity / **선택:** Codex T2 (독립 모듈) | Claude T2 Medium / Gemini T3 Low / Codex T2 Medium | 생략 (0회) | 소스 코드 (`/backend`, `/frontend`), `.env.example`, `README.md` (실행 방법) |
-| **6** | 통합 및 버그 수정 | Claude Sonnet5.5 · Claude Code (막히면 Claude OPUS) | T2 Medium / T1 High | 데모 핵심 경로만 필수, Codex T1 Medium (1회, 치명적 버그 시 최대 2회) | `docs/bugs.md` (버그·해결 여부), `docs/reviews/06-review-r1.md` |
-| **7** | 배포 및 데모 리허설 | Claude T2 · Claude Code | Low | 생략, 스모크 테스트로 대체 (0회) | 배포 URL, `docs/07-deploy.md` (배포 방법), 데모 백업 영상 (배포 장애 대비) |
-| **8** | 발표 자료 및 피치 스토리 | **초안:** Gemini T3 / **검토:** Gemini T1 · Antigravity | Low → Medium | 선택 (0~1회) | `docs/08-pitch.md` (발표 스크립트, 예상 질문·답변), 발표 슬라이드 |
+| **1** (스킬 없음) | 주제·심사기준 분석 및 아이디어 브레인스토밍 | Gemini 3.8 Flash · Desktop | High | 생략 (0회) | `docs/00-brainstorm.md` (아이디어 후보, 심사기준별 점수표, 팀원별 사용 가능 모델) |
+| **2** (`/grill-with-docs`, 필요 시 `/research`) | 아이디어 확정 및 MVP 범위 정의 | Gemini 4 Argon · Desktop + 팀원 (불가 시 Claude OPUS 5.5) | High | 권장, Claude T1 Medium (1회) ※대체 시 Codex T1 | `docs/01-mvp-scope.md` (문제 정의, 필수/제외 기능, 성공 기준), `docs/02-glossary.md`·`docs/adr/` (`/grill-with-docs`가 갱신), `docs/reviews/01-review-r1.md` |
+| **3** (`/to-spec`) | 기능 목록·데모 시나리오 작성 및 **`SPEC.md` 생성** | Gemini 4 Argon · Antigravity 생성 후 Claude OPUS 5.5 으로 교차검증 | Medium | 생략 (2회) | `docs/02-features.md`, `docs/02-demo-scenario.md` (데모 클릭 순서, 보여줄 화면), **`SPEC.md`** |
+| **4** (Plan 모드 + `/to-tickets`†) | 구현 계획 및 Task 분할 | Claude OPUS 5.5 · Claude Code (Plan 모드) | High | 사용자 승인 필수 (승인 1회, 재승인 최대 1회) | `docs/03-plan.md` (Task 목록, 담당 에이전트·디렉터리), `docs/progress.md` (§3 ⑦), `docs/03-api-contract.md` (엔드포인트, 요청·응답 형식), `AGENTS.md` (공통 규칙), `CLAUDE.md` (`@AGENTS.md` import) |
+| **5** (`verification-before-completion`, 선택 `/implement`†, 조건부 스택 스킬) | 프론트엔드·백엔드 병렬 개발 | **주:** Claude T2 · Claude Code / **단순 작업:** Gemini T3 · Antigravity / **선택:** Codex T2 (독립 모듈) | Claude T2 Medium / Gemini T3 Low / Codex T2 Medium | 생략 (0회) | 소스 코드 (`/backend`, `/frontend`), `.env.example`, `README.md` (실행 방법) |
+| **6** (`/diagnosing-bugs`†, 검증 시 `/code-review`, `agent-browser`) | 통합 및 버그 수정 | Claude Sonnet5.5 · Claude Code (막히면 Claude OPUS) | T2 Medium / T1 High | 데모 핵심 경로만 필수, Codex T1 Medium (1회, 치명적 버그 시 최대 2회) | `docs/bugs.md` (버그·해결 여부), `docs/reviews/06-review-r1.md` |
+| **7** (조건부 `/deploy-to-vercel`, `agent-browser`) | 배포 및 데모 리허설 | Claude T2 · Claude Code | Low | 생략, 스모크 테스트로 대체 (0회) | 배포 URL, `docs/07-deploy.md` (배포 방법), 데모 백업 영상 (배포 장애 대비) |
+| **8** (`/pptx`) | 발표 자료 및 피치 스토리 | **초안:** Gemini T3 / **검토:** Gemini T1 · Antigravity | Low → Medium | 선택 (0~1회) | `docs/08-pitch.md` (발표 스크립트, 예상 질문·답변), 발표 슬라이드 |
 
 ### 해커톤 권장 디렉터리 구조
 
@@ -113,10 +114,11 @@ hackathon/
 ├── .claude/skills/           # Skills 동기화 사본 (Claude Code, 직접 수정 금지)
 └── docs/
     ├── 00-brainstorm.md      01-mvp-scope.md
-    ├── 02-features.md        02-demo-scenario.md
-    ├── 03-plan.md            03-api-contract.md
+    ├── 02-features.md        02-demo-scenario.md   02-glossary.md
+    ├── 03-plan.md            03-api-contract.md    progress.md
     ├── 07-deploy.md          08-pitch.md
     ├── bugs.md
+    ├── adr/   agents/        # agents/: setup-matt-pocock-skills 설정
     └── reviews/
 ```
 
@@ -134,6 +136,7 @@ hackathon/
 - **막힘 20분 규칙:** 한 문제로 20분 이상 막히면 T1으로 전환하거나, 해당 기능을 Non-goals로 옮겨 Mock·하드코딩으로 대체합니다.
 - **첫 배포는 1:40까지:** 빈 화면이라도 먼저 배포해 배포 환경 문제를 초반에 드러냅니다.
 - **4:30 기능 동결:** 이후에는 버그 수정, 배포, 발표 준비만 합니다.
+- **Skills 최소화:** 표에 적은 스킬만 씁니다. `/brainstorming`은 새 프로젝트를 항상 무거운 아키텍처 경로로 처리하므로 쓰지 않고, `/to-spec`(경량 템플릿과 구조가 다름)과 `/implement`·`/tdd`(테스트 우선, 1-B는 테스트 코드를 쓰지 않음)도 쓰지 않습니다(§4).
 
 ### 사전 준비 (행사 전)
 
@@ -144,20 +147,22 @@ hackathon/
 - **경량 `verify`:** 아래 「경량 `verify`」 기준으로 미리 구성하고 실행되는지 확인합니다.
 - **`SPEC.md` 빈 템플릿:** 아래 경량 템플릿을 미리 넣어 둡니다.
 - **배포 환경:** 배포 플랫폼 계정 로그인, 필요한 환경 변수 목록 정리.
+- **Skills 설치:** `/grilling`, `verification-before-completion`, `agent-browser`, `/pptx`와 스택에 맞는 조건부 스킬만 `.agents/skills/`에 설치하고 sync합니다. `/to-tickets`나 `/diagnosing-bugs`를 쓸 경우 `/setup-matt-pocock-skills`를 미리 실행합니다(블록은 `AGENTS.md`에, §4-3 ①). 이때 생기는 `docs/agents/`는 「단일 문서」 원칙의 유일한 예외이며, 이슈 트래커는 로컬 마크다운으로 지정합니다. `/grilling`만 쓴다면 실행하지 않아도 됩니다. `setup-pre-commit`은 대회 규정과 일정이 허락할 때만 구성합니다.
+- **MCP:** 브라우저 검증 등에 MCP 서버를 쓴다면 행사 전에 연결과 인증까지 끝냅니다(PART 3 §9).
 - **모델 확인:** 참가자별 요금제와 사용 가능 모델·한도를 확인하고(§0-3), 세 에이전트에서 규칙과 Skills가 적용되는지 확인합니다(§3 ⑤).
 
 ### 현장 타임라인 (총 360분)
 
 | **시간** | **단계 (명령/스킬)** | **업무** | **주 담당 모델 · 환경** | **추론 수준** | **교차 검증 (횟수)** | **결과물** |
 | --- | --- | --- | --- | --- | --- | --- |
-| **0:00–0:40** | **1** 기획 및 `SPEC.md` 작성 (`/brainstorming`, `/grilling`) | 주제·심사기준 분석, 아이디어 확정, 데모 시나리오 작성 | **후보 생성:** Gemini T2 · Antigravity / **확정·작성:** Gemini T1 · Antigravity (불가 시 Claude T1) | High / Medium | 생략 (2단계에서 함께 검증) | **`SPEC.md`** (1~4 섹션) |
-| **0:40–1:10** | **2** 구현 계획·Task 분할 | Plan 모드로 Task와 디렉터리 분할, Mock 대상 확정 | Claude T1 · Claude Code (Plan 모드) | High | **필수 1회 (10분 제한):** Codex T1이 `SPEC.md`와 계획을 함께 검토 + 사용자 승인 1회 | `SPEC.md` 갱신 (5. Task Split) |
-| **1:10–1:40** | **3** 뼈대 및 첫 배포 | 프로젝트 골격 생성, `verify` 통과 확인, 빈 화면이라도 배포 | Claude T2 · Claude Code | Medium | 생략 | 배포 URL, `.env.example` |
-| **1:40–4:00** | **4** 해피 패스 병렬 구현 | 데모 시나리오에 나오는 화면·기능만 구현, Non-goals는 Mock·하드코딩 처리, Task 완료마다 `verify` 실행 | **주:** Claude T2 · Claude Code / **UI·단순:** Gemini T3 · Antigravity (브라우저 확인) / **선택:** Codex T2 (독립 모듈) | Medium / Low / Medium | 생략, `verify`로 대체 (0회) | 소스 코드 (`/backend`, `/frontend`) |
-| **2:30–4:45** (병렬, 선택) | **5** 발표 자료 초안 | 데모 시나리오를 바탕으로 발표 스크립트·슬라이드 초안 작성 | Gemini T3 · Antigravity | Low | 생략 | `pitch.md`, 슬라이드 초안 |
-| **4:00–4:45** | **6** 통합·버그 수정, **4:30 기능 동결** | 프론트-백엔드 연동, 데모 클릭 순서대로 스모크 테스트 | Claude T2 · Claude Code (막히면 Claude T1) | Medium / High | **데모 경로만 1회:** Codex T1이 데모 경로 코드의 런타임 오류 가능성 점검 | 데모 경로가 끝까지 동작하는 상태 |
-| **4:45–5:15** | **7** 최종 배포 및 백업 영상 | 배포 환경에서 데모 경로 확인 후 백업 영상 최우선 녹화 | Claude T2 · Claude Code | Low | 생략, 스모크 테스트로 대체 (0회) | 배포 URL, 데모 백업 영상 |
-| **5:15–6:00** | **8** 발표 마무리 및 리허설 | 구현 화면 스크린샷 반영, 예상 질문·답변 준비, 리허설 2회 | **검토:** Gemini T1 · Antigravity | Medium | 생략 | 최종 슬라이드, `pitch.md` |
+| **0:00–0:40** | **1** 기획 및 `SPEC.md` 작성 (`/grilling`) | 주제·심사기준 분석, 아이디어 확정, 데모 시나리오 작성 | **후보 생성:** Gemini T2 · Antigravity / **확정·작성:** Gemini T1 · Antigravity (불가 시 Claude T1) | High / Medium | 생략 (2단계에서 함께 검증) | **`SPEC.md`** (1~4 섹션) |
+| **0:40–1:10** | **2** 구현 계획·Task 분할 (Plan 모드, 선택 `/to-tickets`†: 결과는 `SPEC.md` 5절에 기록) | Plan 모드로 Task와 디렉터리 분할, Mock 대상 확정 | Claude T1 · Claude Code (Plan 모드) | High | **필수 1회 (10분 제한):** Codex T1이 `SPEC.md`와 계획을 함께 검토 + 사용자 승인 1회 | `SPEC.md` 갱신 (5. Task Split) |
+| **1:10–1:40** | **3** 뼈대 및 첫 배포 (조건부 `/deploy-to-vercel`) | 프로젝트 골격 생성, `verify` 통과 확인, 빈 화면이라도 배포 | Claude T2 · Claude Code | Medium | 생략 | 배포 URL, `.env.example` |
+| **1:40–4:00** | **4** 해피 패스 병렬 구현 (`verification-before-completion`, 조건부 스택 스킬) | 데모 시나리오에 나오는 화면·기능만 구현, Non-goals는 Mock·하드코딩 처리, Task 완료마다 `verify` 실행 | **주:** Claude T2 · Claude Code / **UI·단순:** Gemini T3 · Antigravity (브라우저 확인) / **선택:** Codex T2 (독립 모듈) | Medium / Low / Medium | 생략, `verify`로 대체 (0회) | 소스 코드 (`/backend`, `/frontend`) |
+| **2:30–4:45** (병렬, 선택) | **5** 발표 자료 초안 (`/pptx`) | 데모 시나리오를 바탕으로 발표 스크립트·슬라이드 초안 작성 | Gemini T3 · Antigravity | Low | 생략 | `pitch.md`, 슬라이드 초안 |
+| **4:00–4:45** | **6** 통합·버그 수정, **4:30 기능 동결** (`agent-browser`로 스모크 테스트, 선택 `/diagnosing-bugs`†) | 프론트-백엔드 연동, 데모 클릭 순서대로 스모크 테스트 | Claude T2 · Claude Code (막히면 Claude T1) | Medium / High | **데모 경로만 1회:** Codex T1이 데모 경로 코드의 런타임 오류 가능성 점검 (스킬 없이 프롬프트로, `/code-review`는 표준·spec 축이라 목적이 다름) | 데모 경로가 끝까지 동작하는 상태 |
+| **4:45–5:15** | **7** 최종 배포 및 백업 영상 (조건부 `/deploy-to-vercel`, `agent-browser`) | 배포 환경에서 데모 경로 확인 후 백업 영상 최우선 녹화 | Claude T2 · Claude Code | Low | 생략, 스모크 테스트로 대체 (0회) | 배포 URL, 데모 백업 영상 |
+| **5:15–6:00** | **8** 발표 마무리 및 리허설 (`/pptx`) | 구현 화면 스크린샷 반영, 예상 질문·답변 준비, 리허설 2회 | **검토:** Gemini T1 · Antigravity | Medium | 생략 | 최종 슬라이드, `pitch.md` |
 - 5단계를 병렬로 진행할 여력이 없으면 발표 자료는 8단계에서 초안부터 작성합니다. 이 경우 리허설은 1회로 줄입니다.
 - 2단계 검증에서 Codex T1을 쓸 수 없으면 §0-3 대체 규칙을 따르되, 작성 모델(Claude)과 다른 계열이 검증하도록 합니다.
 
@@ -193,7 +198,7 @@ PART 2 §2-3의 템플릿에서 비기능 요구사항, 위험 요소, 테스트
 - (엔드포인트, 요청·응답 JSON 형식)
 
 ## 5. Task Split
-- (Task, 담당 에이전트, 작업 디렉터리)
+- (Task, 담당 에이전트, 작업 디렉터리, 상태: 대기/진행/통과/보류)
 ```
 
 ### 경량 `verify`
@@ -218,17 +223,19 @@ hackathon-6h/
 ## 2. 프로젝트 워크플로우 (캡스톤 · 일반 프로젝트)
 
 - 중장기 프로젝트나 캡스톤 디자인에서는 요구사항 검증, 아키텍처 설계, 테스트 및 산출물 문서화의 정합성을 높이는 데 집중합니다.
+- 스킬 표기(†, 조건부)는 1-A와 같으며, 출처·적용 조건은 §4를 따릅니다. 프로젝트 시작 시 `/setup-matt-pocock-skills`†를 한 번 실행합니다(§4-3 ①).
+- 7단계의 CI/CD 설정(`.github/workflows/`)을 만드는 스킬은 없으므로 PART 3 §6에 따라 구성합니다.
 
-| **단계** | **업무** | **주 담당 모델 · 환경** | **추론 수준** | **교차 검증 (횟수)** | **결과물** |
+| **단계 (명령/스킬)** | **업무** | **주 담당 모델 · 환경** | **추론 수준** | **교차 검증 (횟수)** | **결과물** |
 | --- | --- | --- | --- | --- | --- |
-| **1** | 아이디어 브레인스토밍 | Gemini T3 · Antigravity | High | 선택 (0~1회) | `docs/00-brainstorm.md` |
-| **2** | 아이디어 구체화 및 실현 가능성 검증 | Gemini T1 · Antigravity + 팀원 (불가 시 Claude T1) | High | 필수, Claude T1 High (1~2회) ※대체 시 Codex T1 | `docs/01-concept.md` (문제 정의, 타깃 사용자, 경쟁 서비스 비교), `docs/01-feasibility.md` (기술·일정·인력 검토, 리스크), `docs/meetings/` (회의록) |
-| **3** | 요구사항 명세서 작성·검토 및 **`SPEC.md` 확정** | **초안:** Gemini T1 / **검토:** Claude T1 | 초안 Medium → 검토 High | 필수 (2회, 최대 3회) | `docs/02-requirements.md` (기능·비기능 요구사항, 유스케이스, 우선순위), `docs/02-glossary.md` (도메인 용어집), **`SPEC.md`** |
-| **4** | 아키텍처 설계, 구현 계획 및 Task 분 | Claude T1 · Claude Code (Plan 모드) | High | 필수, Gemini T1 High (2회, 최대 3회) + 사용자 승인 1회 | `docs/03-architecture.md` (구조도, ERD는 Mermaid로), `docs/adr/` (주요 기술 결정 기록), `api/openapi.yaml`, `docs/03-plan.md` (마일스톤, Task·이슈 번호), `AGENTS.md`, `CLAUDE.md` (`@AGENTS.md` import) |
-| **5** | 프론트엔드·백엔드 개발 | **일반:** Claude T2 / **단순:** Gemini T3 / **복잡:** Claude T1 / **선택:** Codex T2 (독립 모듈) | Medium / Low / High / Medium | 선택적 (복잡한 모듈만 PR당 1회, Codex T1) | 소스 코드, 단위 테스트, PR 설명 (변경 내용·테스트 방법), `CHANGELOG.md` |
-| **6** | 코드 리뷰 및 통합 테스트 | **테스트:** Claude T2 / **리뷰:** Codex T1 (작성 모델과 다른 계열) / **중요 영역:** Codex T1 + Gemini T1 | Medium / Medium / High | 필수 (일반 PR당 1회, 인증·결제·개인정보 PR당 2회: 두 계열이 1회씩) | 통합·E2E 테스트 코드, `docs/06-test-report.md` (테스트 범위, 결과, 미해결 이슈), `docs/reviews/` |
-| **7** | 배포 및 운영 | Claude T2 · Claude Code (장애 시 Claude T1) | 일반 Medium / 고위험 High | 위험도에 따라 (일반 0회, DB 마이그레이션·인프라 변경 1~2회, Codex T1) | CI/CD 설정 (`.github/workflows/` 등), `docs/07-deploy.md`, `docs/07-runbook.md` (장애 대응 절차), `.env.example` |
-| **8** | 문서화 및 발표 | **초안:** Gemini T1 / **검토:** Claude T1 | Medium | 보고서 권장 (보고서 1회, 발표 자료 0~1회) | `README.md` (최종본), 최종 보고서, 발표 자료, 사용자 매뉴얼 (캡스톤 제출용) |
+| **1** (스킬 없음) | 아이디어 브레인스토밍 | Gemini T3 · Antigravity | High | 선택 (0~1회) | `docs/00-brainstorm.md` |
+| **2** (`/grill-with-docs`, `/research`, 선택 `/prototype`†) | 아이디어 구체화 및 실현 가능성 검증 | Gemini T1 · Antigravity + 팀원 (불가 시 Claude T1) | High | 필수, Claude T1 High (1~2회) ※대체 시 Codex T1 | `docs/01-concept.md` (문제 정의, 타깃 사용자, 경쟁 서비스 비교), `docs/01-feasibility.md` (기술·일정·인력 검토, 리스크), `docs/meetings/` (회의록) |
+| **3** (`/to-spec`, `/grill-with-docs`) | 요구사항 명세서 작성·검토 및 **`SPEC.md` 확정** | **초안:** Gemini T1 / **검토:** Claude T1 | 초안 Medium → 검토 High | 필수 (2회, 최대 3회) | `docs/02-requirements.md` (기능·비기능 요구사항, 유스케이스, 우선순위), `docs/02-glossary.md` (도메인 용어집), **`SPEC.md`** |
+| **4** (Plan 모드 + `/to-tickets`†) | 아키텍처 설계, 구현 계획 및 Task 분할 | Claude T1 · Claude Code (Plan 모드) | High | 필수, Gemini T1 High (2회, 최대 3회) + 사용자 승인 1회 | `docs/03-architecture.md` (구조도, ERD는 Mermaid로), `docs/adr/` (주요 기술 결정 기록), `api/openapi.yaml`, `docs/03-plan.md` (마일스톤, Task·이슈 번호), `docs/progress.md` (§3 ⑦), `AGENTS.md`, `CLAUDE.md` (`@AGENTS.md` import) |
+| **5** (`/implement`†, `/tdd`†, `verification-before-completion`, 조건부 스택 스킬) | 프론트엔드·백엔드 개발 | **일반:** Claude T2 / **단순:** Gemini T3 / **복잡:** Claude T1 / **선택:** Codex T2 (독립 모듈) | Medium / Low / High / Medium | 선택적 (복잡한 모듈만 PR당 1회, Codex T1) | 소스 코드, 단위 테스트, PR 설명 (변경 내용·테스트 방법), `CHANGELOG.md` |
+| **6** (`/code-review`, `verification-before-completion`, `agent-browser`, `improve-codebase-architecture`, 선택 `/diagnosing-bugs`†) | 코드 리뷰 및 통합 테스트 | **테스트:** Claude T2 / **리뷰:** Codex T1 (작성 모델과 다른 계열) / **중요 영역:** Codex T1 + Gemini T1 | Medium / Medium / High | 필수 (일반 PR당 1회, 인증·결제·개인정보 PR당 2회: 두 계열이 1회씩) | 통합·E2E 테스트 코드, `docs/06-test-report.md` (테스트 범위, 결과, 미해결 이슈), `docs/reviews/` |
+| **7** (`finishing-a-development-branch`, 조건부 `/deploy-to-vercel`) | 배포 및 운영 | Claude T2 · Claude Code (장애 시 Claude T1) | 일반 Medium / 고위험 High | 위험도에 따라 (일반 0회, DB 마이그레이션·인프라 변경 1~2회, Codex T1) | CI/CD 설정 (`.github/workflows/` 등), `docs/07-deploy.md`, `docs/07-runbook.md` (장애 대응 절차), `.env.example` |
+| **8** (`/pptx`) | 문서화 및 발표 | **초안:** Gemini T1 / **검토:** Claude T1 | Medium | 보고서 권장 (보고서 1회, 발표 자료 0~1회) | `README.md` (최종본), 최종 보고서, 발표 자료, 사용자 매뉴얼 (캡스톤 제출용) |
 
 > 💡 **작성 모델과 검증 모델**
 5·6단계의 코드는 주로 Claude가 작성하므로 리뷰는 Codex(OpenAI)가 맡습니다. Gemini나 Codex가 작성한 모듈이라면 그와 다른 계열(예: Claude T1)이 리뷰합니다.
@@ -248,10 +255,11 @@ project/
     ├── 00-brainstorm.md
     ├── 01-concept.md         01-feasibility.md
     ├── 02-requirements.md    02-glossary.md
-    ├── 03-architecture.md    03-plan.md
+    ├── 03-architecture.md    03-plan.md    progress.md
     ├── 06-test-report.md
     ├── 07-deploy.md          07-runbook.md
     ├── adr/   meetings/   reviews/
+    ├── agents/               # setup-matt-pocock-skills 설정 (이슈 트래커·문서 위치)
 ```
 
 ## 3. 워크플로우 공통 운영 규칙
@@ -298,8 +306,8 @@ project/
 
 | **에이전트** | **팀 공유 (저장소에 커밋)** | **개인 (커밋 금지 또는 홈 디렉터리)** |
 | --- | --- | --- |
-| **Antigravity** | `AGENTS.md`, `.agents/rules/*.md`, `.agents/skills/` | `~/.gemini/AGENTS.md`, `~/.gemini/GEMINI.md`, `~/.gemini/config/rules/`, `~/.gemini/config/skills/` |
-| **Claude Code** | `CLAUDE.md`, `.claude/settings.json`, `.claude/skills/` (동기화 사본) | `CLAUDE.local.md`, `.claude/settings.local.json`, `~/.claude/CLAUDE.md`, `~/.claude/skills/` |
+| **Antigravity** | `AGENTS.md`, `.agents/rules/*.md`, `.agents/skills/` | `~/.gemini/AGENTS.md`, `~/.gemini/GEMINI.md`, `~/.gemini/config/rules/`, `~/.gemini/config/skills/`, `~/.gemini/config/mcp_config.json` |
+| **Claude Code** | `CLAUDE.md`, `.claude/settings.json`, `.claude/skills/` (동기화 사본), `.mcp.json` | `CLAUDE.local.md`, `.claude/settings.local.json`, `~/.claude/CLAUDE.md`, `~/.claude/skills/` |
 | **Codex** | `AGENTS.md`, `.codex/config.toml`, `.agents/skills/` | `~/.codex/AGENTS.md`, `~/.codex/config.toml`, `$HOME/.agents/skills/` |
 - `CLAUDE.local.md`와 `.claude/settings.local.json`은 `.gitignore`에 추가합니다.
 - Codex는 사용자가 프로젝트를 **신뢰(trust)** 처리한 경우에만 저장소의 `.codex/` 설정·훅·규칙을 불러옵니다. 팀원은 최초 실행 시 프로젝트를 신뢰 처리해야 합니다.
@@ -322,6 +330,83 @@ project/
 - **기록 위치:** 1-A·2 워크플로우는 `docs/00-brainstorm.md` 상단(또는 `README.md`), 1-B 현장 해커톤은 `SPEC.md` 상단에 참여 인원, 참가자별 사용 가능 모델, 전체 기한을 함께 적습니다.
 - **캡스톤·일반 프로젝트:** 전체 기한은 1단계에서 정합니다. 2단계 `docs/01-feasibility.md`의 일정 검토가 이 기한을 기준으로 이루어집니다. 4단계 `docs/03-plan.md`에서는 기한으로부터 거꾸로 계산해 마일스톤과 **기능 동결일**을 정하고, 일정의 일부를 버퍼로 남깁니다.
 - **외부 기한이 없는 개인 프로젝트**도 스스로 기한을 정합니다. 기한을 바꿀 때는 이유를 `docs/adr/`에 기록합니다.
+
+### ⑦ 세션 간 진행 상태 기록 (progress)
+
+에이전트는 새 세션마다 이전 작업을 기억하지 못하므로, 진행 상태를 파일로 남겨 다음 세션이 넘겨받게 합니다. Anthropic의 장시간 에이전트 하네스(세션별 진행 로그, 기능별 통과 여부 목록, 설명이 있는 git 커밋)를 이 문서의 구조에 맞춘 것입니다.
+
+- **위치:** 1-A·2 워크플로우는 `docs/progress.md`, 1-B 현장 해커톤은 `SPEC.md` 5절(Task Split)의 상태 열을 씁니다.
+- **형식:** Task 표(ID, Task, 담당, 상태, 마지막 `verify` 결과, 메모)와 세션 로그(날짜·에이전트·한 일·다음 할 일, 3줄 이내)로 구성합니다.
+- **상태 값:** 대기 / 진행 / 통과 / 보류. "통과"는 `verify` 또는 스모크 테스트를 실제로 실행한 증거가 있을 때만 바꿉니다(`verification-before-completion`).
+- **세션 시작:** progress 파일과 최근 git log를 읽고, `verify`를 먼저 실행해 기준 상태를 확인한 뒤 Task 하나를 고릅니다.
+- **세션 종료:** 상태와 세션 로그를 갱신하고, 무엇을 했는지 알 수 있는 메시지로 커밋합니다.
+- **변경 금지:** Task 목록은 4단계 `docs/03-plan.md`(또는 `/to-tickets` 결과)에서 만듭니다. 진행 중에 에이전트가 Task를 지우거나 완료 조건을 바꾸지 않으며, 바꿔야 하면 사람이 결정하고 `SPEC.md`부터 고칩니다.
+
+```
+# progress.md
+
+| ID | Task | 담당 | 상태 | 마지막 verify | 메모 |
+| --- | --- | --- | --- | --- | --- |
+| T-01 | 로그인 API | Claude Code | 통과 | 2026-11-02 통과 | |
+| T-02 | 로그인 화면 | Antigravity | 진행 | 2026-11-02 typecheck 실패 | 오류 메시지 형식 미정 |
+
+## 세션 로그
+- 2026-11-02 · Claude Code · T-01 완료. 다음: T-02 전에 API 오류 응답 형식 확정
+```
+
+## 4. 단계별 Skills 매핑과 사용 원칙
+
+워크플로우 표의 "단계 (명령/스킬)" 열에는 스킬 이름만 적고, 스킬의 출처·용도·적용 조건은 이 섹션에서만 관리합니다. 스킬 이름과 구성은 자주 바뀌므로(예: mattpocock/skills v1.1에서 `/to-prd` → `/to-spec`, `/to-issues` → `/to-tickets`) 바뀌면 이 섹션과 표의 이름만 수정합니다.
+
+- **기준일:** 2026-10-28. 설치 수와 순위는 빠르게 바뀌므로 기록하지 않습니다.
+- **기본 흐름:** mattpocock/skills의 `grill-with-docs → to-spec → to-tickets → implement → code-review`를 뼈대로 쓰고, obra/superpowers에서는 `verification-before-completion`과 `finishing-a-development-branch`만 가져옵니다. 나머지는 기술 스택이 맞을 때만 사용합니다.
+- **기획 스킬 중복 금지:** `brainstorming`(superpowers)과 `grill-with-docs`(mattpocock)는 둘 다 한 번에 하나씩 질문하고 승인 게이트를 두므로 같은 단계에서 함께 쓰지 않습니다.
+- **† 표시:** 2026-10-28 기준 팀 설치 목록에 없어 추가 설치가 필요한 스킬입니다. 설치 후 `python scripts/sync_skills.py`를 실행합니다.
+- **설치 시점:** 스킬 추가는 프로젝트 시작 전(1-B는 사전 준비, 1-A·2는 1단계 이전) 또는 PART 4 Step 5~6에서 결정합니다. PART 3 §1-2 진단과 PART 4 §2-2 개선 작업 중에는 새 스킬을 제안·설치하지 않는다는 원칙을 그대로 유지합니다.
+
+### 4-1. Skills 목록 (출처 · 용도 · 적용 조건)
+
+| **스킬** | **출처 저장소** | **하는 일** | **적용 조건 · 주의** |
+| --- | --- | --- | --- |
+| `setup-matt-pocock-skills` † | mattpocock/skills | 이슈 트래커·문서 위치를 설정해 다른 mattpocock 스킬이 참조하게 함 | 레포당 1회, 사전 준비 단계. `to-spec`·`to-tickets`·`implement`·`tdd`·`diagnosing-bugs`·`code-review`·`improve-codebase-architecture`를 쓰기 전에 필요. 생성되는 `## Agent skills` 블록은 `AGENTS.md`에만 둠 (§4-3 ①) |
+| `grill-with-docs` | mattpocock/skills | 한 번에 하나씩 질문해 계획을 검증하고, 용어집·ADR을 진행 중에 갱신 | 내부에서 `grilling`·`domain-modeling`을 사용하므로 둘을 표에 따로 나열하지 않음 |
+| `grilling` | mattpocock/skills | 한 번에 하나씩 질문해 계획을 검증 (문서 갱신 없음) | 시간 제약이 큰 1-B에서 사용 |
+| `research` | mattpocock/skills | 백그라운드 에이전트가 1차 자료(공식 문서·소스·스펙)를 조사해 출처를 단 마크다운으로 저장 | 기술·API 실현 가능성 검토용. 경쟁 서비스 비교처럼 2차 자료가 필요한 조사는 프롬프트로 진행 |
+| `prototype` † | mattpocock/skills | 비즈니스 로직·상태 전이·데이터 모델을 본구현 전에 빠르게 시험 | 선택. 위험한 핵심 로직이 있을 때 |
+| `to-spec` | mattpocock/skills | 대화를 spec(PRD)으로 정리해 이슈 트래커에 게시 | 대화 단위 spec이므로 루트 `SPEC.md`로 옮겨 확정 (§4-3 ②). 1-B 경량 템플릿에는 쓰지 않음 |
+| `to-tickets` † | mattpocock/skills | spec을 tracer-bullet 티켓으로 나누고 티켓 간 선후 관계를 표시 | `docs/03-plan.md`의 Task·이슈 번호에 대응 |
+| `implement` † | mattpocock/skills | spec·티켓을 테스트 우선으로 구현 | 테스트를 쓰지 않는 1-B에서는 사용하지 않음 |
+| `tdd` † | mattpocock/skills | 테스트 주도로 기능·버그 수정 구현 | 단위 테스트가 결과물인 §2 5단계 |
+| `diagnosing-bugs` † | mattpocock/skills | 버그 원인 진단 (구 `/diagnose`) | 통합·버그 수정 단계에서 선택 |
+| `code-review` | mattpocock/skills | diff를 레포 코딩 표준(Fowler 코드 스멜 12종 포함)과 spec 충실도 두 축으로 병렬 검토 | 린터가 강제하는 항목은 건너뜀. 런타임 오류·메모리 누수 점검용이 아님. Codex에서 두 축이 분리되어 나오는지 확인 (§3 ⑤) |
+| `improve-codebase-architecture` | mattpocock/skills | 기존 코드에서 얕은 모듈·강결합을 찾아 개선 기회를 제시 | 코드가 쌓인 뒤 사용 (§2 6단계, 마일스톤 사이). 새로 짜는 단계에는 쓰지 않음 |
+| `setup-pre-commit` | mattpocock/skills | Husky + lint-staged(Prettier) + typecheck·test pre-commit 훅 설정 | Node 스택 전용. 시크릿 검사는 포함하지 않음. 마지막에 직접 커밋함. 하네스 구축 단계에서 사용 (PART 3 §3-3, §4-3 ⑤) |
+| `brainstorming` | obra/superpowers | 구현 전에 질문으로 의도·요구사항을 다듬어 설계안을 만들고, 승인 전까지 코딩을 막음 | 발산형이 아니라 수렴형(설계안 최대 2~3개, 추천안 우선). 새 프로젝트는 항상 무거운 아키텍처 경로. 기본 워크플로우에서는 사용하지 않음 (§4-3 ③) |
+| `verification-before-completion` | obra/superpowers | 완료를 주장하기 전에 검증 명령을 실제로 실행하고 결과로 확인 | 구현·통합·배포 단계 전체. `AGENTS.md` §8과 겹치므로 규칙 파일에는 호출 지시 한 줄만 둠 |
+| `finishing-a-development-branch` | obra/superpowers | 테스트·베이스 브랜치 확인 후 merge·PR·유지·폐기 선택지를 안내 | 브랜치 마무리용. 배포·컨테이너 스킬이 아님 |
+| `vercel-react-best-practices` | vercel-labs/agent-skills | React·Next.js 성능 규칙 (워터폴, 번들 크기, 서버·클라이언트 렌더링) | React·Next.js 프로젝트일 때만 |
+| `deploy-to-vercel` | vercel-labs/agent-skills | Vercel 배포·프리뷰 배포 | Vercel로 배포할 때만. CI YAML은 만들지 않음 (PART 3 §6) |
+| `design-taste-frontend` | Leonxlnx/taste-skill (개인 저장소, Anthropic 공식 아님) | 디자인 방향을 먼저 정해 템플릿 같은 기본 디자인을 피함 | 랜딩·포트폴리오·리디자인 페이지 전용. 대시보드·데이터 테이블·다단계 제품 UI에는 쓰지 않음 |
+| `supabase-postgres-best-practices` | supabase/agent-skills | Postgres 스키마·인덱스·RLS·마이그레이션·쿼리 성능 규칙 | Postgres를 쓸 때만 (Supabase 호스팅이 아니어도 적용) |
+| `agent-browser` | vercel-labs/agent-browser | 실제 브라우저를 자동화해 화면·사용자 흐름을 확인 | 스모크·E2E 확인용. Antigravity는 내장 브라우저가 있으므로 Claude Code·Codex 위주로 사용 |
+| `pptx` | anthropics/skills | PowerPoint 파일 생성·편집 | 발표 자료 |
+| `find-skills` | vercel-labs/skills | 레지스트리에서 스킬을 검색·설치 | 개인 전역 경로에서만 사용 (§4-3 ④) |
+
+### 4-2. 공통 사용 규칙
+
+- 각 단계에서는 표에 적은 스킬만 호출합니다. 설치된 모든 스킬을 매 작업에 실행하지 않습니다(`AGENTS.md` §5).
+- `verification-before-completion`은 Task 완료를 보고하기 전에 매번 사용합니다(1-B에서는 경량 `verify` 실행이 그 증거입니다).
+- 기술 스택 조건부 스킬(`vercel-react-best-practices`, `supabase-postgres-best-practices`, `deploy-to-vercel`, `setup-pre-commit`)은 `SPEC.md`의 기술 스택이 확정된 뒤 설치 여부를 정하고, 결정을 `docs/adr/`(1-A·1-B는 `README.md`)에 기록합니다.
+- 스킬 이름이 바뀌거나 deprecated 되면 이 섹션과 워크플로우 표를 함께 고치고, 「문서 변경 이력」에 남깁니다.
+
+### 4-3. 하네스 규칙과 충돌하지 않게 쓰는 방법
+
+- ① **`setup-matt-pocock-skills` 결과 위치:** 이 스킬은 `AGENTS.md`나 `CLAUDE.md`에 `## Agent skills` 블록을 쓰고 `docs/agents/`를 만듭니다. `CLAUDE.md`는 `@AGENTS.md` import와 전용 지침만 둔다는 §3 ③ 규칙에 따라 블록은 반드시 `AGENTS.md`에 둡니다. 이슈 트래커는 GitHub Issues 또는 로컬 마크다운 중 하나로 정하고, 용어집·ADR 위치는 `docs/02-glossary.md`, `docs/adr/`로 지정합니다.
+- ② **`to-spec`과 `SPEC.md`:** `to-spec`은 대화 단위 spec을 이슈 트래커에 게시하지만, 요구사항의 유일한 기준은 루트 `SPEC.md`입니다(PART 2 §2-0). `to-spec` 결과를 `SPEC.md` 템플릿 항목으로 옮겨 확정하고, 게시된 spec은 원천 문서로 남깁니다. 출력 위치를 `SPEC.md`로 바로 지정할 수 있는지는 실제 호출로 확인합니다.
+- ③ **`brainstorming`을 쓰는 경우:** 설계 문서를 `docs/superpowers/specs/`에 저장하고 커밋하므로 저장 위치를 `docs/` 구조에 맞게 지정합니다. 단독 설치하면 아키텍처 경로의 마지막 단계가 설치되지 않은 `writing-plans`를 호출하므로, 4단계 Plan 모드로 넘어간다고 명시합니다. 시각 보조 도구를 수락하면 `.superpowers/`가 생기므로 `.gitignore`에 추가합니다. 1-B에서는 사용하지 않습니다.
+- ④ **`find-skills`:** 레지스트리에서 스킬을 바로 설치하므로 `.agents/skills/` 단일 원본 정책과 sync를 깨뜨릴 수 있습니다. 개인 전역 경로에서 탐색 용도로만 쓰고, 프로젝트에 넣을 스킬은 원본 저장소·라이선스를 확인한 뒤(PART 3 §4-6 보안 검토, §4-3 점검 체크리스트 7번) `.agents/skills/`에 직접 추가하고 sync합니다.
+- ⑤ **`setup-pre-commit`:** 훅에 들어가는 typecheck·test 명령을 `verify`(또는 경량 `verify`의 일부)로 바꿔 "단일 `verify`" 원칙(PART 3 §3)과 맞춥니다. 스킬이 마지막에 커밋까지 하므로 팀 저장소에서는 브랜치에서 실행합니다. 시크릿 검사는 별도로 구성합니다.
+- ⑥ **`code-review`를 Codex에서 쓸 때:** 서브에이전트 병렬 실행을 전제로 만든 스킬이므로, Codex에서 Standards·Spec 두 축이 분리되어 보고되는지 처음 한 번 확인합니다. 리뷰 결과는 §3 ② 양식으로 `docs/reviews/`에 옮깁니다.
 
 # PART 2. 하네스 엔지니어링 핵심 문서 설계 (`SPEC.md` & `AGENTS.md`)
 
@@ -502,39 +587,42 @@ project/
 - **분량 기준:** 지나치게 긴 문서는 핵심 지침을 묻히게 하므로 `AGENTS.md`는 **약 100줄 수준의 간결한 안내서**로 유지하고, 상세 내용은 별도 참조 문서로 분리합니다. 바이트 기준으로는 Codex 합산 32KiB, Antigravity 파일당 24KB를 넘지 않아야 하며, 하위 디렉터리 `AGENTS.md`까지 합친 크기로 관리합니다.
 - **Antigravity의 `AGENTS.md`:** frontmatter 없이 해당 디렉터리 범위에서 항상 활성(`always_on`) 상태로 적용됩니다.
 - **Codex의 `AGENTS.override.md`:** 같은 폴더의 `AGENTS.md`보다 먼저 선택되므로, 개인이 임의로 만들면 팀 규칙이 조용히 덮어써집니다. PART 1 §3 ③의 원칙대로 원칙적으로 만들지 않습니다.
+- **최소 요구사항 원칙 (실증 근거):** ICLR 2026 연구 「Evaluating AGENTS.md」에서 컨텍스트 파일은 전체적으로 작업 성공률을 높이지 못하면서 추론 비용을 20% 이상 늘렸습니다. 에이전트가 자동 생성한 파일(`/init` 등)은 성공률을 평균 약 3% 낮췄고, 개발자가 직접 쓴 파일만 약 4% 개선했습니다. 따라서 `AGENTS.md`에는 에이전트가 레포를 읽어도 알 수 없거나 틀리기 쉬운 정보만 적고, 디렉터리 개요처럼 레포에서 바로 확인되는 내용이나 에이전트가 원래 하는 일반 행동은 적지 않습니다.
 
-### 3-1. `AGENTS.md` 포함 항목 및 4대 작성 원칙
+### 3-1. `AGENTS.md` 포함 항목 및 5대 작성 원칙
 
 | **항목** | **작성 내용** |
 | --- | --- |
-| **프로젝트 개요** | 목적, 실제 기술 스택, 기준 문서 위치 |
+| **프로젝트 개요** | 목적, 레포에서 알 수 없는 제약, 기준 문서 위치 |
 | **기준 문서 (Source of Truth)** | `SPEC.md`, 아키텍처 문서, 테스트 문서 간 역할 정의 |
-| **작업 진행 규칙** | 변경 전 코드 조사, 복잡한 작업의 사전 계획 수립 |
+| **작업 진행 규칙** | 세션 시작·종료 절차(진행 상태 파일), 복잡한 작업의 사전 계획 수립 |
 | **아키텍처·코딩 규칙** | 반드시 지켜야 하는 구조적 제약 |
-| **Skills 활용 원칙** | 작업에 맞는 스킬만 선택, 원본 경로 명시, 중복 지침 방지 |
+| **Skills 활용 원칙** | 작업에 맞는 스킬만 선택, 원본 경로 명시, 중복 지침 방지 (단계별 스킬 목록은 PART 1 §4) |
 | **다중 에이전트 호환** | 공통 규칙 단일화, 에이전트별 설정 분리, override 파일 금지 |
 | **보안 및 권한** | 비밀정보 관리, 위험한 DB 작업 및 배포 승인 |
 | **검증 방법** | 실제 프로젝트에서 확인한 단일 `verify` 명령 |
 | **완료 보고** | 변경 내용, 검사 결과, 실패 및 남은 위험 보고 양식 |
 
-**작성 시 지켜야 할 4가지 원칙**
+**작성 시 지켜야 할 5가지 원칙**
 
 1. **`SPEC.md`를 복사하지 않는다:** 기능 요구사항은 `SPEC.md`에 두고, `AGENTS.md`에는 구현 시 항상 지켜야 할 작업 규칙만 적습니다.
 2. **기존 Skills의 상세 절차를 복제하지 않는다:** 체크리스트 전체를 복사하는 대신, 해당 작업 시 관련 Skill을 호출하도록 규정합니다.
 3. **실제 프로젝트에서 확인한 정보만 확정적으로 작성한다:** 테스트 명령어, 디렉터리, 기술 스택은 저장소를 실제 조사한 결과를 기반으로 적습니다. (별도의 제출용 JSON 파일을 만들 필요는 없으며, 기존의 `package.json` 등을 조사에 활용합니다.)
-4. **자동 강제 가능한 규칙은 자동 검증과 연결한다:** 문서에 적어두는 것에 그치지 않고 린터(Linter), API 스키마 검사, 테스트와 연결합니다.
+4. **자동 강제 가능한 규칙은 자동 검증과 연결한다:** 문서에 적어두는 것에 그치지 않고 린터(Linter), API 스키마 검사, 테스트와 연결합니다. 린터·테스트로 강제되는 규칙은 `AGENTS.md`에서 지웁니다.
+5. **레포에서 알 수 없는 것만 남긴다:** 각 줄마다 "이 줄이 없으면 에이전트가 틀리는가?"를 묻고, 아니라면 지웁니다. 에이전트가 만든 초안은 사람이 이 기준으로 줄인 뒤 커밋합니다(§3-0 최소 요구사항 원칙).
 
 ### 3-2. `AGENTS.md` 기본 템플릿
 
 - `<VERIFY_COMMAND>`는 PART 3 §3-2에서 정한 실제 검증 명령(예: `npm run verify`)으로 바꿉니다.
+- 다른 `<...>` 자리표시자는 실제 레포 고유 내용으로 바꾸고, 해당 내용이 없으면 줄째 지웁니다. 에이전트가 원래 하는 일반 행동(코드 읽기, 작은 단위 변경 등)은 템플릿에서 뺐습니다(§3-1 원칙 5).
+- 1-B 현장 해커톤은 `docs/progress.md` 대신 `SPEC.md` 5절을 가리키도록 바꿉니다.
 
 ```
 # AGENTS.md
 
 ## 1. Project Overview
-- Read README.md to understand the development environment.
 - Read SPEC.md before implementing features.
-- Follow the actual repository structure and technology stack.
+- <One-line project purpose and constraints not discoverable from the repo, e.g., deployment target, supported browsers>
 
 ## 2. Source of Truth
 - SPEC.md defines functional requirements and acceptance criteria.
@@ -544,16 +632,16 @@ project/
 - If documents conflict, report the conflict instead of guessing.
 
 ## 3. Working Procedure
-- Inspect relevant source files and Git status before editing.
+- At session start, read docs/progress.md and the recent git log, then run <VERIFY_COMMAND>.
+- Work on one task per session. Before ending, update docs/progress.md and commit.
+- Never delete tasks or change acceptance criteria in docs/progress.md; ask a human.
 - Plan multi-file, architectural, API, or database changes before implementation.
-- Keep changes small and avoid unrelated refactoring.
 - Preserve existing user changes.
 - Report critical ambiguities rather than inventing requirements.
 
 ## 4. Architecture and Coding Rules
-- Follow the established project architecture and conventions.
-- Maintain consistency across frontend, backend, API contracts, and database schemas.
-- Validate untrusted inputs at appropriate boundaries.
+- <Repository-specific boundaries only, e.g., frontend/ must not import from database/>
+- <Rules already enforced by linters or tests do not belong here; verify checks them>
 - Update relevant documentation and tests when contracts change.
 
 ## 5. Skills Usage
@@ -563,6 +651,9 @@ project/
 - The source of project Skills is .agents/skills/.
 - .claude/skills/ is a generated copy; never edit it directly.
   After changing .agents/skills/, run the skills sync script.
+- Do not install new Skills or MCP servers yourself; propose them for human review.
+- Before claiming any task is complete, use the verification-before-completion skill.
+- The "## Agent skills" block created by setup-matt-pocock-skills belongs in this file, not in CLAUDE.md.
 
 ## 6. Multi-Agent Compatibility
 - This file is the single source of shared rules for Antigravity, Claude Code, and Codex.
@@ -608,6 +699,7 @@ Report:
 - Project Skills are copied into .claude/skills/ by the sync script; do not edit them here.
 - Use Plan mode for multi-file or architectural changes and wait for approval.
 - Personal preferences belong in CLAUDE.local.md (git-ignored), not in this file.
+- After a task passes and docs/progress.md is updated, start the next task in a fresh session (/clear).
 ```
 
 ### 3-4. `AGENTS.md` 작성 프롬프트 (세 에이전트 공통)
@@ -625,14 +717,15 @@ Report:
 - 기존 테스트·린트·타입 검사·빌드 설정과 verify 명령
 - 환경 변수 예시 및 DB 마이그레이션
 - 기존 규칙 파일: AGENTS.md, AGENTS.override.md, CLAUDE.md, CLAUDE.local.md, GEMINI.md, .agents/rules/
-- 에이전트 설정: .claude/settings.json, .codex/config.toml
+- 에이전트 설정: .claude/settings.json, .codex/config.toml, .mcp.json(MCP 서버)
+- 진행 상태 파일: docs/progress.md 존재 여부와 형식
 - 설치된 Skills(.agents/skills/, .claude/skills/)의 이름, 역할, 두 경로의 일치 여부
 - 레거시 .agents/workflows/ 존재 여부
 - CI/CD 설정 및 Git 상태
 
 ## 작성할 내용
 1. 프로젝트 개요와 기준 문서
-2. 작업 전 코드 및 문서 조사 원칙
+2. 세션 시작·종료 절차(진행 상태 파일 읽기·갱신)
 3. 계획 수립과 변경 범위 관리
 4. 아키텍처 및 코딩 규칙
 5. Skills 선택과 사용 원칙(원본 경로 포함)
@@ -647,11 +740,16 @@ Report:
 - 존재하지 않는 파일, 명령어, 기술 스택을 만들어 내지 않는다.
 - 확인되지 않은 사항은 미확정으로 표시한다.
 - 불필요한 장문보다 실제 작업에 영향을 주는 규칙을 우선한다(약 100줄, 32KiB 이내).
+- 에이전트가 기본으로 따르는 일반 원칙(코드를 먼저 읽기, 작은 단위로 변경 등)과 레포에서 바로 확인되는 정보(디렉터리 개요, 의존성 목록 등)는 적지 않는다.
+- 린터·테스트·verify로 이미 강제되는 규칙은 적지 않는다.
+- 초안의 각 규칙 옆에 "이 줄이 없으면 에이전트가 틀릴 수 있는 이유"를 한 줄로 표시한다(검토용, 최종 파일에는 남기지 않음).
 - 기존 파일과 사용자 변경 사항을 보존한다.
 - 다른 규칙 파일과 충돌하는 내용이 있으면 목록으로 보고한다.
 
 먼저 조사 결과와 AGENTS.md 초안(필요 시 CLAUDE.md 초안 포함)을 제시하라. 초안을 검토하기 전에는 기존 파일을 덮어쓰거나 다른 파일을 수정하지 마라.
 ```
+
+- 초안은 사람이 §3-1 원칙 5로 줄인 뒤 커밋합니다. 에이전트가 쓴 초안을 그대로 커밋하지 않습니다(§3-0 최소 요구사항 원칙).
 
 ## 4. `SPEC.md`와 `AGENTS.md`의 역할 분담 및 관계
 
@@ -672,6 +770,8 @@ Report:
 | **에이전트별 설정** | 각 도구의 권한, 샌드박스, Hooks 등 전용 기능 |
 | **`verify` 명령** | 테스트·빌드 등 공통 검증 실행 (OS 무관 단일 진입점) |
 | **CI 및 Evals** | 반복 검증과 품질 측정 |
+| `docs/progress.md` | 세션 간 진행 상태와 Task 통과 여부 (PART 1 §3 ⑦) |
+| **MCP 서버** | 브라우저·DB·이슈 트래커 등 외부 시스템 접근 도구 (PART 3 §9) |
 
 # PART 3. 하네스 환경 진단 및 구축 실무
 
@@ -689,10 +789,10 @@ Report:
 | **4. 테스트** | 테스트·린트·타입 검사·빌드 명령과 단일 `verify` 진입점이 존재하는가? |
 | **5. DB** | 스키마·마이그레이션·개발용 초기 데이터 생성 절차가 있는가? |
 | **6. 규칙** | `AGENTS.md`의 규칙 중 자동 검사할 수 있는 항목이 있는가? |
-| **7. Skills** | 기존 Skills가 인식되고, 필요한 작업에서 활용되는가? 두 경로가 일치하는가? |
+| **7. Skills** | 기존 Skills가 인식되고, 필요한 작업에서 활용되는가? 두 경로가 일치하는가? 외부 스킬의 출처와 고정 커밋이 기록되어 있는가? |
 | **8. 자동화** | GitHub Actions 등에서 검증을 재실행할 수 있는가? |
-| **9. 보안** | 위험한 명령이나 실제 배포에 대한 권한 통제가 있는가? |
-| **10. 관측성** | 오류 로그와 검증 결과를 확인할 수 있는가? |
+| **9. 보안** | 위험한 명령이나 실제 배포에 대한 권한 통제가 있는가? MCP 서버의 권한과 비밀값 관리가 적절한가? |
+| **10. 관측성** | 오류 로그와 검증 결과를 확인할 수 있는가? 세션 간 진행 상태를 `docs/progress.md`로 확인할 수 있는가? |
 | **11. 다중 에이전트 정합성** | 세 에이전트 모두 같은 공통 규칙을 읽는가? `GEMINI.md`·`AGENTS.override.md`·개인 전역 규칙과의 충돌이나 레거시 `.agents/workflows/`가 남아 있지 않은가? |
 - **상태 분류 기준 (5단계):** `확인 완료` / `구성되어 있으나 검증 필요` / `미구성` / `프로젝트 특성상 불필요` / `자료 부족으로 판단 불가`
 
@@ -713,8 +813,8 @@ Report:
 6. SPEC.md의 요구사항을 검증할 방법
 7. AGENTS.md와 Skills의 역할 및 중복 여부
 8. DB 초기화·마이그레이션 절차
-9. Git 상태, CI/CD, 로그 및 오류 확인 환경
-10. 위험한 명령과 배포 작업에 대한 권한 통제
+9. Git 상태, CI/CD, 로그 및 오류 확인 환경, 진행 상태 파일(docs/progress.md)
+10. 위험한 명령·배포 작업·MCP 서버에 대한 권한 통제
 11. 다중 에이전트 정합성: CLAUDE.md의 @AGENTS.md import, GEMINI.md·AGENTS.override.md 존재 여부,
     .agents/rules/ frontmatter, .agents/skills/와 .claude/skills/ 일치 여부, 레거시 .agents/workflows/
 
@@ -828,6 +928,7 @@ verify
 | DB 변경을 마이그레이션으로 관리한다 | 마이그레이션 상태 검사 |
 | 비밀정보를 코드에 포함하지 않는다 | `.gitignore` · 시크릿 스캐닝 검사 |
 | 빌드가 성공해야 한다 | 빌드 명령을 검증 루프에 포함 |
+| 커밋 전에 포맷·타입 검사·테스트를 통과한다 | pre-commit 훅 (Node 스택은 `setup-pre-commit` 스킬로 구성하고, 훅에서 `verify` 또는 그 일부를 호출. PART 1 §4-3 ⑤) |
 | `.claude/skills/`를 직접 수정하지 않는다 | `python scripts/sync_skills.py --check` |
 | 규칙 파일을 간결하게 유지한다 | `AGENTS.md` 합산 크기 32KiB 이하 검사 |
 | Antigravity rules는 frontmatter를 갖춘다 | `.agents/rules/*.md` 첫 줄 `---` 및 `trigger` 값 검사 |
@@ -855,10 +956,51 @@ verify
 
 `scripts/sync_skills.py` 예시:
 
-python
-
 ```python
-#!/usr/bin/env python3"""`.agents/skills/`(원본)를 `.claude/skills/`(사본)로 동기화한다.사용법:    python scripts/sync_skills.py          # 동기화    python scripts/sync_skills.py --check  # 불일치 시 exit 1 (CI·verify용)"""import filecmpimport shutilimport sysfrom pathlib import PathSRC = Path(".agents/skills")DST = Path(".claude/skills")def differs(a: Path, b: Path) -> bool:    if not b.is_dir():        return True    cmp = filecmp.dircmp(a, b)    if cmp.left_only or cmp.right_only or cmp.funny_files:        return True    _, mismatch, errors = filecmp.cmpfiles(a, b, cmp.common_files, shallow=False)    if mismatch or errors:        return True    return any(differs(a / d, b / d) for d in cmp.common_dirs)def main() -> None:    if not SRC.is_dir():        sys.exit(f"원본 경로가 없습니다:{SRC}")    if "--check" in sys.argv:        if differs(SRC, DST):            sys.exit("Skills 불일치: python scripts/sync_skills.py 실행 후 커밋하세요.")        print("Skills 동기화 상태 정상")        return    if DST.exists():        shutil.rmtree(DST)    shutil.copytree(SRC, DST)    print(f"{SRC} ->{DST} 동기화 완료")if __name__ == "__main__":    main()
+#!/usr/bin/env python3
+"""`.agents/skills/`(원본)를 `.claude/skills/`(사본)로 동기화한다.
+
+사용법:
+    python scripts/sync_skills.py          # 동기화
+    python scripts/sync_skills.py --check  # 불일치 시 exit 1 (CI·verify용)
+"""
+import filecmp
+import shutil
+import sys
+from pathlib import Path
+
+SRC = Path(".agents/skills")
+DST = Path(".claude/skills")
+
+
+def differs(a: Path, b: Path) -> bool:
+    if not b.is_dir():
+        return True
+    cmp = filecmp.dircmp(a, b)
+    if cmp.left_only or cmp.right_only or cmp.funny_files:
+        return True
+    _, mismatch, errors = filecmp.cmpfiles(a, b, cmp.common_files, shallow=False)
+    if mismatch or errors:
+        return True
+    return any(differs(a / d, b / d) for d in cmp.common_dirs)
+
+
+def main() -> None:
+    if not SRC.is_dir():
+        sys.exit(f"원본 경로가 없습니다: {SRC}")
+    if "--check" in sys.argv:
+        if differs(SRC, DST):
+            sys.exit("Skills 불일치: python scripts/sync_skills.py 실행 후 커밋하세요.")
+        print("Skills 동기화 상태 정상")
+        return
+    if DST.exists():
+        shutil.rmtree(DST)
+    shutil.copytree(SRC, DST)
+    print(f"{SRC} -> {DST} 동기화 완료")
+
+
+if __name__ == "__main__":
+    main()
 ```
 
 ### 4-3. 점검 체크리스트
@@ -869,9 +1011,11 @@ python
 4. `AGENTS.md`와 Skills 간에 불필요하게 중복된 지침이 없는가?
 5. 팀 프로젝트에서 공유해야 할 Skills와 개인 전용 Skills를 구분했는가?
 6. 공통 Skills를 GitHub 리포지토리에서 버전 관리하는가?
-7. 외부 Skills의 원본 저장소와 라이선스를 확인했는가?
+7. 외부 Skills의 원본 저장소와 라이선스를 확인하고, §4-6 보안 검토(본문·스크립트 검토, 커밋 고정)를 거쳤는가?
 8. 세 에이전트에서 Skill 인식 및 호출을 각각 검증했는가? (PART 1 §3 ⑤)
 9. `sync_skills.py --check`가 통과하는가? 같은 스킬이 개인 경로와 프로젝트 경로에 중복 설치되어 서로 경쟁하지 않는가?
+10. 워크플로우 표의 스킬이 PART 1 §4-1 목록과 일치하고, 이름이 바뀌거나 deprecated 된 스킬이 남아 있지 않은가?
+11. `setup-matt-pocock-skills`가 만든 `## Agent skills` 블록이 `AGENTS.md`에만 있고 `CLAUDE.md`에는 없는가?
 
 ### 4-4. 구성 요소별 역할
 
@@ -910,7 +1054,16 @@ Google Antigravity의 기존 `.agents/workflows/`(및 전역 workflows) 기능�
 > - Antigravity App에서 `/migrate-workflows`를 실행하면 기존 워크플로우를 `.agents/skills/<이름>/SKILL.md`로 자동 변환하고, 원본 파일은 `.bak`으로 보관합니다.
 > - 변환된 스킬도 `/<이름>` 슬래시 명령으로 그대로 호출할 수 있습니다.
 > - 변환 후 `python scripts/sync_skills.py`를 실행해 Claude Code용 사본도 갱신합니다.
-> - 이 문서의 해커톤 표에 있는 `/brainstorming`, `/research`, `/grill-with-docs`, `/domain-modeling`, `/grilling`이 아직 워크플로우 형식이라면 먼저 마이그레이션합니다.
+> - 이 문서의 워크플로우 표에 있는 스킬(`/grill-with-docs`, `/grilling`, `/research`, `/to-spec` 등) 중 아직 워크플로우 형식으로 남은 것이 있으면 먼저 마이그레이션합니다.
+
+### 4-6. 외부 Skills 보안 검토
+
+`SKILL.md`는 에이전트가 그대로 따르는 자연어 지시문이므로, 외부 스킬은 코드 의존성과 같은 수준으로 검토합니다. Snyk의 2026년 2월 감사에서는 공개 레지스트리 스킬 3,984개 중 36.82%에 보안 결함이 있었고 13.4%는 치명적 등급이었으며, 악성 지시가 스크립트가 아니라 `SKILL.md` 본문 자체에 들어 있는 경우가 전형적이었습니다.
+
+1. **출처:** 공식 조직이나 유지보수 이력이 확인되는 저장소의 스킬만 씁니다. 레지스트리에서 자동 설치하지 않습니다(`find-skills`는 탐색 용도만, PART 1 §4-3 ④).
+2. **본문 검토:** `SKILL.md` 전체와 동봉 파일(`scripts/`, `references/` 등)을 사람이 읽습니다. 위험 신호는 외부 URL로 데이터 전송, 환경 변수·`.env`·`~/.ssh`·자격 증명 파일 읽기, 보안·권한 설정 변경, 다른 스킬·패키지 추가 설치 지시, 인코딩되거나 난독화된 문자열입니다.
+3. **버전 고정:** 특정 커밋(또는 태그)을 복사해 `.agents/skills/`에 커밋하고, 원본 저장소와 커밋을 README의 Skills 표에 기록합니다. 업데이트는 변경 diff를 검토한 뒤에만 반영합니다.
+4. **권한 최소화:** 스킬이 실행하는 명령도 §5의 권한 정책을 그대로 따릅니다. 새 스킬을 처음 실행할 때는 승인 모드(Codex `on-request`, Claude Code 기본 권한 확인)에서 동작을 지켜봅니다.
 
 ## 5. 보안 및 에이전트 권한 설정
 
@@ -924,6 +1077,7 @@ Google Antigravity의 기존 `.agents/workflows/`(및 전역 workflows) 기능�
 | **개발용 DB 초기화** | 데이터 손실 가능성을 확인하고 진행 |
 | **운영 DB 변경** | **별도 승인 없이는 수행 금지** |
 | **외부 유료 서비스 요청** | 비용과 부작용에 따라 사전 승인 기준 설정 |
+| **MCP 서버 연결·쓰기 작업** | 필요한 서버만 연결, 운영 자원에 쓰는 도구는 명시적 승인 (§9) |
 | **운영 배포 및 자원 삭제** | **명시적인 사용자 승인과 배포 절차 적용** |
 
 ### 에이전트별 권한 설정
@@ -938,10 +1092,9 @@ Google Antigravity의 기존 `.agents/workflows/`(및 전역 workflows) 기능�
 | **Codex** | `.codex/config.toml` | `~/.codex/config.toml` | `sandbox_mode`, `approval_policy`, Hooks, Rules | 프로젝트를 신뢰 처리해야 `.codex/` 설정이 적용됨 |
 - **Codex 권장 기본값 예시** (`.codex/config.toml`):
 
-toml
-
 ```toml
-sandbox_mode = "workspace-write"   # read-only | workspace-write | danger-full-accessapproval_policy = "on-request"     # untrusted | on-request | never
+sandbox_mode = "workspace-write"   # read-only | workspace-write | danger-full-access
+approval_policy = "on-request"     # untrusted | on-request | never
 ```
 
 - 팀 저장소에서는 `danger-full-access`와 `approval_policy = "never"` 조합을 사용하지 않습니다.
@@ -995,6 +1148,66 @@ sandbox_mode = "workspace-write"   # read-only | workspace-write | danger-full-a
     - **환경 재현 실패:** 실행 스크립트 및 환경 설정 개선
     - **특정 에이전트만 규칙을 무시:** 해당 에이전트의 로딩 방식 확인 (PART 1 §3 ⑤, PART 2 §3-0)
 
+## 8. 하네스 유지보수와 엔트로피 관리
+
+에이전트는 레포에 있는 패턴을 좋은 것과 나쁜 것을 가리지 않고 복제하므로, 하네스와 코드는 시간이 지나면 흐트러집니다. OpenAI 하네스 팀은 백그라운드 에이전트가 정기적으로 이탈을 찾아 품질을 매기고 리팩터링 PR을 여는 "가비지 컬렉션"을 운영했습니다. 반대로 Vercel은 에이전트 도구의 80%를 제거해 더 나은 결과를 얻었습니다. 하네스는 추가하는 것만큼 덜어내는 것도 관리 대상입니다.
+
+| **주기** | **점검** | **방법** |
+| --- | --- | --- |
+| 마일스톤마다 (§2 6단계) | 코드 패턴 이탈·중복·강결합 | `improve-codebase-architecture`로 후보를 찾고, 이슈로 등록해 한 번에 하나씩 수정 |
+| 마일스톤마다 | 문서 최신성 | 아래 「하네스 최신성 점검」 프롬프트로 문서가 가리키는 파일·명령·경로를 실제 레포와 대조 |
+| 같은 리뷰 지적이 2회 반복될 때 | 규칙의 자동화 | 해당 규칙을 §3-3처럼 린터·테스트로 옮기고 `AGENTS.md`에서는 지움 |
+| 모델 교체 또는 분기마다 | 하네스 덜어내기 | 각 규칙·Skill·MCP 서버·Hook이 아직 필요한지 검토하고, 최근 쓰이지 않거나 효과가 확인되지 않는 항목을 제거. 결정은 `docs/adr/`에 기록 |
+
+- 1-A·1-B 해커톤에는 적용하지 않습니다. 1-A는 행사 후 회고 때 선택적으로 진행합니다.
+- 모델이 좋아지면 예전 모델의 약점을 메우려고 넣은 규칙이 불필요해질 수 있습니다. PART 1 §0 모델 표를 갱신할 때 하네스 덜어내기를 함께 검토합니다.
+
+```
+# 하네스 최신성 점검
+
+AGENTS.md, CLAUDE.md, SPEC.md, docs/, .agents/skills/, MCP 설정의 내용을 실제 저장소와 대조하라.
+
+## 확인 항목
+1. 문서가 가리키는 파일·디렉터리·명령이 실제로 존재하고 동작하는가
+2. 문서 내용과 실제 코드·설정이 서로 다른 곳
+3. AGENTS.md 규칙 중 이미 린터·테스트로 강제되어 중복된 줄
+4. 최근 작업에서 쓰이지 않은 Skills·MCP 서버·Hooks
+5. docs/progress.md의 상태와 실제 verify 결과가 일치하는가
+
+## 원칙
+- 이 단계에서는 파일을 수정하지 않고 목록과 근거만 보고한다.
+- 삭제·수정 제안은 영향도와 우선순위를 함께 제시한다.
+```
+
+## 9. MCP 서버 관리
+
+MCP 서버는 브라우저, DB, 이슈 트래커, 문서 검색처럼 외부 시스템에 접근하는 도구입니다. 작업 절차와 지식은 Skill로, 외부 시스템 접근은 MCP로 나눕니다. Anthropic의 장시간 하네스에서도 평가 에이전트가 Playwright MCP로 실행 중인 앱을 사용자처럼 조작해 검증했습니다.
+
+- **필요한 서버만:** 연결된 도구가 많을수록 도구 설명이 컨텍스트를 차지하고 선택이 흐려집니다. 프로젝트에 필요한 서버만 연결하고, §8의 덜어내기 점검 대상에 포함합니다.
+- **브라우저 검증은 하나로 통일:** Antigravity는 내장 브라우저를 쓰고, Claude Code·Codex는 Playwright MCP 또는 `agent-browser` 중 하나만 정해 씁니다.
+- **비밀값:** 토큰·API 키는 설정 파일에 직접 쓰지 않고 환경 변수로 참조합니다.
+- **DB 접근:** DB MCP는 개발 DB와 읽기 전용 계정으로 연결합니다. 운영 자원에 쓸 수 있는 도구는 §5의 운영 배포와 같은 수준의 명시적 승인을 거칩니다.
+- **출처 검토:** 외부 MCP 서버도 §4-6과 같은 기준(출처, 버전 고정, 권한 최소화)으로 검토합니다.
+
+| **에이전트** | **설정 위치 (2026-10-28 기준)** | **팀 공유 방법** |
+| --- | --- | --- |
+| **Claude Code** | 프로젝트 루트 `.mcp.json` (개인용은 사용자 범위 설정) | `.mcp.json`을 커밋 (비밀값은 환경 변수 참조) |
+| **Codex** | `.codex/config.toml`의 `[mcp_servers.<이름>]` (신뢰 처리된 프로젝트), 개인은 `~/.codex/config.toml` | `.codex/config.toml`을 커밋 |
+| **Antigravity** | `~/.gemini/config/mcp_config.json` (사용자 전역, 이전 경로 `~/.gemini/antigravity/mcp_config.json`) | 프로젝트 단위 공유 파일이 없으므로 README에 권장 서버 목록과 설정 예시를 둠 |
+
+- 설정 경로는 도구 업데이트로 바뀔 수 있으므로, 처음 구성할 때 각 도구의 공식 문서로 다시 확인합니다.
+
+## 10. 컨텍스트와 세션 운용
+
+Anthropic 실험에서는 긴 세션에서 압축(compaction)만으로 성능이 유지되지 않아, 컨텍스트를 리셋하고 구조화된 파일로 작업을 넘겨받는 방식이 하네스 설계의 필수 요소가 되었습니다.
+
+- **1 Task = 1 세션:** Task가 통과하면 `docs/progress.md`를 갱신·커밋하고 새 세션(예: Claude Code `/clear`)에서 다음 Task를 시작합니다.
+- **압축보다 리셋:** 세션이 길어져 응답 품질이 떨어지면 압축을 반복하지 말고, 진행 상태를 갱신한 뒤 새 세션으로 넘어갑니다.
+- **탐색은 위임:** 넓은 코드 탐색, 문서 조사, 로그 분석은 서브에이전트나 `/research` 같은 백그라운드 조사에 맡기고, 메인 세션에는 요약만 가져옵니다.
+- **계획과 구현 분리:** Plan 모드에서 만든 계획을 `docs/03-plan.md`·`docs/progress.md`에 남긴 뒤 구현 세션을 시작합니다.
+- **추론 수준:** 세션을 새로 시작할 때 정하고, 세션 중에는 바꾸지 않습니다(PART 1 §0-4 ③).
+- **1-B 현장 해커톤:** Task를 바꿀 때 새 세션을 권장하며, 진행 상태는 `SPEC.md` 5절로 넘깁니다.
+
 # PART 4. 아키텍처 구조 및 전체 구축 로드맵
 
 ## 1. 표준 프로젝트 디렉터리 구조 및 문서별 책임
@@ -1010,6 +1223,7 @@ project/
 ├── CHANGELOG.md               # 주요 변경 이력
 ├── .env.example               # 필수 환경 변수 템플릿
 ├── .gitignore                 # 비밀정보, 빌드 산출물, 개인 설정(CLAUDE.local.md 등) 제외
+├── .mcp.json                  # Claude Code 팀 공유 MCP 서버 (비밀값은 환경 변수로 참조)
 │
 ├── docs/                      # 워크플로우 단계별 산출물 및 상세 설계 문서
 │   ├── 00-brainstorm.md
@@ -1019,10 +1233,12 @@ project/
 │   ├── 02-glossary.md         # 도메인 용어집
 │   ├── 03-architecture.md     # 시스템 구조와 모듈 의존 관계 (Mermaid ERD 등)
 │   ├── 03-plan.md             # 구현 계획 및 Task 분할
+│   ├── progress.md            # 세션 간 진행 상태와 Task 통과 여부 (PART 1 §3 ⑦)
 │   ├── 06-test-report.md      # 테스트 범위·결과 및 복잡한 검증 절차
 │   ├── 07-deploy.md           # 배포 방법
 │   ├── 07-runbook.md          # 장애 대응 절차
 │   ├── adr/                   # 주요 기술 결정 기록 (Architecture Decision Records)
+│   ├── agents/                # setup-matt-pocock-skills 설정 (이슈 트래커·문서 위치)
 │   ├── meetings/              # 회의록
 │   └── reviews/               # AI 교차 검증 리뷰 기록
 │
@@ -1060,13 +1276,15 @@ project/
 | **단계** | **핵심 작업** | **구체적 수행 내용** | **완료 기준** |
 | --- | --- | --- | --- |
 | **Step 1** | **`SPEC.md` 작성 및 검수** | 프로젝트 목표, 기능, 우선순위, 검증 가능한 완료 조건 확정 | 요구사항의 모호한 부분과 미확정 사항이 구분됨 |
-| **Step 2** | **`AGENTS.md`·`CLAUDE.md` 작성 및 검수** | 실제 저장소를 조사해 작업 규칙과 기준 문서 위치 정리, `CLAUDE.md`는 `@AGENTS.md` import + 전용 지침만 작성 | 규칙이 프로젝트와 일치하고, 세 에이전트 모두에서 로딩이 확인됨 (PART 1 §3 ⑤) |
+| **Step 2** | **`AGENTS.md`·`CLAUDE.md` 작성 및 검수** | 실제 저장소를 조사해 작업 규칙과 기준 문서 위치 정리, `CLAUDE.md`는 `@AGENTS.md` import + 전용 지침만 작성, mattpocock 스킬을 쓰면 `/setup-matt-pocock-skills` 실행 | 사람이 검토해 레포 고유 규칙만 남았고(PART 2 §3-1 원칙 5), 규칙이 프로젝트와 일치하고, 세 에이전트 모두에서 로딩이 확인됨 (PART 1 §3 ⑤) |
 | **Step 3** | **현재 하네스 진단** | 문서·Skills·코드·실행 환경·테스트·권한·다중 에이전트 정합성 조사 | 누락 사항과 개선 우선순위가 확인됨 |
 | **Step 4** | **실행 환경 안정화** | 의존성, 실행 명령, 환경 변수, 개발 DB의 재현 가능성 확보 | 다른 팀원의 환경(OS 포함)에서도 프로젝트를 즉시 재실행할 수 있음 |
-| **Step 5** | **자동 검증 체계 구축** | 테스트·린트·타입 검사·빌드·Skills 동기화 검사를 단일 `verify` 명령으로 연결 | `verify`가 실행되고 실패 단계를 정확히 보고함 |
-| **Step 6** | **규칙과 보안 보완** | 중요한 아키텍처 규칙을 자동 검사하고, 세 에이전트 각각의 권한 설정으로 위험 작업 승인 기준 적용 | 핵심 제약과 고위험 작업이 모든 에이전트에서 안전하게 관리됨 |
+| **Step 5** | **자동 검증 체계 구축** | 테스트·린트·타입 검사·빌드·Skills 동기화 검사를 단일 `verify` 명령으로 연결 (Node 스택은 `setup-pre-commit`으로 커밋 전 훅도 연결) | `verify`가 실행되고 실패 단계를 정확히 보고함 |
+| **Step 6** | **규칙과 보안 보완** | 중요한 아키텍처 규칙을 자동 검사하고, 세 에이전트 각각의 권한 설정과 MCP 서버 권한(PART 3 §9)으로 위험 작업 승인 기준 적용 | 핵심 제약과 고위험 작업이 모든 에이전트에서 안전하게 관리됨 |
 | **Step 7** | **CI/CD 및 평가(Evals)** | 로컬 검증 안정화 후 CI에서 같은 `verify` 실행, 대표 작업 평가 세트를 에이전트별로 실행 | 반복 실행 가능한 자동 검증 파이프라인 작동 |
 | **Step 8** | **실제 기능으로 최종 검증** | 작은 기능을 구현·교차 검증한 뒤 실패 원인을 분석해 하네스 개선 | `계획 → 구현 → 검증 → 수정` 루프가 실제로 작동함 |
+
+- 구축 이후에는 PART 3 §8의 주기에 따라 하네스를 점검하고 덜어냅니다. 외부 Skills·MCP 서버는 Step 5~6에서 PART 3 §4-6·§9 기준으로 검토한 뒤 추가합니다.
 
 ### 2-2. 진단 후 우선순위별 개선 구현 프롬프트 (세 에이전트 공통)
 
@@ -1125,6 +1343,10 @@ project/
 - [ ]  실패 원인을 파악하는 데 필요한 로그와 검증 결과를 에이전트가 확인할 수 있는가?
 - [ ]  팀원 모두가 워크플로우의 담당 모델(또는 대체 모델)을 실제로 사용할 수 있는가?
 - [ ]  실제 기능 구현을 통해 **`계획 → 구현 → 교차 검증/자동 테스트 → 수정`** 루프가 원활히 작동하는가?
+- [ ]  `AGENTS.md`에 레포에서 알 수 없는 정보만 남아 있고, 사람이 검토한 내용인가?
+- [ ]  새 세션이 `docs/progress.md`(1-B는 `SPEC.md` 5절)와 git log만으로 작업 상태를 이어받을 수 있는가?
+- [ ]  외부 Skills·MCP 서버가 출처 검토와 버전 고정을 거쳤고, 비밀값이 설정 파일에 없는가?
+- [ ]  하네스 최신성 점검과 덜어내기 검토가 정해진 주기로 이루어지는가?
 
 ### 참고한 공식 자료
 
@@ -1155,3 +1377,31 @@ project/
 - [Config basics (config.toml, 샌드박스·승인)](https://developers.openai.com/codex/config-basic)
 - [Hooks](https://developers.openai.com/codex/hooks)
 - [Models](https://developers.openai.com/codex/models)
+
+**하네스 설계 근거** (2026-10-28 검토)
+
+- [Birgitta Böckeler — Harness engineering for coding agent users (martinfowler.com)](https://martinfowler.com/articles/harness-engineering.html)
+- [Anthropic — Effective harnesses for long-running agents](https://anthropic.com/engineering/effective-harnesses-for-long-running-agents)
+- [Anthropic — Harness design for long-running application development](https://anthropic.com/engineering/harness-design-long-running-apps)
+- [Gloaguen et al. — Evaluating AGENTS.md (ICLR 2026)](https://iclr.cc/virtual/2026/10021235)
+- [CSA — Agent Context Poisoning: SKILL.md and the New AI Supply Chain Attack Surface](https://labs.cloudsecurityalliance.org/research/csa-research-note-skill-md-agent-context-poisoning-20260506)
+- [Barbaste et al. — Harness Engineering: A Source-Code Study of Eleven Systems (arXiv)](https://arxiv.org/abs/2609.00006)
+
+**Skills 원본 저장소** (PART 1 §4)
+
+- [mattpocock/skills](https://github.com/mattpocock/skills)
+- [obra/superpowers](https://github.com/obra/superpowers)
+- [vercel-labs/agent-skills](https://github.com/vercel-labs/agent-skills)
+- [vercel-labs/skills (find-skills)](https://github.com/vercel-labs/skills)
+- [vercel-labs/agent-browser](https://github.com/vercel-labs/agent-browser)
+- [supabase/agent-skills](https://github.com/supabase/agent-skills)
+- [Leonxlnx/taste-skill](https://github.com/Leonxlnx/taste-skill)
+- [anthropics/skills (pptx)](https://github.com/anthropics/skills)
+
+# 문서 변경 이력
+
+| **날짜** | **변경 내용** |
+| --- | --- |
+| 2026-10-28 (2차) | 최신 하네스 연구·사례 대조 결과 반영. ① `AGENTS.md` 최소 요구사항 원칙(PART 2 §3-0·§3-1 원칙 5, 템플릿의 일반론 삭제, 작성 프롬프트 규칙 추가) ② 세션 간 진행 상태 기록(PART 1 §3 ⑦, `docs/progress.md`, 1-B `SPEC.md` 5절 상태 열) ③ 하네스 유지보수와 엔트로피 관리(PART 3 §8) ④ 외부 Skills 보안 검토(PART 3 §4-6) ⑤ MCP 서버 관리와 컨텍스트·세션 운용(PART 3 §9·§10). 관련 디렉터리 구조·진단 영역·작성 프롬프트·체크리스트·참고 자료 갱신 |
+| 2026-10-28 | PART 1 §4 「단계별 Skills 매핑과 사용 원칙」 신설. 1-A·1-B·2 워크플로우 표에 단계별 Skills 명시 (1단계 `/brainstorming` 제거, 2단계 `/grill-with-docs`로 통합, `/to-spec`·`/to-tickets`·`/pptx` 등 배치). 1-B 운영 원칙·사전 준비에 Skills 항목 추가. `AGENTS.md` 템플릿 §5, PART 3 §3-3·§4-3·§4-5, PART 4 Step 2·5와 디렉터리 구조(`docs/agents/`) 갱신. §0-1 모델 등급 표와 `sync_skills.py`·`config.toml` 코드 블록의 깨진 서식 복구, 2단계 표 오타("Task 분" → "Task 분할") 수정 |
+| 2026-10-21 | 통합본 기준일 (모델 가용성·도구 경로는 이 날짜 기준, 이전 변경 이력은 기록되지 않음) |

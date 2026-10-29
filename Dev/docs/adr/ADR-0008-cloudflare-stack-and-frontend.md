@@ -29,7 +29,7 @@ SPEC §17은 Cloudflare Workers·TypeScript·D1·R2·Cron Trigger를 확정했�
 4. **서버 라이브러리**:
    - **Hono**: Workers용 라우터. 의존성이 작고 미들웨어 구조가 단순합니다.
    - **zod**: 서버 요청 검증
-5. **테스트**: Vitest와 `@cloudflare/vitest-pool-workers`. 실제 D1(miniflare)에서 batch 원자성과 제약을 확인합니다.
+5. **테스트**: Vitest와 `@cloudflare/vitest-plugin`. 실제 D1(miniflare)에서 batch 원자성과 제약을 확인합니다. (2026-10-28 변경: 처음 채택한 `@cloudflare/vitest-pool-workers`가 `@cloudflare/vitest-plugin`으로 이름이 바뀌고 deprecated되었습니다. 구버전 wrangler·miniflare를 내부에 고정해 개발 의존성에 high 취약점이 보고되어 후속 패키지로 교체했습니다. 테스트 방식은 그대로입니다.)
 6. **품질 도구**:
    - ESLint(flat config) + `typescript-eslint` + Prettier
    - `no-restricted-imports`로 모듈 경계를 강제합니다.
@@ -48,4 +48,5 @@ SPEC §17은 Cloudflare Workers·TypeScript·D1·R2·Cron Trigger를 확정했�
 ## 결과
 
 - 버전은 T01 스캐폴드 시점의 안정 버전으로 고정하고, 확인한 명령을 `AGENTS.md` §4·§7에 기록합니다.
+- **버전 고정 예외 (2026-10-28, T01)**: TypeScript는 최신 7.0이 아니라 5.9.3으로 고정합니다. `typescript-eslint` 8.x(TypeScript `<6.1`)와 `openapi-typescript` 7.x(TypeScript `^5.x`)가 요구하는 TypeScript 피어 의존성 범위 때문입니다. 두 도구가 올라가면 TypeScript도 올립니다. Vitest는 `@cloudflare/vitest-plugin`이 요구하는 4.1.x(`^4.1.0 || ^5.0.0`)입니다.
 - 이 결정을 바꾸려면 이 ADR과 `docs/architecture.md`를 먼저 고칩니다(SPEC §17 규칙).
