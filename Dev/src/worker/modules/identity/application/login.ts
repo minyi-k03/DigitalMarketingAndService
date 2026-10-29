@@ -1,7 +1,7 @@
 import { encryptAesGcm, randomToken, sha256Hex } from '../../../platform/crypto';
 import { DomainError } from '../../../platform/errors';
 import { newId } from '../../../platform/id';
-import { toUtcInstant } from '../../../../shared/kst-date';
+import { toUtcInstant, type UtcInstant } from '../../../../shared/kst-date';
 import type { IdentityDeps } from '../deps';
 import { invalidLoginState, signLoginState, verifyLoginState } from '../domain/login-state';
 import { isInternalPath } from '../domain/return-to';
@@ -47,7 +47,7 @@ export interface LoginWithKakaoInput {
 export interface LoginResult {
   /** 쿠키에 담을 세션 토큰 원문. DB에는 해시만 저장한다 */
   sessionToken: string;
-  expiresAt: string;
+  expiresAt: UtcInstant;
   returnTo: string;
 }
 

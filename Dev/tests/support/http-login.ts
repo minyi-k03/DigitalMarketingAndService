@@ -6,7 +6,7 @@ import { FakeClock } from './fake-clock';
 import { FakeKakaoOAuthClient } from './fake-kakao-oauth';
 
 export const ORIGIN = 'http://localhost';
-const silentLogger: Logger = { info: () => {}, error: () => {} };
+export const silentLogger: Logger = { info: () => {}, error: () => {} };
 
 /** 가짜 카카오와 실제 D1로 조립한 앱. 로그인 헬퍼와 함께 쓴다 */
 export function buildLoginApp() {

@@ -390,7 +390,7 @@ describe('CM catalog_items 제약 [D-13][D-15][T03]', () => {
   });
 });
 
-describe('ID 계정·카카오 토큰·세션 [D-16][T03]', () => {
+describe('IA 계정·카카오 토큰·세션 [D-16][T03]', () => {
   it('kakao_id는 유일하다', async () => {
     const id = uid('user');
     await insert('users', userRow(id, { kakao_id: 'dup-kakao-id' }));

@@ -1,6 +1,8 @@
+import type { UtcInstant } from '../../../../shared/kst-date';
+
 export interface KakaoTokenRow {
   refreshTokenEncrypted: string;
-  refreshTokenExpiresAt: string;
+  refreshTokenExpiresAt: UtcInstant;
   scopes: string[];
 }
 
@@ -9,9 +11,9 @@ export async function upsertKakaoToken(
   input: {
     userId: string;
     refreshTokenEncrypted: string;
-    refreshTokenExpiresAt: string;
+    refreshTokenExpiresAt: UtcInstant;
     scopes: string[];
-    updatedAt: string;
+    updatedAt: UtcInstant;
   },
 ): Promise<void> {
   await db
@@ -47,7 +49,11 @@ export async function findKakaoToken(
        FROM kakao_message_tokens WHERE user_id = ?`,
     )
     .bind(userId)
-    .first<{ refreshTokenEncrypted: string; refreshTokenExpiresAt: string; scopes: string }>();
+    .first<{
+      refreshTokenEncrypted: string;
+      refreshTokenExpiresAt: UtcInstant;
+      scopes: string;
+    }>();
   if (!row) return null;
   return { ...row, scopes: JSON.parse(row.scopes) as string[] };
 }
@@ -57,8 +63,8 @@ export async function replaceRefreshToken(
   input: {
     userId: string;
     refreshTokenEncrypted: string;
-    refreshTokenExpiresAt: string;
-    updatedAt: string;
+    refreshTokenExpiresAt: UtcInstant;
+    updatedAt: UtcInstant;
   },
 ): Promise<void> {
   await db

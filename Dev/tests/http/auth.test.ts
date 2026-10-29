@@ -1,27 +1,7 @@
 import { env } from 'cloudflare:test';
 import { describe, expect, it } from 'vitest';
 import { createApp } from '../../src/worker/http/app';
-import type { Logger } from '../../src/worker/http/logger';
-import { createIdentityService } from '../../src/worker/modules/identity';
-import { FakeClock } from '../support/fake-clock';
-import { FakeKakaoOAuthClient } from '../support/fake-kakao-oauth';
-
-const ORIGIN = 'http://localhost';
-const silentLogger: Logger = { info: () => {}, error: () => {} };
-
-function buildApp() {
-  const clock = new FakeClock('2026-11-02T01:00:00.000Z');
-  const kakao = new FakeKakaoOAuthClient();
-  const identity = createIdentityService({
-    db: env.DB,
-    clock,
-    kakao,
-    sessionSigningKey: 'test-session-signing-key',
-    tokenEncryptionKey: btoa('0123456789abcdef0123456789abcdef'),
-  });
-  const app = createApp({ clock, db: env.DB, logger: silentLogger, identity });
-  return { app, clock, kakao, identity };
-}
+import { buildLoginApp as buildApp, ORIGIN, silentLogger } from '../support/http-login';
 
 type Built = ReturnType<typeof buildApp>;
 
@@ -140,8 +120,6 @@ describe('IA 카카오 로그인 HTTP 계약 [S16][T05]', () => {
       kakaoId: '1001',
       returnTo: '/bridge/tr_1',
     });
-    expect(callback.status).toBe(302);
-
     expect(callback.status).toBe(302);
     expect(callback.headers.get('Location')).toBe('/bridge/tr_1');
     expect(setCookie).toMatch(/^sc_session=[\w-]{20,};/);

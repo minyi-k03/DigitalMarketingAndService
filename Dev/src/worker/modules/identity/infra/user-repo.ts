@@ -1,3 +1,5 @@
+import type { UtcInstant } from '../../../../shared/kst-date';
+
 export interface UserRef {
   id: string;
   role: 'USER' | 'OPERATOR' | 'ADMIN';
@@ -6,7 +8,7 @@ export interface UserRef {
 export interface UserRow extends UserRef {
   nickname: string | null;
   notificationEnabled: number;
-  notificationConsentAt: string | null;
+  notificationConsentAt: UtcInstant | null;
   phoneNumberEncrypted: string | null;
 }
 
@@ -29,7 +31,7 @@ export async function findUserById(db: D1Database, userId: string): Promise<User
  */
 export async function upsertUserByKakaoId(
   db: D1Database,
-  input: { newId: string; kakaoId: string; nickname?: string; nowIso: string },
+  input: { newId: string; kakaoId: string; nickname?: string; nowIso: UtcInstant },
 ): Promise<UserRef> {
   const row = await db
     .prepare(

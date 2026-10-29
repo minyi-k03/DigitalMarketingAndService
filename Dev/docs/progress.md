@@ -7,7 +7,7 @@
 
 | 날짜 | 명령 | 결과 |
 | :--- | :--- | :--- |
-| 2026-10-28 | `npm run verify` | 통과 (lint, typecheck, test 170건, build). T06 완료 시점 |
+| 2026-10-29 | `npm run verify` | 통과 (lint, typecheck, test 170건, build). 외부 리뷰 반영 후 |
 
 ## 세션 로그
 
@@ -17,3 +17,5 @@
 - 2026-10-28 · Claude Code · T06 완료(발표용 간소화): `requireRole`, `/api/admin/*` 기본 가드(OPERATOR 이상), ADMIN 시드 스크립트(`npm run seed:admin`). 시드는 로컬 D1에서 수동 확인했고 원격(`--remote`)은 실행하지 않음. 로컬 D1에 마이그레이션 0001 적용됨. 미커밋. 다음: T07 또는 T08.
 - 2026-10-29 · Claude Code · N7 일부 완료(Cloudflare 무료 계정, `wrangler login` 확인, 계정 서브도메인 `june18806.workers.dev`). 무료 플랜 조건으로 R2 바인딩을 `wrangler.jsonc`에서 제거하고 `Env.BLOBS`를 선택 타입으로 변경(R2 사용 여부는 T09 이후 결정, ADR-0008의 R2는 보류 상태). production Worker 이름을 `subcut`으로 명시. 원격 리소스는 아직 만들지 않음. 다음: 빈 Worker 배포(D1 생성 → database_id 교체 → 원격 마이그레이션 → deploy, 각 단계 승인).
 - 2026-10-29 · Claude Code · **빈 Worker 첫 배포 완료(T32 일부, M1)**: 대시보드에서 D1 `subcut-production` 생성(CLI `d1 create`는 Authentication error 10000으로 실패, 원인 미확인), `database_id` 교체, 원격 마이그레이션 0001 적용(테이블 12개, app_settings 3행, users 0건 확인), `wrangler deploy --env production` → https://subcut.june18806.workers.dev (Version d144046a, Cron 2개 등록). 배포 후 GET 확인: `/` 200, `/api/health` 200, `/api/me` 401(loginUrl 포함), `/api/nope` 404, SPA 경로 200. 비밀값 미등록이라 `/auth/kakao/login`은 500(예상된 동작, 로그인 불가). 다음: N8 카카오 앱 등록 → 로컬 로그인 확인 → 비밀값 등록(승인 필요).
+- 2026-10-29 · Claude Code · T01~T06 커밋·푸시: `a5e7796`(docs), `ed31448`(T01~T06 코드·설정) → `origin/main`. 위 항목들의 "미커밋"은 이 시점에 해소.
+- 2026-10-29 · Claude Code · 외부 에이전트(Gemini) `/code-review` 결과 9건 검증 후 반영. 수정 7건: 테스트 약어 `ID`→`IA`, `auth.test.ts` 조립 코드 중복을 `tests/support/http-login.ts`로 통일·중복 단언 제거, `SessionRow.id`→`userId`, state 페이로드 `n/r/e`→`nonce/returnTo/exp`, Identity 저장소·`LoginResult`의 시각을 `UtcInstant`로 유지, Vite 프록시에 `/auth` 추가, `tasks.md` T01에 R2·staging 보류 사유 기록. 리뷰에 없던 추가 발견: Vite(5173) 경유 POST가 Origin 검사로 403 → 개발 프록시에서만 개발 서버 Origin을 Worker 주소로 바꿔 전달(외부 Origin은 계속 403, 로컬에서 wrangler dev + vite로 확인). 기록만 2건: `/api/health`는 계약 밖 내부 경로로 architecture §8에 명시, `Me.hasRecipient` 판정(D-16)은 T07 착수 전 결정 사항으로 tasks.md T07에 기록.

@@ -161,7 +161,7 @@
 | `npm run gen:api` | `api/openapi.yaml` → `src/shared/api-types.ts` |
 | `npm run format` | Prettier 쓰기 모드 |
 | `npm run seed:admin -- <카카오 회원번호> [--remote]` | 먼저 로그인한 계정을 `ADMIN`으로 승격(로컬 D1 기본). `--remote`는 production D1이므로 사용자 승인 후에만 실행 |
-| `npm run dev` / `npm run dev:web` | `wrangler dev`(웹 빌드 후) / Vite 개발 서버(`/api`는 `localhost:8787`로 프록시) |
+| `npm run dev` / `npm run dev:web` | `wrangler dev`(웹 빌드 후) / Vite 개발 서버(포트 5173 고정, `/api`·`/auth`는 `localhost:8787`로 프록시. Origin 검사를 통과하도록 개발 서버 자신의 Origin만 Worker 주소로 바꿔 전달) |
 - **수용 기준 연결**: 테스트는 `describe('TT 알림 스케줄 [S13][S26]')`, `it('V-08 UNPUBLISHED 항목은 경로 A 생성 거부')`처럼 `SPEC.md` Testing Decisions 항목·`V-01~V-10`·사용자 스토리 번호로 추적할 수 있게 이름 짓는다(`docs/architecture.md` §10, `docs/tasks.md` 추적표 2).
 - **테스트 방식**: Vitest + `@cloudflare/vitest-plugin`으로 마이그레이션을 적용한 격리 로컬 D1에서 실행한다. 각 모듈 `application/` 명령·조회 핸들러를 테스트 seam(`[확정]`)으로 삼아 관찰 가능한 결과만 검증하고, 경계에서 `FakeClock`, `FakeNotificationSender`, `FakeRecipientResolver`, `FakeKakaoOAuthClient`(카카오 OAuth 포트)만 테스트 더블로 교체한다. 외부 HTTP 어댑터(`kakao-memo`, 카카오 OAuth, 알림톡)의 단위 테스트만 예외로 `fetch`를 모의한다(V-10). 실제 알림톡이나 카카오 메시지를 보내는 테스트는 만들지 않는다.
 - **반드시 다룰 경계**:

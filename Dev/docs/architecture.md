@@ -406,6 +406,7 @@ RETURNING id, safe_end_date, billing_date;
 ## 8. HTTP 계층 (D-06)
 
 - 계약의 원본은 [`api/openapi.yaml`](../api/openapi.yaml)입니다. `openapi-typescript`로 `src/shared/api-types.ts`를 생성해 서버 라우트와 SPA가 함께 씁니다.
+  - 예외: `GET /api/health`(`{"status":"ok"}`)는 배포 후 생존 확인용 내부 경로라 계약에 넣지 않습니다(2026-10-28 결정). SPA는 이 경로를 쓰지 않습니다.
 - 요청 본문은 서버에서 zod로 검증합니다. 생성된 타입과 zod 스키마가 어긋나지 않는지는 HTTP 계약 테스트에서 확인합니다.
 - **오류 응답**: RFC 9457 `application/problem+json`에 `code`를 더합니다.
 

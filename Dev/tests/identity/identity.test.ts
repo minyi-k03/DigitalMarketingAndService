@@ -176,7 +176,7 @@ describe('IA 카카오 로그인 완료와 세션 [S16][T05]', () => {
       '본문(returnTo)이 바뀐 state',
       (state: string) => {
         const [, signature] = state.split('.');
-        const forged = btoa(JSON.stringify({ n: 'x', r: '/admin', e: 9999999999999 }))
+        const forged = btoa(JSON.stringify({ nonce: 'x', returnTo: '/admin', exp: 9999999999999 }))
           .replaceAll('=', '')
           .replaceAll('+', '-')
           .replaceAll('/', '_');

@@ -43,6 +43,7 @@
   - `package.json`(스크립트 `dev`·`build`·`test`·`typecheck`·`lint`·`format`·`gen:api`)
   - `tsconfig`(worker·web 분리)
   - `wrangler.jsonc`(env `staging`·`production`, D1·R2 바인딩, cron 2종, assets SPA fallback, `NOTIFICATION_MODE`)
+    - 실제 구현(2026-10-29): `staging`은 발표 전 만들지 않는다(implementation-plan §7.2 T32). R2 바인딩은 무료 플랜 조건(카드 등록 없음)으로 보류해 `Env.BLOBS`를 선택 타입으로 두었고, 로고 업로드가 필요한 T09 이후 사용 여부를 정한다.
   - `vitest.config.ts`(pool-workers, 마이그레이션 자동 적용)
   - ESLint(모듈 경계 `no-restricted-imports`, 도메인 `Date` 직접 호출 금지)·Prettier
   - `.gitignore`(`.dev.vars`, `node_modules`, `dist`)
@@ -128,6 +129,7 @@
   - `PUT /api/me/notification-settings`
   - `RecipientResolver` 포트(`resolve(userId) → recipient | null`)와 `FakeRecipientResolver`
   - `getNotificationRecipient` 공개 조회
+  - **착수 전 결정 필요**: 현재 `Me.hasRecipient`는 전화번호 저장 여부(`phone_number_encrypted`)로 판정하고, openapi 설명도 "알림톡 수신 번호 확보 여부"다. 발표용 `kakao_memo`(D-16)에서는 수신처가 전화번호가 아니라 `talk_message` 동의 토큰이므로, 발표 환경에서 `hasRecipient`를 무엇으로 판정할지(`RecipientResolver` 기준으로 통일할지) 정한다. 바꾸면 openapi 설명도 갱신한다.
 - **완료 기준**: 설정 변경이 `Me`에 반영되고, 포트 fake로 수신 번호 유무를 바꿀 수 있습니다(SKIPPED 검증은 T17).
 - **주요 파일**: `m/identity/*`, `w/ports/recipient-resolver.ts`
 

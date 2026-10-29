@@ -21,7 +21,7 @@ export async function authenticate(
     await deleteSession(deps.db, tokenHash);
     return null;
   }
-  return { userId: session.id, role: session.role };
+  return { userId: session.userId, role: session.role };
 }
 
 export async function logout(deps: IdentityDeps, sessionToken: string | undefined): Promise<void> {

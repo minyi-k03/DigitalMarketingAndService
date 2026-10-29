@@ -11,12 +11,10 @@ import { isInternalPath } from './return-to';
 export const STATE_TTL_MS = 10 * 60 * 1000;
 
 interface StatePayload {
-  /** nonce */
-  n: string;
-  /** returnTo */
-  r: string;
+  nonce: string;
+  returnTo: string;
   /** 만료 시각(epoch ms) */
-  e: number;
+  exp: number;
 }
 
 export const invalidLoginState = () =>
@@ -40,7 +38,7 @@ export async function signLoginState(
   nowMs: number,
 ): Promise<{ state: string; nonce: string }> {
   const nonce = randomToken(16);
-  const payload: StatePayload = { n: nonce, r: returnTo, e: nowMs + STATE_TTL_MS };
+  const payload: StatePayload = { nonce, returnTo, exp: nowMs + STATE_TTL_MS };
   const body = toBase64Url(new TextEncoder().encode(JSON.stringify(payload)));
   return { state: `${body}.${await hmacSign(secret, body)}`, nonce };
 }
@@ -61,8 +59,9 @@ export async function verifyLoginState(
   } catch {
     throw invalidLoginState();
   }
-  if (typeof payload.e !== 'number' || payload.e < nowMs) throw invalidLoginState();
-  if (typeof payload.r !== 'string' || !isInternalPath(payload.r)) throw invalidLoginState();
-  if (typeof payload.n !== 'string' || payload.n === '') throw invalidLoginState();
-  return { nonce: payload.n, returnTo: payload.r };
+  const { nonce, returnTo, exp } = payload;
+  if (typeof exp !== 'number' || exp < nowMs) throw invalidLoginState();
+  if (typeof returnTo !== 'string' || !isInternalPath(returnTo)) throw invalidLoginState();
+  if (typeof nonce !== 'string' || nonce === '') throw invalidLoginState();
+  return { nonce, returnTo };
 }
