@@ -1,0 +1,47 @@
+{
+  "$schema": "node_modules/wrangler/config-schema.json",
+  "name": "subcut",
+  "main": "src/worker/index.ts",
+  "compatibility_date": "2026-10-01",
+  "assets": {
+    "directory": "./dist/web",
+    "not_found_handling": "single-page-application",
+    "run_worker_first": ["/api/*", "/auth/*"],
+  },
+  // 바인딩은 환경별로 상속되지 않으므로 env.production에 다시 적는다.
+  // database_id는 placeholder다. 실제 D1 생성(`wrangler d1 create`)은 승인 후 T32에서 한다.
+  "d1_databases": [
+    {
+      "binding": "DB",
+      "database_name": "subcut-dev",
+      "database_id": "00000000-0000-0000-0000-000000000000",
+      "migrations_dir": "migrations",
+    },
+  ],
+  // R2 바인딩은 아직 없다 (production 쪽 주석 참고). 쓰기로 정하면 두 곳 모두에 다시 넣는다.
+  "triggers": {
+    // 10분 주기 알림 발송, 매일 15:10 UTC(KST 00:10) MISSED_BILLED 배치 (architecture §5)
+    "crons": ["*/10 * * * *", "10 15 * * *"],
+  },
+  "vars": { "NOTIFICATION_MODE": "log" },
+  "env": {
+    // 발표 전에는 staging을 만들지 않는다 (AGENTS.md §6).
+    "production": {
+      // 환경을 지정하면 기본 이름이 "subcut-production"이 되므로, 주소를 subcut.<계정>.workers.dev로 맞추려고 명시한다.
+      "name": "subcut",
+      "d1_databases": [
+        {
+          "binding": "DB",
+          "database_name": "subcut-production",
+          "database_id": "49fe3ab9-7cba-49b6-8746-e3878dd53388",
+          "migrations_dir": "migrations",
+        },
+      ],
+      // R2는 무료 플랜 조건(카드 등록 없음)을 지키려고 첫 배포에서 뺐다. 로고 업로드가 필요한 T09 이후
+      // R2를 쓸지 정하고, 쓰기로 하면 이 자리에 r2_buckets를 다시 넣는다. 현재 코드는 BLOBS를 사용하지 않는다.
+      "triggers": { "crons": ["*/10 * * * *", "10 15 * * *"] },
+      // T34(kakao_memo 어댑터) 구현 전까지 log. 구현 후 kakao_memo로 바꾼다 (D-16).
+      "vars": { "NOTIFICATION_MODE": "log" },
+    },
+  },
+}

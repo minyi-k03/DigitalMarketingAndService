@@ -35,23 +35,40 @@ paths:
           schema: { type: string, example: /bridge/tr_123 }
       responses:
         '302':
-          description: 카카오 인가 화면으로 이동 (state에 서명된 returnTo 포함)
+          description: |
+            카카오 인가 화면으로 이동한다 (state에 서명된 nonce·returnTo 포함).
+            같은 nonce를 로그인 CSRF 방어용 쿠키로 심는다. 클라이언트가 읽거나 보내는 값이 아니며 브라우저가 콜백에서 자동 전송한다.
+          headers:
+            Set-Cookie:
+              schema: { type: string }
+              description: sc_login_nonce; HttpOnly; Secure; SameSite=Lax; Path=/auth/kakao; Max-Age=600
+        '400': { $ref: '#/components/responses/ValidationFailed' }
   /auth/kakao/callback:
     get:
       tags: [auth]
       summary: 카카오 로그인 콜백
+      description: |
+        `state` 안의 nonce와 `sc_login_nonce` 쿠키가 같을 때만 로그인을 완료한다 (로그인 CSRF 방어).
+        사용자가 동의 화면에서 취소하면 카카오가 `code` 없이 `error`(예: `access_denied`)를 붙여 돌려보낸다.
       security: []
       parameters:
-        - { name: code, in: query, required: true, schema: { type: string } }
-        - { name: state, in: query, required: true, schema: { type: string } }
+        - { name: code, in: query, required: false, description: '`error`가 없으면 필수', schema: { type: string } }
+        - { name: state, in: query, required: false, description: '`error`가 없으면 필수', schema: { type: string } }
+        - { name: error, in: query, required: false, description: 카카오가 돌려준 오류(동의 취소 등), schema: { type: string } }
       responses:
         '302':
-          description: 세션 쿠키(sc_session) 발급 후 returnTo 또는 `/`로 이동
+          description: |
+            - 성공: 세션 쿠키(sc_session)를 발급하고 `sc_login_nonce` 쿠키를 지운 뒤 returnTo 또는 `/`로 이동한다.
+            - `error` 쿼리가 있으면 세션 없이 `/?loginError=access_denied`(동의 취소) 또는 `/?loginError=failed`(그 밖의 오류)로 이동한다.
           headers:
             Set-Cookie:
               schema: { type: string }
-              description: sc_session; HttpOnly; Secure; SameSite=Lax; Max-Age=2592000
-        '400': { $ref: '#/components/responses/ValidationFailed' }
+              description: sc_session; HttpOnly; Secure; SameSite=Lax; Path=/; Max-Age=2592000 (성공 시)
+        '400':
+          description: code·state 누락, 위조·만료된 state, nonce 쿠키 불일치, 무효한 인가 코드 (VALIDATION_FAILED)
+          content:
+            application/problem+json:
+              schema: { $ref: '#/components/schemas/Problem' }
   /auth/logout:
     post:
       tags: [auth]
@@ -763,6 +780,11 @@ components:
       content:
         application/problem+json:
           schema: { $ref: '#/components/schemas/Problem' }
+    InternalError:
+      description: 예상하지 못한 서버 오류 (INTERNAL_ERROR). 내부 정보는 담지 않는다. 모든 엔드포인트에서 발생할 수 있다
+      content:
+        application/problem+json:
+          schema: { $ref: '#/components/schemas/Problem' }
 
   schemas:
     # ---------- 공통
@@ -796,6 +818,7 @@ components:
             - CATALOG_ITEM_NOT_PUBLISHED
             - TRIAL_ALREADY_ENDED
             - BRIDGE_NOT_AVAILABLE
+            - INTERNAL_ERROR
         errors:
           type: array
           description: VALIDATION_FAILED일 때 필드별 오류

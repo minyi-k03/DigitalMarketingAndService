@@ -1,0 +1,8 @@
+# 로컬 개발용 Secrets 템플릿. 복사해 `.dev.vars`로 저장하고 실제 값을 채운다 (`.dev.vars`는 git 제외).
+# production 값은 `wrangler secret put`으로 등록한다 (사용자 승인 필요).
+KAKAO_CLIENT_ID=
+KAKAO_CLIENT_SECRET=
+SESSION_SIGNING_KEY=
+PHONE_ENCRYPTION_KEY=
+KAKAO_TOKEN_ENCRYPTION_KEY=
+ALIMTALK_API_KEY=
