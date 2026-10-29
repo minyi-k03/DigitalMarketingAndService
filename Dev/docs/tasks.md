@@ -94,7 +94,7 @@
 
 ## Phase 2: Identity & Account (P0)
 
-### T05 카카오 로그인·세션 — `완료 (로컬에서 실제 카카오 로그인 확인 2026-10-29. 배포 환경은 비밀값 등록과 production 리다이렉트 URI 시험 후 확인 필요)`
+### T05 카카오 로그인·세션 — `완료 (로컬·production에서 실제 카카오 로그인 확인 2026-10-29)`
 - **근거**: §15 로그인·세션, §19 `User`(G6 확정), S16, IA "알림 링크 로그인 후 복귀"
 - **선행**: T03, T04
 - **내용**:
@@ -129,7 +129,7 @@
   - `PUT /api/me/notification-settings`
   - `RecipientResolver` 포트(`resolve(userId) → recipient | null`)와 `FakeRecipientResolver`
   - `getNotificationRecipient` 공개 조회
-  - **착수 전 결정 필요**: 현재 `Me.hasRecipient`는 전화번호 저장 여부(`phone_number_encrypted`)로 판정하고, openapi 설명도 "알림톡 수신 번호 확보 여부"다. 발표용 `kakao_memo`(D-16)에서는 수신처가 전화번호가 아니라 `talk_message` 동의 토큰이므로, 발표 환경에서 `hasRecipient`를 무엇으로 판정할지(`RecipientResolver` 기준으로 통일할지) 정한다. 바꾸면 openapi 설명도 갱신한다.
+  - **결정 (2026-10-29, A안)**: `Me.hasRecipient`는 `RecipientResolver` 기준으로 판정한다. 현재는 전화번호 저장 여부(`phone_number_encrypted`)로 판정하고 openapi 설명도 "알림톡 수신 번호 확보 여부"여서, 발표용 `kakao_memo`(D-16)에서는 수신처가 `talk_message` 동의 토큰인데도 `false`가 나온다. `NOTIFICATION_MODE`별로 `kakao_memo`는 유효한 카카오 토큰이 있으면, `dealer`는 전화번호가 있으면 `true`로 한다. 구현할 때 `me.ts`의 판정과 openapi 설명을 함께 바꾸고(`openapi.yaml` 변경이므로 착수 전 계획 승인), `/api/me` 테스트(`tests/http/auth.test.ts`, `tests/identity/identity.test.ts`)의 기대값을 갱신한다.
 - **완료 기준**: 설정 변경이 `Me`에 반영되고, 포트 fake로 수신 번호 유무를 바꿀 수 있습니다(SKIPPED 검증은 T17).
 - **주요 파일**: `m/identity/*`, `w/ports/recipient-resolver.ts`
 
@@ -389,7 +389,7 @@
 - **내용**: 딜러사 HTTP API 어댑터, 템플릿 코드 매핑, 실제 `RecipientResolver` 구현. `staging`에서는 쓸 수 없게 막습니다.
 - **완료 기준**: 딜러사 응답을 모의(mock)한 어댑터 단위 테스트를 통과합니다. 실제 발송 테스트는 만들지 않습니다.
 
-### T32 staging 구성과 Cloudflare Access — `대기 (발표용: Cloudflare production 배포 필수, staging 생략, Access는 가능하면)` (실행은 승인 필요)
+### T32 staging 구성과 Cloudflare Access — `진행 (발표용: Cloudflare production 배포 필수, staging 생략, Access는 가능하면. 1주차 빈 Worker 배포·원격 D1 마이그레이션 0001·production Secrets 4개 등록 완료 2026-10-29)` (실행은 승인 필요)
 - **발표용 일정**: 1주차 빈 Worker 첫 배포 → 점검 B 전 시험 배포 → 12/5 최종 배포 (implementation-plan §7.5)
 - **근거**: §16 접근 제어, §17 환경
 - **선행**: T30, N7
