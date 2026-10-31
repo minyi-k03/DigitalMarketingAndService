@@ -152,15 +152,20 @@ T01 → T02 → T03 → T04 → T05 → T06 → T09 ─┐
 
 예상 시간은 사람이 지시·검토·수정하는 시간의 추정치이며, 총 약 135~140시간(주 약 24시간)입니다. 주 20시간만 쓰면 T62와 간소화 항목부터 줄입니다(§7.6).
 
-| 기간 | Claude Code (`src/worker`, `tests`, `migrations`, `api`, `src/shared`) | Antigravity (`src/web`) | 비코드 | 점검 |
-| :--- | :--- | :--- | :--- | :--- |
-| 10/27~11/2 | T01~T04, 빈 Worker 첫 배포(T32 일부) | — | N7 Cloudflare 계정, N8 카카오 앱 등록, 현재 문서 커밋 | M1, workers.dev 접속 확인 |
-| 11/3~11/9 | T05·T06·T07, T08, T09(간소), T10 | T25 | N5 해지 경로 검증 시작 | M2·M3 |
-| 11/10~11/16 | **T13~T15** | T26 | | **점검 A**: T15 테스트 통과 |
-| 11/17~11/23 | T16(간소), T17, **T34**, T18, T19 | T27 | 시험 배포 1회 | **점검 B**: 실제 카카오톡 수신 확인 |
-| 11/24~11/30 | T20~T23 | T28, T30(간소)·T61 | N5 데이터 입력 | **점검 C**: T62 범위 결정 |
-| 12/1~12/5 | T35, T60·T62·T63 서버, T33, **Cloudflare 최종 배포** | T60·T62·T63 화면 | N1 문안 | 기능 동결·최종 배포(12/5) |
-| 12/6~12/8 | 버그 수정만 | 버그 수정만 | 리허설, 시연 영상 백업, 발표 자료 | |
+스킬 열은 TASK별로 쓸 프로젝트 Skill을 정리한 것입니다(`Dev/.agents/skills/`에 설치된 Skill, AGENTS §5).
+- **공통**: 서버 TASK는 `tdd`로 구현하고, 모든 TASK는 끝낼 때 `verification-before-completion`과 `code-review`를 씁니다. 테스트가 실패하거나 버그가 나오면 `systematic-debugging`을 씁니다. 공개 인터페이스·`openapi.yaml` 변경처럼 사전 승인이 필요한 TASK는 `writing-plans`로 계획을 씁니다.
+- **열에 적힌 것은 TASK 특화 Skill입니다.** 라이브러리·외부 API 문서(Hono, zod, TanStack Query, 카카오 메시지 API)는 Skill 대신 `context7`로 조회합니다.
+- **설치가 필요한 Skill**: `wrangler`(`cloudflare/skills@wrangler`, 11/17 주 시험 배포 전), `agent-browser`(출처·라이선스를 확인하고 `npx skills add`로 재설치한 뒤. 11/24 주 전). 설치는 사용자 승인 후 AGENTS §5 절차로 합니다.
+
+| 기간 | Claude Code (`src/worker`, `tests`, `migrations`, `api`, `src/shared`) | Antigravity (`src/web`) | 비코드 | 점검 | 스킬 |
+| :--- | :--- | :--- | :--- | :--- | :--- |
+| 10/27~11/2 | T01~T04, 빈 Worker 첫 배포(T32 일부) | — | N7 Cloudflare 계정, N8 카카오 앱 등록, 현재 문서 커밋 | M1, workers.dev 접속 확인 | 공통만 |
+| 11/3~11/9 | T05·T06·T07, T08, T09(간소), T10 | T25 | N5 해지 경로 검증 시작 | M2·M3 | 서버: `workers-best-practices`(T05~T10), T07 `codebase-design`·`writing-plans`(포트·`openapi.yaml` 변경 계획), T08 `domain-modeling`<br>화면: T25 `frontend-design`, `vercel-react-best-practices` |
+| 11/10~11/16 | **T13~T15** | T26 | | **점검 A**: T15 테스트 통과 | 서버: T13~T15 `codebase-design`, T14 `workers-best-practices`(D1 `batch`)<br>화면: T26 `frontend-design`, `design-taste-frontend`, `vercel-react-best-practices` |
+| 11/17~11/23 | T16(간소), T17, **T34**, T18, T19 | T27 | 시험 배포 1회 | **점검 B**: 실제 카카오톡 수신 확인 | 서버: T17·T18 `workers-best-practices`(Cron·`scheduled`), T34 `context7`(카카오 메시지 API), 시험 배포 `wrangler`(설치 필요)<br>화면: T27 `frontend-design`, `vercel-react-best-practices` |
+| 11/24~11/30 | T20~T23 | T28, T30(간소)·T61 | N5 데이터 입력 | **점검 C**: T62 범위 결정 | 서버: T20~T23 `codebase-design`(EscapeBridge 모듈 경계)<br>화면: T28·T30·T61 `frontend-design`, `design-taste-frontend`, 브라우저 점검 `agent-browser`(설치 필요) |
+| 12/1~12/5 | T35, T60·T62·T63 서버, T33, **Cloudflare 최종 배포** | T60·T62·T63 화면 | N1 문안 | 기능 동결·최종 배포(12/5) | 서버: T35 전용 Skill 없음, T33 `agent-browser`, 최종 배포 `wrangler`<br>화면: T60·T62·T63 `frontend-design`, `design-taste-frontend` |
+| 12/6~12/8 | 버그 수정만 | 버그 수정만 | 리허설, 시연 영상 백업, 발표 자료 | | `systematic-debugging`, `verification-before-completion` |
 
 ### 7.6 지연 시 줄이는 순서
 

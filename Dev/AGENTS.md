@@ -18,7 +18,7 @@
 | `skills-lock.json` | 프로젝트 Skill의 출처·해시 기록(커밋 대상). Skill 파일(`.agents/skills/`)은 커밋하지 않고 이 파일로 복원한다(§5) |
 | `api/openapi.yaml` | HTTP 엔드포인트 및 RFC 9457 `problem+json` 오류 응답 규격 (`D-06` 확정) |
 | `docs/architecture.md` | 시스템 구성, 디렉터리 구조, 모듈 공개 인터페이스, D1 스키마, SPEC 갭(G1~G6 해결) 현황 |
-| `docs/implementation-plan.md` | 단계별 마일스톤(M0~M10), 크리티컬 패스, 비코드 병행 작업(N1~N8), **§7 발표용 범위·주차별 일정·에이전트 담당 구분** |
+| `docs/implementation-plan.md` | 단계별 마일스톤(M0~M10), 크리티컬 패스, 비코드 병행 작업(N1~N8), **§7 발표용 범위·주차별 일정·에이전트 담당 구분·TASK별 사용 Skill** |
 | `docs/tasks.md` | 구현 작업 분할(T00~T52, 발표용 T34·T35·T60~T63) 및 스토리·검증 항목 추적표 |
 | `docs/adr/ADR-0008-cloudflare-stack-and-frontend.md` | Cloudflare 단일 Worker, React + Vite SPA(`D-07`), Hono·zod·Vitest 채택 기록 |
 | `../목업html/`, `../시장분석,사용자분석/`, `../index*.html` | 이전 정적 목업·기획 자료. 구독컷 애플리케이션 구현 코드가 아니다 |
@@ -125,6 +125,7 @@
   - **새 PC·clone 후 복원**: `Dev/`에서 `npx skills experimental_install`을 실행하면 `.agents/skills/`가 복원된다(임시 폴더에서 12개 복원 확인). 이 명령은 `.claude/skills/` 연결을 만들지 않으므로 이어서 `New-Item -ItemType Directory -Force .claude\skills | Out-Null; Get-ChildItem .agents\skills -Directory | ForEach-Object { New-Item -ItemType Junction -Path ".claude\skills\$($_.Name)" -Target $_.FullName | Out-Null }`로 Junction을 만들고, 새 대화에서 Skill이 보이는지 확인한다.
   - **출처가 없는 Skill**(현재 `grilling`, `domain-modeling`, `codebase-design`, `writing-plans`, `agent-browser`)은 잠금 파일로 복원되지 않는 로컬 전용이다. 출처를 찾아 `npx skills add`로 재설치해 잠금 파일에 기록하거나, 다른 PC에서 쓰려면 `.agents/skills/`에 폴더째 복사하고 Junction을 만든다. 라이선스를 확인하기 전에는 커밋하지 않는다.
   - **`npx skills remove -g`는 쓰지 않는다.** 전역 삭제 명령이 프로젝트의 `.agents/skills/` 폴더까지 지운 사례가 있다. 프로젝트 Skill 제거는 `npx skills remove <name>`(`-g` 없이)로 한다.- **목적별 선택 기준**: 요구사항·설계 탐색(`brainstorming`, `grilling`, `domain-modeling`, `to-spec`), 아키텍처·모듈 설계(`codebase-design`, `improve-codebase-architecture`), 구현 계획(`writing-plans`), 테스트 우선 구현(`tdd`), 버그 분석(`systematic-debugging`), 프런트엔드 UI·React(`frontend-design`, `design-taste-frontend`, `vercel-react-best-practices`), 브라우저 검증(`agent-browser`), 코드 리뷰(`code-review`), 완료 전 검증·마무리(`verification-before-completion`, `finishing-a-development-branch`).
+- **TASK별 사용 Skill**: 발표 전까지 주차별·TASK별 Skill은 `docs/implementation-plan.md` §7.5의 '스킬' 열을 따른다. 그 표에 없는 Skill이 필요하거나 '설치 필요'로 표시된 Skill을 쓰려면 설치 전에 사용자에게 보고한다.
 - **스택 불일치 Skill 설치·사용 금지**: `deploy-to-vercel`, `supabase-postgres-best-practices`는 본 프로젝트(Cloudflare Workers·D1)에 설치하지도 쓰지도 않는다. Worker 코드 작성·리뷰·설정에는 `workers-best-practices`를 쓴다. `vercel-react-best-practices`는 React 컴포넌트·상태 최적화 규칙만 참고하고 Next.js·Vercel 전용 규칙은 제외한다.
 - **다중 에이전트 호환 (Antigravity · Claude Code · Codex)**:
   - 모든 에이전트는 `Dev/AGENTS.md`를 공통 기준으로 삼는다.
