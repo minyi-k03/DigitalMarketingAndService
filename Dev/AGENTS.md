@@ -15,6 +15,7 @@
 | `SPEC.md` | 요구사항 명세서 v1.11 (최우선 기준 문서) |
 | `Glossary.md` | 도메인 용어집 v1.4 및 `ADR-0001`~`ADR-0005` 요약 |
 | `CLAUDE.md` | Claude Code 세션에서 `@AGENTS.md`를 자동 로드하는 래퍼 |
+| `skills-lock.json` | 프로젝트 Skill의 출처·해시 기록(커밋 대상). Skill 파일(`.agents/skills/`)은 커밋하지 않고 이 파일로 복원한다(§5) |
 | `api/openapi.yaml` | HTTP 엔드포인트 및 RFC 9457 `problem+json` 오류 응답 규격 (`D-06` 확정) |
 | `docs/architecture.md` | 시스템 구성, 디렉터리 구조, 모듈 공개 인터페이스, D1 스키마, SPEC 갭(G1~G6 해결) 현황 |
 | `docs/implementation-plan.md` | 단계별 마일스톤(M0~M10), 크리티컬 패스, 비코드 병행 작업(N1~N8), **§7 발표용 범위·주차별 일정·에이전트 담당 구분** |
@@ -115,13 +116,16 @@
 ## 5. Skills Usage and Multi-Agent Rules
 
 - 작업 목적에 맞는 설치된 Skill만 골라 해당 `SKILL.md`를 읽고 따르며, 상세 절차를 이 문서에 옮겨 적지 않는다.
-- **필수 호출**: 구현은 `tdd`를 따르고, 완료 보고 전에는 `verification-before-completion`을 따르며, 리뷰는 `code-review`를 쓴다. 새 Skill은 설치하지 않는다.
-- **에이전트별 Skill 원본 경로**:
-  - Codex / 공통: `C:/Users/june1/.agents/skills/<skill>/SKILL.md`
-  - Antigravity: `C:/Users/june1/.gemini/config/skills/<skill>/SKILL.md`
-  - Claude Code: `C:/Users/june1/.claude/skills/<skill>/SKILL.md`
-- **목적별 선택 기준**: 요구사항·설계 탐색(`brainstorming`, `grilling`, `domain-modeling`, `to-spec`), 아키텍처·모듈 설계(`codebase-design`, `improve-codebase-architecture`), 구현 계획(`writing-plans`), 테스트 우선 구현(`tdd`), 버그 분석(`systematic-debugging`), 프런트엔드 UI·React(`frontend-design`, `design-taste-frontend`, `vercel-react-best-practices`), 브라우저 검증(`agent-browser`), 코드 리뷰(`code-review`), 완료 전 검증·마무리(`verification-before-completion`, `finishing-a-development-branch`).
-- **스택 불일치 Skill 사용 금지**: `deploy-to-vercel`, `supabase-postgres-best-practices`는 본 프로젝트(Cloudflare Workers·D1)에 쓰지 않는다. `vercel-react-best-practices`는 React 컴포넌트·상태 최적화 규칙만 참고하고 Next.js·Vercel 전용 규칙은 제외한다.
+- **필수 호출**: 구현은 `tdd`를 따르고, 완료 보고 전에는 `verification-before-completion`을 따르며, 리뷰는 `code-review`를 쓴다.
+- **Skill 위치와 설치**:
+  - 프로젝트 Skill의 원본은 `Dev/.agents/skills/<skill>/SKILL.md` 한 곳이다. Antigravity는 이 경로를 읽고, Claude Code는 `Dev/.claude/skills/<skill>`(원본을 가리키는 Junction)로 읽는다. 두 에이전트에서 인식되는 것을 확인했다. Codex·Gemini CLI도 `.agents/skills/`를 읽는 것으로 알려져 있으나 이 프로젝트에서는 확인하지 않았다.
+  - 전역(`~/.claude/skills`, `~/.agents/skills`, `~/.gemini/config/skills`)에는 `find-skills`만 둔다. 같은 이름이 전역과 프로젝트에 모두 있으면 한쪽이 가려질 수 있으므로 프로젝트 Skill은 전역에 설치하지 않는다.
+  - 새 프로젝트 전용 Skill은 `find-skills`로 찾고, 설치 전에 `SKILL.md`를 읽어 검토한 뒤 `Dev/`에서 `npx skills add <owner/repo> --skill <name> -y`(`-g` 없이)로 설치한다. 의존성 설치에 해당하므로 사용자 승인 후에만 설치하고, 설치 후 `skills-lock.json`을 갱신해 커밋한다.
+  - **Skill 파일은 커밋하지 않는다.** 서드파티 Skill은 MIT·Apache-2.0 등 각자의 라이선스(저작권 고지 포함 의무)가 있고 저장소에 라이선스 파일이 없는 경우가 많아, 재배포 대신 출처와 해시만 `skills-lock.json`에 기록한다. `.agents/skills/`와 `.claude/skills/`는 `.gitignore`로 제외한다.
+  - **새 PC·clone 후 복원**: `Dev/`에서 `npx skills experimental_install`을 실행하면 `.agents/skills/`가 복원된다(임시 폴더에서 12개 복원 확인). 이 명령은 `.claude/skills/` 연결을 만들지 않으므로 이어서 `New-Item -ItemType Directory -Force .claude\skills | Out-Null; Get-ChildItem .agents\skills -Directory | ForEach-Object { New-Item -ItemType Junction -Path ".claude\skills\$($_.Name)" -Target $_.FullName | Out-Null }`로 Junction을 만들고, 새 대화에서 Skill이 보이는지 확인한다.
+  - **출처가 없는 Skill**(현재 `grilling`, `domain-modeling`, `codebase-design`, `writing-plans`, `agent-browser`)은 잠금 파일로 복원되지 않는 로컬 전용이다. 출처를 찾아 `npx skills add`로 재설치해 잠금 파일에 기록하거나, 다른 PC에서 쓰려면 `.agents/skills/`에 폴더째 복사하고 Junction을 만든다. 라이선스를 확인하기 전에는 커밋하지 않는다.
+  - **`npx skills remove -g`는 쓰지 않는다.** 전역 삭제 명령이 프로젝트의 `.agents/skills/` 폴더까지 지운 사례가 있다. 프로젝트 Skill 제거는 `npx skills remove <name>`(`-g` 없이)로 한다.- **목적별 선택 기준**: 요구사항·설계 탐색(`brainstorming`, `grilling`, `domain-modeling`, `to-spec`), 아키텍처·모듈 설계(`codebase-design`, `improve-codebase-architecture`), 구현 계획(`writing-plans`), 테스트 우선 구현(`tdd`), 버그 분석(`systematic-debugging`), 프런트엔드 UI·React(`frontend-design`, `design-taste-frontend`, `vercel-react-best-practices`), 브라우저 검증(`agent-browser`), 코드 리뷰(`code-review`), 완료 전 검증·마무리(`verification-before-completion`, `finishing-a-development-branch`).
+- **스택 불일치 Skill 설치·사용 금지**: `deploy-to-vercel`, `supabase-postgres-best-practices`는 본 프로젝트(Cloudflare Workers·D1)에 설치하지도 쓰지도 않는다. Worker 코드 작성·리뷰·설정에는 `workers-best-practices`를 쓴다. `vercel-react-best-practices`는 React 컴포넌트·상태 최적화 규칙만 참고하고 Next.js·Vercel 전용 규칙은 제외한다.
 - **다중 에이전트 호환 (Antigravity · Claude Code · Codex)**:
   - 모든 에이전트는 `Dev/AGENTS.md`를 공통 기준으로 삼는다.
     - Claude Code는 `Dev/CLAUDE.md`(`@AGENTS.md`)를 통해 로드한다.
@@ -131,8 +135,6 @@
     - Antigravity: `src/web/`. `api/openapi.yaml`·`src/shared/`는 읽기만 하고, 계약 변경이 필요하면 직접 고치지 않고 사용자에게 보고한다.
     - 두 에이전트가 같은 TASK나 같은 파일을 동시에 다루지 않는다. 화면 TASK는 해당 API TASK가 끝나고 사용자가 커밋한 뒤에 시작한다.
     - 작업을 시작할 때 `git status`와 `docs/tasks.md` 상태를 확인해 다른 에이전트가 진행 중인 TASK와 겹치지 않는지 본다.
-  - `~/.claude/skills/`에 없는 스킬(`codebase-design`, `domain-modeling`, `grilling`, `writing-plans`, `frontend-design`, `agent-browser`)이 필요할 때는 `C:/Users/june1/.agents/skills/<skill>/SKILL.md`를 직접 읽는다.
-  - `~/.agents/skills/`와 `~/.gemini/config/skills/`에 없는 스킬(`tdd`, `systematic-debugging`)이 필요할 때는 `C:/Users/june1/.claude/skills/<skill>/SKILL.md`를 직접 읽는다.
 
 ## 6. Security and Permissions
 

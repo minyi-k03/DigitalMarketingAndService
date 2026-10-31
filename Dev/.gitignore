@@ -15,3 +15,7 @@ coverage/
 # 개인 설정
 CLAUDE.local.md
 .claude/settings.local.json
+
+# 프로젝트 Skill: 서드파티 라이선스상 재배포하지 않고 skills-lock.json으로 복원 (AGENTS.md §5)
+.agents/skills/
+.claude/skills/
