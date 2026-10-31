@@ -137,7 +137,7 @@
 
 ## Phase 3: Catalog & Marketplace (P0)
 
-### T08 카탈로그 도메인 검증 — `대기`
+### T08 카탈로그 도메인 검증 — `완료 (2026-10-31, 순수 함수 2개: validateCatalogItemInput·computeDarkPatternLevel. 오류 형식 변환과 DB 연결은 T09)`
 - **근거**: §2 전체(G4 확정 포함), §19 `CatalogItem`, S4·S18·S24·S38·S39
 - **선행**: T02
 - **내용**:
