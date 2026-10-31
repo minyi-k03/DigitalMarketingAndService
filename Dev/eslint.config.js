@@ -16,7 +16,16 @@ const internalsOf = (modules) =>
 
 export default tseslint.config(
   {
-    ignores: ['node_modules', 'dist', '.wrangler', 'coverage', 'src/shared/api-types.ts'],
+    // .agents·.claude는 설치형 Skill 스크립트라 프로젝트 코드가 아니다 (AGENTS.md §5)
+    ignores: [
+      'node_modules',
+      'dist',
+      '.wrangler',
+      'coverage',
+      'src/shared/api-types.ts',
+      '.agents',
+      '.claude',
+    ],
   },
   js.configs.recommended,
   ...tseslint.configs.recommended,
