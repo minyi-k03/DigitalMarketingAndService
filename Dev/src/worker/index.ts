@@ -3,6 +3,7 @@ import type { Env } from './env';
 import { createApp } from './http/app';
 import type { AppDeps } from './http/deps';
 import { createConsoleLogger } from './http/logger';
+import { createCatalogService } from './modules/catalog';
 import { createIdentityService } from './modules/identity';
 import { SystemClock } from './platform/clock';
 
@@ -19,7 +20,8 @@ function buildDeps(env: Env): AppDeps {
     sessionSigningKey: env.SESSION_SIGNING_KEY,
     tokenEncryptionKey: env.KAKAO_TOKEN_ENCRYPTION_KEY,
   });
-  return { clock, db: env.DB, logger: createConsoleLogger(), identity };
+  const catalog = createCatalogService({ db: env.DB, clock });
+  return { clock, db: env.DB, logger: createConsoleLogger(), identity, catalog };
 }
 
 export default {

@@ -1,6 +1,7 @@
 import { env } from 'cloudflare:test';
 import { createApp } from '../../src/worker/http/app';
 import type { Logger } from '../../src/worker/http/logger';
+import { createCatalogService } from '../../src/worker/modules/catalog';
 import { createIdentityService } from '../../src/worker/modules/identity';
 import { FakeClock } from './fake-clock';
 import { FakeKakaoOAuthClient } from './fake-kakao-oauth';
@@ -19,8 +20,9 @@ export function buildLoginApp() {
     sessionSigningKey: 'test-session-signing-key',
     tokenEncryptionKey: btoa('0123456789abcdef0123456789abcdef'),
   });
-  const app = createApp({ clock, db: env.DB, logger: silentLogger, identity });
-  return { app, clock, kakao, identity };
+  const catalog = createCatalogService({ db: env.DB, clock });
+  const app = createApp({ clock, db: env.DB, logger: silentLogger, identity, catalog });
+  return { app, clock, kakao, identity, catalog };
 }
 
 type LoginApp = ReturnType<typeof buildLoginApp>;

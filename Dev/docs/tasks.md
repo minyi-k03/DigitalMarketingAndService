@@ -152,7 +152,7 @@
 - **완료 기준**: CM "`EscapeGuide` 4단계 이상 거부", "원점수→등급 변환", "`forcedChannel` 필수·비어 있음", "대체 URL 필수", "`ownerPartnerId` 필수", "`name`·`lastVerifiedAt` 필수와 `signupUrl` 필수", "URL 스킴 검증(G4: `https:` 외 거부, `escapeLink` 커스텀 스킴은 `forcedChannel = APP`이고 `catalog.allowedDeepLinkSchemes`에 등록된 경우만 허용, 기본값 `[]`에서는 거부)"
 - **주요 파일**: `m/catalog/domain/*`
 
-### T09 카탈로그 관리 명령과 변경 이력 — `대기 (발표용 간소화: 되돌리기 제외)`
+### T09 카탈로그 관리 명령과 변경 이력 — `완료 (2026-10-31, 발표용 간소화: 되돌리기 제외. applyBufferToActiveRecords=true는 T16 연결 전까지 400으로 거부)`
 - **근거**: §2 게시 상태·반영 규칙, §16 변경 이력·최종 검증일, S38·S47·S48, V-06
 - **선행**: T06, T08
 - **내용**:

@@ -218,6 +218,7 @@ describe('IA 세션 보호 API HTTP 계약 [S16][T05]', () => {
       db: env.DB,
       logger: silentLogger,
       identity: { ...built.identity, getMe: async () => null },
+      catalog: built.catalog,
     });
 
     const res = await orphaned.request(`${ORIGIN}/api/me`, { headers: { Cookie: cookie } });

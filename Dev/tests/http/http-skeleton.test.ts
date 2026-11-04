@@ -5,6 +5,7 @@ import { createApp } from '../../src/worker/http/app';
 import { redact, type Logger } from '../../src/worker/http/logger';
 import { validateJson } from '../../src/worker/http/validate';
 import { DomainError, type DomainErrorCode } from '../../src/worker/platform/errors';
+import { createCatalogService } from '../../src/worker/modules/catalog';
 import { createIdentityService } from '../../src/worker/modules/identity';
 import { FakeClock } from '../support/fake-clock';
 import { FakeKakaoOAuthClient } from '../support/fake-kakao-oauth';
@@ -25,7 +26,8 @@ function buildApp() {
     sessionSigningKey: 'test-session-signing-key',
     tokenEncryptionKey: btoa('0123456789abcdef0123456789abcdef'),
   });
-  const app = createApp({ clock, db: env.DB, logger, identity });
+  const catalog = createCatalogService({ db: env.DB, clock });
+  const app = createApp({ clock, db: env.DB, logger, identity, catalog });
 
   app.post(
     '/api/_test/echo',
