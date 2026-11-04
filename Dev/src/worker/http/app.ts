@@ -12,6 +12,7 @@ import { requireSession } from './middleware/session';
 import { INTERNAL_ERROR_PROBLEM, PROBLEM_CONTENT_TYPE, toProblem } from './problem';
 import { adminCatalogRoutes } from './routes/admin-catalog';
 import { authRoutes } from './routes/auth';
+import { catalogRoutes } from './routes/catalog';
 import { healthRoutes } from './routes/health';
 import { meRoutes } from './routes/me';
 
@@ -35,6 +36,7 @@ export function createApp(deps: AppDeps) {
   app.route('/', authRoutes(deps));
   app.route('/', meRoutes(deps));
   app.route('/', adminCatalogRoutes(deps));
+  app.route('/', catalogRoutes(deps));
 
   app.notFound((c) => problemResponse(c, toProblem(new DomainError('NOT_FOUND'))));
 

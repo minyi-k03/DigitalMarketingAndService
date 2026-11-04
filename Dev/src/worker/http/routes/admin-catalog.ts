@@ -1,6 +1,7 @@
 import { Hono } from 'hono';
 import { z } from 'zod';
 import type { AppEnv } from '../app-env';
+import { serviceCategory } from '../catalog-schemas';
 import type { AppDeps } from '../deps';
 import { validateJson, validateQuery } from '../validate';
 
@@ -20,7 +21,7 @@ const catalogItemInput = z.strictObject({
   name: z.string().min(1),
   signupUrl: z.string().optional(),
   ownerPartnerId: z.string().optional(),
-  serviceCategory: z.enum(['BIGTECH', 'AI', 'DELIVERY', 'OTT', 'CLOUD', 'LEARNING', 'ETC']),
+  serviceCategory,
   monthlyPrice: z.number().int().min(0),
   defaultTrialDays: z.number().int().min(1).max(365),
   isGlobalTimeZoneBufferRequired: z.boolean(),

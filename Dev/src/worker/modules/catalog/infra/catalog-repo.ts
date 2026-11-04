@@ -89,6 +89,35 @@ export async function listItems(
   return results.map(toCatalogItem);
 }
 
+/** LIKE 패턴에서 특수 문자(`%`, `_`, `\`)를 글자 그대로 찾도록 이스케이프한다 */
+const escapeLike = (text: string) => text.replace(/[\\%_]/g, (char) => `\\${char}`);
+
+/**
+ * 공개 목록용: 목록·검색에 노출되는 게시 상태(D-11)만. 이름순.
+ * `q`는 서비스명 부분 일치(영문은 SQLite LIKE 기본 동작대로 대소문자 무시)이고, 공백뿐이면 조건 없이 본다.
+ */
+export async function listPubliclyVisibleItems(
+  db: D1Database,
+  filter: { category?: CatalogItem['serviceCategory']; q?: string } = {},
+): Promise<CatalogItem[]> {
+  const conditions = [`publication_status IN ('PUBLISHED', 'UNPUBLISHED')`];
+  const params: string[] = [];
+  if (filter.category) {
+    conditions.push('service_category = ?');
+    params.push(filter.category);
+  }
+  const q = filter.q?.trim();
+  if (q) {
+    conditions.push(`name LIKE ? ESCAPE '\\'`);
+    params.push(`%${escapeLike(q)}%`);
+  }
+  const { results } = await db
+    .prepare(`${SELECT_ITEM} WHERE ${conditions.join(' AND ')} ORDER BY name, rowid`)
+    .bind(...params)
+    .all<CatalogItemRow>();
+  return results.map(toCatalogItem);
+}
+
 export async function findItemById(db: D1Database, id: string): Promise<CatalogItem | null> {
   const row = await db.prepare(`${SELECT_ITEM} WHERE id = ?`).bind(id).first<CatalogItemRow>();
   return row ? toCatalogItem(row) : null;
