@@ -9,6 +9,7 @@ import { createCatalogService } from '../../src/worker/modules/catalog';
 import { createIdentityService } from '../../src/worker/modules/identity';
 import { FakeClock } from '../support/fake-clock';
 import { FakeKakaoOAuthClient } from '../support/fake-kakao-oauth';
+import { FakeRecipientResolver } from '../support/fake-recipient-resolver';
 
 type LogEntry = { level: 'info' | 'error'; event: string; fields: Record<string, unknown> };
 
@@ -25,6 +26,8 @@ function buildApp() {
     kakao: new FakeKakaoOAuthClient(),
     sessionSigningKey: 'test-session-signing-key',
     tokenEncryptionKey: btoa('0123456789abcdef0123456789abcdef'),
+    notificationMode: 'log',
+    recipientResolver: new FakeRecipientResolver(),
   });
   const catalog = createCatalogService({ db: env.DB, clock });
   const app = createApp({ clock, db: env.DB, logger, identity, catalog });

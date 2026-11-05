@@ -5,6 +5,7 @@ import { createCatalogService } from '../../src/worker/modules/catalog';
 import { createIdentityService } from '../../src/worker/modules/identity';
 import { FakeClock } from './fake-clock';
 import { FakeKakaoOAuthClient } from './fake-kakao-oauth';
+import { FakeRecipientResolver } from './fake-recipient-resolver';
 
 export const ORIGIN = 'http://localhost';
 export const silentLogger: Logger = { info: () => {}, error: () => {} };
@@ -19,6 +20,8 @@ export function buildLoginApp() {
     kakao,
     sessionSigningKey: 'test-session-signing-key',
     tokenEncryptionKey: btoa('0123456789abcdef0123456789abcdef'),
+    notificationMode: 'kakao_memo',
+    recipientResolver: new FakeRecipientResolver(),
   });
   const catalog = createCatalogService({ db: env.DB, clock });
   const app = createApp({ clock, db: env.DB, logger: silentLogger, identity, catalog });

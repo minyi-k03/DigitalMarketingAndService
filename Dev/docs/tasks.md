@@ -122,7 +122,7 @@
 - **완료 기준**: USER가 관리 API를 부르면 403, OPERATOR가 ADMIN 전용 API(역할·설정·기준표)를 부르면 403을 받습니다.
 - **주요 파일**: `m/identity/*`, `w/http/middleware/role.ts`
 
-### T07 알림 수신 설정과 RecipientResolver 포트 — `대기`
+### T07 알림 수신 설정과 RecipientResolver 포트 — `완료 (2026-11-04. 포트·Fake·수신 설정·getNotificationRecipient·hasRecipient 모드별 판정. 실제 수신처 조회 구현은 T34·T31에서 교체하며 그때까지 composition root는 "수신처 없음" 자리표시자)`
 - **근거**: §6 수신 거부, §15 알림 수신 설정, S44, FN §4
 - **선행**: T05
 - **내용**:

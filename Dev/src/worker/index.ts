@@ -19,6 +19,10 @@ function buildDeps(env: Env): AppDeps {
     }),
     sessionSigningKey: env.SESSION_SIGNING_KEY,
     tokenEncryptionKey: env.KAKAO_TOKEN_ENCRYPTION_KEY,
+    notificationMode: env.NOTIFICATION_MODE,
+    // 실제 수신처 조회는 T34(kakao_memo)·T31(dealer)에서 어댑터와 함께 교체한다.
+    // 발송 디스패처(T17)가 생기기 전까지는 이 값을 쓰는 곳이 없다.
+    recipientResolver: { resolve: async () => null },
   });
   const catalog = createCatalogService({ db: env.DB, clock });
   return { clock, db: env.DB, logger: createConsoleLogger(), identity, catalog };

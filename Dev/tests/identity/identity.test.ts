@@ -4,6 +4,7 @@ import { createIdentityService } from '../../src/worker/modules/identity';
 import { DomainError } from '../../src/worker/platform/errors';
 import { FakeClock } from '../support/fake-clock';
 import { FakeKakaoOAuthClient } from '../support/fake-kakao-oauth';
+import { FakeRecipientResolver } from '../support/fake-recipient-resolver';
 
 const REDIRECT_URI = 'https://subcut.test/auth/kakao/callback';
 // 테스트용 키: AES-256(32바이트)을 base64로 표현한 값과 HMAC 키
@@ -19,6 +20,8 @@ function setup() {
     kakao,
     sessionSigningKey: SIGNING_KEY,
     tokenEncryptionKey: TOKEN_KEY,
+    notificationMode: 'kakao_memo',
+    recipientResolver: new FakeRecipientResolver(),
   });
   return { clock, kakao, identity };
 }
@@ -240,9 +243,7 @@ describe('IA 카카오 로그인 완료와 세션 [S16][T05]', () => {
     );
 
     expect((error as DomainError).code).toBe('VALIDATION_FAILED');
-    const { results } = await env.DB.prepare(
-      "SELECT id FROM users WHERE kakao_id = '9001'",
-    ).all();
+    const { results } = await env.DB.prepare("SELECT id FROM users WHERE kakao_id = '9001'").all();
     expect(results).toHaveLength(0);
   });
 

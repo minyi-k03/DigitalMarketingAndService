@@ -235,6 +235,7 @@ export interface paths {
                         "application/json": components["schemas"]["Me"];
                     };
                 };
+                400: components["responses"]["ValidationFailed"];
                 401: components["responses"]["Unauthenticated"];
             };
         };
@@ -1563,7 +1564,12 @@ export interface components {
             role: components["schemas"]["UserRole"];
             notificationEnabled: boolean;
             notificationConsentAt?: components["schemas"]["UtcInstant"];
-            /** @description 알림톡 수신 번호 확보 여부 (확보 방식은 FN §4 결정 후) */
+            /**
+             * @description 알림을 받을 곳을 확보했는지 나타내는 표시용 값이며 알림 발송 여부를 정하지 않는다 (수신 여부는 notificationEnabled).
+             *     발송 채널(NOTIFICATION_MODE)로 판정이 갈린다.
+             *     kakao_memo(발표용, D-16)와 log(개발·staging)는 '나에게 보내기'(talk_message) 동의가 있고 저장된 refresh token이 만료 전이면 true,
+             *     dealer(알림톡)는 수신 전화번호가 있으면 true (확보 방식은 FN §4 결정 후).
+             */
             hasRecipient: boolean;
         };
         DarkPatternScores: {

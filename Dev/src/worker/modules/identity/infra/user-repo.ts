@@ -25,6 +25,19 @@ export async function findUserById(db: D1Database, userId: string): Promise<User
     .first<UserRow>();
 }
 
+/** 알림 수신 여부를 바꾼다. 사용자가 없으면 `false` */
+export async function updateNotificationEnabled(
+  db: D1Database,
+  userId: string,
+  enabled: boolean,
+): Promise<boolean> {
+  const result = await db
+    .prepare('UPDATE users SET notification_enabled = ? WHERE id = ?')
+    .bind(enabled ? 1 : 0, userId)
+    .run();
+  return result.meta.changes > 0;
+}
+
 /**
  * 카카오 계정으로 사용자를 만들거나 닉네임을 갱신한다.
  * 신규 사용자는 알림 수신 기본값 켜짐, 역할 USER로 만든다 (SPEC §15).
