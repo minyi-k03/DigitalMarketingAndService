@@ -1,0 +1,57 @@
+/* docs/DESIGN-notion.md의 토큰. 값을 바꾸려면 그 문서를 먼저 고친다. */
+:root {
+  /* 구조 색: 파란색은 행동(CTA·링크·포커스)에만, 인디고는 홈 히어로 한 곳에만 쓴다 */
+  --color-primary: #0075de;
+  --color-primary-active: #005bab;
+  --color-secondary: #213183;
+  --color-on-primary: #ffffff;
+
+  --color-canvas: #ffffff;
+  --color-canvas-soft: #f6f5f4;
+  --color-surface: #ffffff;
+  --color-hairline: #e6e6e6;
+  --color-field-border: #dddddd;
+
+  /* 문서는 #000을 95% 알파로 렌더링한다고 적는다 */
+  --color-ink: rgba(0, 0, 0, 0.95);
+  --color-ink-secondary: #31302e;
+  --color-ink-muted: #615d59;
+  /* 대비가 낮아(흰 바탕 약 2.7:1) 자리표시자 같은 보조 요소에만 쓴다. 읽어야 하는 글자는 ink-muted를 쓴다 */
+  --color-ink-faint: #a39e98;
+
+  /* 스티커 팔레트: 장식·카테고리 점에만 쓰고 CTA·구조에는 쓰지 않는다 */
+  --color-accent-sky: #62aef0;
+  --color-accent-purple: #d6b6f6;
+  --color-accent-pink: #ff64c8;
+  --color-accent-orange: #dd5b00;
+  --color-accent-teal: #2a9d99;
+  --color-accent-green: #1aae39;
+
+  --radius-xs: 4px;
+  --radius-sm: 5px;
+  --radius-md: 8px;
+  --radius-lg: 12px;
+  --radius-xl: 16px;
+  --radius-full: 9999px;
+
+  --space-xxs: 4px;
+  --space-xs: 8px;
+  --space-sm: 12px;
+  --space-md: 16px;
+  --space-lg: 24px;
+  --space-xl: 28px;
+  --space-xxl: 32px;
+
+  /* NotionInter는 독점 폰트라 Inter로 대체하고, Inter에 없는 한글은 시스템 한글 글꼴로 받는다 */
+  --font-sans:
+    Inter, -apple-system, system-ui, 'Segoe UI', 'Apple SD Gothic Neo', 'Malgun Gothic', Helvetica,
+    Arial, sans-serif;
+
+  /* Level 1 — 아주 옅은 그림자를 여러 겹 쌓는다 */
+  --shadow-soft:
+    0 0.175px 1.041px rgba(0, 0, 0, 0.01), 0 0.8px 2.925px rgba(0, 0, 0, 0.02),
+    0 2.025px 7.847px rgba(0, 0, 0, 0.027), 0 4px 18px rgba(0, 0, 0, 0.04);
+
+  --container-max: 1080px;
+  --tap-target: 44px;
+}

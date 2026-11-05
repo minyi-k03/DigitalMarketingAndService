@@ -1,0 +1,52 @@
+.base {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-height: var(--tap-target);
+  border: 1px solid transparent;
+  font-family: inherit;
+  font-size: 16px;
+  font-weight: 500;
+  line-height: 1.5;
+  text-decoration: none;
+  cursor: pointer;
+  transition:
+    background-color 120ms,
+    transform 120ms;
+}
+
+.base:active {
+  transform: scale(0.9);
+}
+
+/* 화면의 유일한 파란 행동 */
+.primary {
+  composes: base;
+  padding: 8px 24px;
+  border-radius: var(--radius-full);
+  background: var(--color-primary);
+  color: var(--color-on-primary);
+}
+
+.primary:active {
+  background: var(--color-primary-active);
+}
+
+.secondary {
+  composes: base;
+  padding: 8px 24px;
+  border-radius: var(--radius-full);
+  background: var(--color-surface);
+  color: var(--color-ink);
+  box-shadow: var(--shadow-soft);
+}
+
+/* 내비게이션·목록 안에서 쓰는 작은 버튼 */
+.utility {
+  composes: base;
+  padding: 4px 14px;
+  border-color: var(--color-hairline);
+  border-radius: var(--radius-md);
+  background: var(--color-surface);
+  color: var(--color-ink);
+}

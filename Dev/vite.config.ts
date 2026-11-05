@@ -1,5 +1,6 @@
 import react from '@vitejs/plugin-react';
 import { defineConfig, type ProxyOptions } from 'vite';
+import { VitePWA } from 'vite-plugin-pwa';
 
 const DEV_SERVER_PORT = 5173;
 const DEV_SERVER_ORIGIN = `http://localhost:${DEV_SERVER_PORT}`;
@@ -32,7 +33,30 @@ const toWorker: ProxyOptions = {
 
 export default defineConfig({
   root: 'src/web',
-  plugins: [react()],
+  plugins: [
+    react(),
+    VitePWA({
+      registerType: 'autoUpdate',
+      // 아이콘은 로고가 정해진 뒤 추가한다(아이콘이 없으면 설치 안내가 뜨지 않을 수 있다)
+      manifest: {
+        name: '구독컷',
+        short_name: '구독컷',
+        description: '카드 연동 없이 무료체험을 등록하고, 안전하게 해지할 마지막 날을 알려드려요.',
+        lang: 'ko',
+        start_url: '/',
+        scope: '/',
+        display: 'standalone',
+        background_color: '#f6f5f4',
+        theme_color: '#ffffff',
+      },
+      workbox: {
+        navigateFallback: '/index.html',
+        // API와 카카오 로그인·로그아웃 이동은 SPA 화면으로 가로채지 않고 Worker로 보낸다
+        // (wrangler.jsonc run_worker_first와 같게 유지)
+        navigateFallbackDenylist: [/^\/api\//, /^\/auth\//],
+      },
+    }),
+  ],
   build: {
     outDir: '../../dist/web',
     emptyOutDir: true,

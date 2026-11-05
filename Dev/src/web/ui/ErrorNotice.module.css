@@ -1,0 +1,38 @@
+/* 문서에 오류 전용 색이 없어, 흰 카드 + 헤어라인 위에 스티커 팔레트의 주황 점으로 상태만 표시한다 */
+.notice {
+  display: flex;
+  gap: var(--space-sm);
+  padding: var(--space-lg);
+  border: 1px solid var(--color-hairline);
+  border-radius: var(--radius-lg);
+  background: var(--color-surface);
+}
+
+.dot {
+  flex: none;
+  width: 10px;
+  height: 10px;
+  margin-top: 8px;
+  border-radius: var(--radius-full);
+  background: var(--color-accent-orange);
+}
+
+.text {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: var(--space-xs);
+}
+
+.title {
+  font-size: 20px;
+  font-weight: 600;
+  line-height: 1.4;
+  letter-spacing: -0.125px;
+}
+
+.detail {
+  font-size: 15px;
+  line-height: 1.5;
+  color: var(--color-ink-muted);
+}

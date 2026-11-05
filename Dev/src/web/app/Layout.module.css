@@ -1,0 +1,68 @@
+.page {
+  display: flex;
+  flex-direction: column;
+  min-height: 100dvh;
+}
+
+.nav {
+  position: sticky;
+  top: 0;
+  z-index: 10;
+  background: var(--color-canvas);
+  border-bottom: 1px solid var(--color-hairline);
+}
+
+.navInner,
+.footerInner {
+  width: 100%;
+  max-width: var(--container-max);
+  margin: 0 auto;
+  padding: var(--space-md);
+}
+
+.navInner {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  font-size: 15px;
+  line-height: 1.33;
+}
+
+.wordmark {
+  /* 로고 파일이 없는 동안 글자로 표시한다 */
+  display: inline-flex;
+  align-items: center;
+  min-height: var(--tap-target);
+  color: var(--color-ink);
+  font-size: 22px;
+  font-weight: 700;
+  letter-spacing: -0.25px;
+  text-decoration: none;
+}
+
+.actions {
+  display: flex;
+  align-items: center;
+  gap: var(--space-sm);
+  min-height: var(--tap-target);
+}
+
+.nickname {
+  color: var(--color-ink-secondary);
+}
+
+.main {
+  flex: 1;
+}
+
+.footer {
+  background: var(--color-canvas-soft);
+  border-top: 1px solid var(--color-hairline);
+  color: var(--color-ink-secondary);
+  font-size: 14px;
+  line-height: 1.43;
+}
+
+.footerInner {
+  padding-block: var(--space-xxl);
+}
