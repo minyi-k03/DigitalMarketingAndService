@@ -1,5 +1,6 @@
 import type { CatalogService } from '../modules/catalog';
 import type { IdentityService } from '../modules/identity';
+import type { TrialTrackingService } from '../modules/trial-tracking';
 import type { Clock } from '../platform/clock';
 import type { Logger } from './logger';
 
@@ -10,4 +11,5 @@ export interface AppDeps {
   logger: Logger;
   identity: IdentityService;
   catalog: CatalogService;
+  trialTracking: TrialTrackingService;
 }

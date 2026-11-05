@@ -1,6 +1,7 @@
 import { describe, expect, it } from 'vitest';
 import {
   addDays,
+  daysBetween,
   kstAt,
   kstDateOf,
   parseKstDate,
@@ -42,6 +43,19 @@ describe('KstDate 일 단위 연산 [SPEC §4, T02]', () => {
     ]) {
       expect(() => parseKstDate(bad), bad).toThrow();
     }
+  });
+});
+
+describe('daysBetween: from에서 to까지 일수 [SPEC §13 D-Day, T13]', () => {
+  it.each([
+    { from: '2026-11-05', to: '2026-11-05', days: 0 },
+    { from: '2026-11-05', to: '2026-12-04', days: 29 },
+    { from: '2026-12-31', to: '2027-01-01', days: 1 },
+    { from: '2028-02-28', to: '2028-03-01', days: 2 }, // 윤년
+    { from: '2027-02-28', to: '2027-03-01', days: 1 }, // 평년
+    { from: '2026-11-05', to: '2026-11-01', days: -4 },
+  ])('$from → $to = $days일', ({ from, to, days }) => {
+    expect(daysBetween(d(from), d(to))).toBe(days);
   });
 });
 

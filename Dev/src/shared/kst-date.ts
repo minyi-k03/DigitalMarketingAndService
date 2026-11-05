@@ -13,6 +13,7 @@ export interface Clock {
 
 const KST_OFFSET_HOURS = 9;
 const KST_OFFSET_MS = KST_OFFSET_HOURS * 60 * 60 * 1000;
+const DAY_MS = 24 * 60 * 60 * 1000;
 const DATE_PATTERN = /^(\d{4})-(\d{2})-(\d{2})$/;
 const HHMM_PATTERN = /^([01]\d|2[0-3]):([0-5]\d)$/;
 
@@ -43,6 +44,13 @@ export function todayKst(clock: Clock): KstDate {
 export function addDays(date: KstDate, days: number): KstDate {
   const [y, m, d] = splitDate(date);
   return formatDate(Date.UTC(y, m - 1, d + days));
+}
+
+/** `from`에서 `to`까지의 일수. `to`가 더 이르면 음수다 */
+export function daysBetween(from: KstDate, to: KstDate): number {
+  const [fy, fm, fd] = splitDate(from);
+  const [ty, tm, td] = splitDate(to);
+  return (Date.UTC(ty, tm - 1, td) - Date.UTC(fy, fm - 1, fd)) / DAY_MS;
 }
 
 /** KST 날짜의 `HH:mm`에 해당하는 UTC 시각 */

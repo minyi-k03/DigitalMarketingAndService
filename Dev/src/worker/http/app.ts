@@ -15,6 +15,7 @@ import { authRoutes } from './routes/auth';
 import { catalogRoutes } from './routes/catalog';
 import { healthRoutes } from './routes/health';
 import { meRoutes } from './routes/me';
+import { trialRoutes } from './routes/trials';
 
 function problemResponse(c: Context, body: { status: number }) {
   return c.body(JSON.stringify(body), body.status as ContentfulStatusCode, {
@@ -37,6 +38,7 @@ export function createApp(deps: AppDeps) {
   app.route('/', meRoutes(deps));
   app.route('/', adminCatalogRoutes(deps));
   app.route('/', catalogRoutes(deps));
+  app.route('/', trialRoutes(deps));
 
   app.notFound((c) => problemResponse(c, toProblem(new DomainError('NOT_FOUND'))));
 

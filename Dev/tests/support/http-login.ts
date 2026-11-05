@@ -3,6 +3,7 @@ import { createApp } from '../../src/worker/http/app';
 import type { Logger } from '../../src/worker/http/logger';
 import { createCatalogService } from '../../src/worker/modules/catalog';
 import { createIdentityService } from '../../src/worker/modules/identity';
+import { createTrialTrackingService } from '../../src/worker/modules/trial-tracking';
 import { FakeClock } from './fake-clock';
 import { FakeKakaoOAuthClient } from './fake-kakao-oauth';
 import { FakeRecipientResolver } from './fake-recipient-resolver';
@@ -24,8 +25,16 @@ export function buildLoginApp() {
     recipientResolver: new FakeRecipientResolver(),
   });
   const catalog = createCatalogService({ db: env.DB, clock });
-  const app = createApp({ clock, db: env.DB, logger: silentLogger, identity, catalog });
-  return { app, clock, kakao, identity, catalog };
+  const trialTracking = createTrialTrackingService({ db: env.DB, clock, catalog });
+  const app = createApp({
+    clock,
+    db: env.DB,
+    logger: silentLogger,
+    identity,
+    catalog,
+    trialTracking,
+  });
+  return { app, clock, kakao, identity, catalog, trialTracking };
 }
 
 type LoginApp = ReturnType<typeof buildLoginApp>;

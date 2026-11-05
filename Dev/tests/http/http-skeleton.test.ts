@@ -7,6 +7,7 @@ import { validateJson } from '../../src/worker/http/validate';
 import { DomainError, type DomainErrorCode } from '../../src/worker/platform/errors';
 import { createCatalogService } from '../../src/worker/modules/catalog';
 import { createIdentityService } from '../../src/worker/modules/identity';
+import { createTrialTrackingService } from '../../src/worker/modules/trial-tracking';
 import { FakeClock } from '../support/fake-clock';
 import { FakeKakaoOAuthClient } from '../support/fake-kakao-oauth';
 import { FakeRecipientResolver } from '../support/fake-recipient-resolver';
@@ -30,7 +31,8 @@ function buildApp() {
     recipientResolver: new FakeRecipientResolver(),
   });
   const catalog = createCatalogService({ db: env.DB, clock });
-  const app = createApp({ clock, db: env.DB, logger, identity, catalog });
+  const trialTracking = createTrialTrackingService({ db: env.DB, clock, catalog });
+  const app = createApp({ clock, db: env.DB, logger, identity, catalog, trialTracking });
 
   app.post(
     '/api/_test/echo',

@@ -5,6 +5,7 @@ import type { AppDeps } from './http/deps';
 import { createConsoleLogger } from './http/logger';
 import { createCatalogService } from './modules/catalog';
 import { createIdentityService } from './modules/identity';
+import { createTrialTrackingService } from './modules/trial-tracking';
 import { SystemClock } from './platform/clock';
 
 // composition root: 환경 바인딩으로 의존성을 만들어 주입한다.
@@ -25,7 +26,8 @@ function buildDeps(env: Env): AppDeps {
     recipientResolver: { resolve: async () => null },
   });
   const catalog = createCatalogService({ db: env.DB, clock });
-  return { clock, db: env.DB, logger: createConsoleLogger(), identity, catalog };
+  const trialTracking = createTrialTrackingService({ db: env.DB, clock, catalog });
+  return { clock, db: env.DB, logger: createConsoleLogger(), identity, catalog, trialTracking };
 }
 
 export default {
