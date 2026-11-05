@@ -982,30 +982,41 @@ components:
         supportContact: { $ref: '#/components/schemas/SupportContact' }
     CatalogItemPatch:
       type: object
-      description: CatalogItemInput의 부분 집합 (kind는 변경 불가)
+      description: |
+        CatalogItemInput의 부분 집합 (kind는 변경 불가).
+        필드를 생략하면 그대로 두고, 등록 때 선택이던 필드(signupUrl, ownerPartnerId, forcedChannel,
+        escapeLinkFallbackUrl, backupChecklist, eduBenefit)는 null을 보내 지운다(JSON Merge Patch).
+        지운 결과가 SPEC §2 규칙에 어긋나면(예: SPONSORED_TRIAL의 signupUrl) 400 VALIDATION_FAILED다.
+        필수 필드에 null을 보내면 400이다.
       properties:
         name: { type: string, minLength: 1 }
-        signupUrl: { type: string }
-        ownerPartnerId: { type: string }
+        signupUrl: { type: [string, 'null'] }
+        ownerPartnerId: { type: [string, 'null'] }
         serviceCategory: { $ref: '#/components/schemas/ServiceCategory' }
         monthlyPrice: { type: integer, minimum: 0 }
         defaultTrialDays: { type: integer, minimum: 1, maximum: 365 }
         isGlobalTimeZoneBufferRequired: { type: boolean }
         darkPatternScores: { $ref: '#/components/schemas/DarkPatternScores' }
         escapePattern: { $ref: '#/components/schemas/EscapePattern' }
-        forcedChannel: { $ref: '#/components/schemas/ForcedChannel' }
+        forcedChannel:
+          oneOf:
+            - $ref: '#/components/schemas/ForcedChannel'
+            - { type: 'null' }
         escapeGuideSteps:
           type: array
           minItems: 1
           maxItems: 3
           items: { type: string, minLength: 1 }
         escapeLink: { type: string }
-        escapeLinkFallbackUrl: { type: string }
+        escapeLinkFallbackUrl: { type: [string, 'null'] }
         accessRetentionPolicy: { $ref: '#/components/schemas/AccessRetentionPolicy' }
         backupChecklist:
-          type: array
+          type: [array, 'null']
           items: { type: string }
-        eduBenefit: { $ref: '#/components/schemas/EduBenefit' }
+        eduBenefit:
+          oneOf:
+            - $ref: '#/components/schemas/EduBenefit'
+            - { type: 'null' }
         supportContact: { $ref: '#/components/schemas/SupportContact' }
     CatalogItem:
       description: 관리용 전체 항목 (SPEC §19 CatalogItem)

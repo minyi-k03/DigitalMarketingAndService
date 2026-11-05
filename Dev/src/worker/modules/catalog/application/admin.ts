@@ -81,21 +81,27 @@ export async function updateCatalogItem(
 
   const before = await getAdminCatalogItem(deps, id);
   const settings = await readCatalogSettings(deps.db);
-  const definedChanges = Object.fromEntries(
-    Object.entries(request.changes).filter(([, value]) => value !== undefined),
-  ) as CatalogItemPatch;
+  // 생략한 필드는 그대로 두고, null은 "지운다"(선택 필드만 받는다), 나머지는 새 값으로 바꾼다
+  const requested = Object.entries(request.changes).filter(([, value]) => value !== undefined);
+  const clearedFields = requested.filter(([, value]) => value === null).map(([field]) => field);
+  const newValues = Object.fromEntries(
+    requested.filter(([, value]) => value !== null),
+  ) as Partial<CatalogItem>;
 
   const merged: CatalogItem = {
     ...before,
-    ...definedChanges,
+    ...newValues,
     lastVerifiedAt: request.markVerified ? todayKst(deps.clock) : before.lastVerifiedAt,
   };
-  // D-15: PC_OR_APP_FORCED가 아닌 항목에는 forcedChannel이 없다. JSON 본문으로는 필드를 지울 수 없어서,
-  // 해지 방식을 바꿀 때 이전 채널이 남아 항상 검증에 걸리지 않도록 함께 비운다
+  for (const field of clearedFields) {
+    delete (merged as unknown as Record<string, unknown>)[field];
+  }
+  // D-15: PC_OR_APP_FORCED가 아닌 항목에는 forcedChannel이 없다. 해지 방식을 바꿀 때
+  // 이전 채널이 남아 항상 검증에 걸리지 않도록 함께 비운다(직접 정했으면 그 값을 검증한다)
   if (
-    definedChanges.escapePattern !== undefined &&
-    definedChanges.escapePattern !== 'PC_OR_APP_FORCED' &&
-    definedChanges.forcedChannel === undefined
+    newValues.escapePattern !== undefined &&
+    newValues.escapePattern !== 'PC_OR_APP_FORCED' &&
+    newValues.forcedChannel === undefined
   ) {
     delete merged.forcedChannel;
   }

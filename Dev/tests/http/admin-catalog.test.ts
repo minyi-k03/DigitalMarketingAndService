@@ -208,6 +208,61 @@ describe('CM 카탈로그 관리 API [S38][S47][T09]', () => {
       ]);
     });
 
+    it('선택 필드를 null로 보내면 지워지고 응답에서 사라진다', async () => {
+      const built = buildLoginApp();
+      const cookie = await loginWithRole(built, 'OPERATOR');
+      const item = await createViaApi(built, cookie, {
+        eduBenefit: { description: '학생 할인', url: 'https://edu.example.com' },
+      });
+
+      const patched = await call(built, 'PATCH', `/api/admin/catalog-items/${item.id}`, cookie, {
+        changes: { eduBenefit: null },
+      });
+      const detail = await call(built, 'GET', `/api/admin/catalog-items/${item.id}`, cookie);
+
+      expect(patched.status).toBe(200);
+      expect(await patched.json()).not.toHaveProperty('eduBenefit');
+      expect(await detail.json()).not.toHaveProperty('eduBenefit');
+    });
+
+    it.each(['name', 'escapeLink', 'supportContact', 'escapeGuideSteps'])(
+      '필수 필드 %s에 null을 보내면 400 VALIDATION_FAILED다',
+      async (field) => {
+        const built = buildLoginApp();
+        const cookie = await loginWithRole(built, 'OPERATOR');
+        const item = await createViaApi(built, cookie);
+
+        const res = await call(built, 'PATCH', `/api/admin/catalog-items/${item.id}`, cookie, {
+          changes: { [field]: null },
+        });
+
+        expect(res.status).toBe(400);
+        expect(res.headers.get('Content-Type')).toContain('application/problem+json');
+        expect(await res.json()).toMatchObject({ code: 'VALIDATION_FAILED' });
+      },
+    );
+
+    it('지운 결과가 도메인 규칙에 어긋나면 400이고 항목은 그대로다', async () => {
+      const built = buildLoginApp();
+      const cookie = await loginWithRole(built, 'OPERATOR');
+      const item = await createViaApi(built, cookie, {
+        escapePattern: 'PC_OR_APP_FORCED',
+        forcedChannel: 'PC_WEB',
+      });
+
+      const res = await call(built, 'PATCH', `/api/admin/catalog-items/${item.id}`, cookie, {
+        changes: { forcedChannel: null },
+      });
+      const detail = await call(built, 'GET', `/api/admin/catalog-items/${item.id}`, cookie);
+
+      expect(res.status).toBe(400);
+      expect(await res.json()).toMatchObject({
+        code: 'VALIDATION_FAILED',
+        errors: [expect.objectContaining({ field: 'forcedChannel' })],
+      });
+      expect(await detail.json()).toMatchObject({ forcedChannel: 'PC_WEB' });
+    });
+
     it('진행 중 기록 적용(applyBufferToActiveRecords)을 켜면 400이다 (T16 전까지 미지원)', async () => {
       const built = buildLoginApp();
       const cookie = await loginWithRole(built, 'OPERATOR');

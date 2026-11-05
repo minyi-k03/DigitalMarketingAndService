@@ -40,7 +40,17 @@ const catalogItemInput = z.strictObject({
   }),
 });
 
-const catalogItemPatch = catalogItemInput.omit({ kind: true }).partial();
+// 수정 요청: 생략은 "그대로", null은 "지운다". 등록 때 선택이던 필드만 null을 받는다
+// (필수 필드에 null이 오면 400이고, 지운 결과가 도메인 규칙에 어긋나면 catalog 모듈이 400으로 알린다)
+const nullableOnPatch = {
+  signupUrl: catalogItemInput.shape.signupUrl.nullable(),
+  ownerPartnerId: catalogItemInput.shape.ownerPartnerId.nullable(),
+  forcedChannel: catalogItemInput.shape.forcedChannel.nullable(),
+  escapeLinkFallbackUrl: catalogItemInput.shape.escapeLinkFallbackUrl.nullable(),
+  backupChecklist: catalogItemInput.shape.backupChecklist.nullable(),
+  eduBenefit: catalogItemInput.shape.eduBenefit.nullable(),
+};
+const catalogItemPatch = catalogItemInput.omit({ kind: true }).partial().extend(nullableOnPatch);
 
 const updateRequest = z.strictObject({
   changes: catalogItemPatch,

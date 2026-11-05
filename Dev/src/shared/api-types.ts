@@ -1642,24 +1642,30 @@ export interface components {
             eduBenefit?: components["schemas"]["EduBenefit"];
             supportContact: components["schemas"]["SupportContact"];
         };
-        /** @description CatalogItemInput의 부분 집합 (kind는 변경 불가) */
+        /**
+         * @description CatalogItemInput의 부분 집합 (kind는 변경 불가).
+         *     필드를 생략하면 그대로 두고, 등록 때 선택이던 필드(signupUrl, ownerPartnerId, forcedChannel,
+         *     escapeLinkFallbackUrl, backupChecklist, eduBenefit)는 null을 보내 지운다(JSON Merge Patch).
+         *     지운 결과가 SPEC §2 규칙에 어긋나면(예: SPONSORED_TRIAL의 signupUrl) 400 VALIDATION_FAILED다.
+         *     필수 필드에 null을 보내면 400이다.
+         */
         CatalogItemPatch: {
             name?: string;
-            signupUrl?: string;
-            ownerPartnerId?: string;
+            signupUrl?: string | null;
+            ownerPartnerId?: string | null;
             serviceCategory?: components["schemas"]["ServiceCategory"];
             monthlyPrice?: number;
             defaultTrialDays?: number;
             isGlobalTimeZoneBufferRequired?: boolean;
             darkPatternScores?: components["schemas"]["DarkPatternScores"];
             escapePattern?: components["schemas"]["EscapePattern"];
-            forcedChannel?: components["schemas"]["ForcedChannel"];
+            forcedChannel?: components["schemas"]["ForcedChannel"] | null;
             escapeGuideSteps?: string[];
             escapeLink?: string;
-            escapeLinkFallbackUrl?: string;
+            escapeLinkFallbackUrl?: string | null;
             accessRetentionPolicy?: components["schemas"]["AccessRetentionPolicy"];
-            backupChecklist?: string[];
-            eduBenefit?: components["schemas"]["EduBenefit"];
+            backupChecklist?: string[] | null;
+            eduBenefit?: components["schemas"]["EduBenefit"] | null;
             supportContact?: components["schemas"]["SupportContact"];
         };
         /** @description 관리용 전체 항목 (SPEC §19 CatalogItem) */

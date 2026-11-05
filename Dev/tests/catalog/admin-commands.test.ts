@@ -469,4 +469,85 @@ describe('CM 카탈로그 입력 검증 보강 [S38][T09]', () => {
       ]),
     );
   });
+
+  // null은 "지운다", 필드를 생략하면 "그대로 둔다"
+  it.each([
+    {
+      field: 'eduBenefit',
+      created: { eduBenefit: { description: '학생 할인', url: 'https://edu.example.com' } },
+      changes: { eduBenefit: null },
+      before: { description: '학생 할인', url: 'https://edu.example.com' },
+    },
+    {
+      field: 'backupChecklist',
+      created: { backupChecklist: ['재생목록 저장'] },
+      changes: { backupChecklist: null },
+      before: ['재생목록 저장'],
+    },
+    {
+      field: 'signupUrl',
+      created: { signupUrl: 'https://signup.example.com' },
+      changes: { signupUrl: null },
+      before: 'https://signup.example.com',
+    },
+    {
+      field: 'escapeLinkFallbackUrl',
+      created: { escapeLinkFallbackUrl: 'https://apps.example.com/app' },
+      changes: { escapeLinkFallbackUrl: null },
+      before: 'https://apps.example.com/app',
+    },
+  ])(
+    '선택 필드 $field는 null로 지울 수 있고 변경 이력에 이전 값이 남는다',
+    async ({ field, created, changes, before }) => {
+      const { catalog } = setup();
+      const item = await catalog.createCatalogItem(operator, catalogInput(created));
+
+      const updated = await catalog.updateCatalogItem(operator, item.id, { changes });
+
+      expect(updated).not.toHaveProperty(field);
+      expect(await catalog.getAdminCatalogItem(item.id)).toEqual(updated);
+      const [latest] = await catalog.listChangeLogs(item.id);
+      expect(latest?.changes).toEqual([{ field, before }]);
+    },
+  );
+
+  it('변경하지 않을 선택 필드는 생략해도 지워지지 않는다', async () => {
+    const { catalog } = setup();
+    const item = await catalog.createCatalogItem(
+      operator,
+      catalogInput({ eduBenefit: { description: '학생 할인', url: 'https://edu.example.com' } }),
+    );
+
+    const updated = await catalog.updateCatalogItem(operator, item.id, {
+      changes: { monthlyPrice: 12000 },
+    });
+
+    expect(updated.eduBenefit).toEqual({
+      description: '학생 할인',
+      url: 'https://edu.example.com',
+    });
+  });
+
+  it('규칙상 필수인 값은 null로 지우려 하면 검증 오류다 [D-15]', async () => {
+    const { catalog } = setup();
+    const forced = await catalog.createCatalogItem(
+      operator,
+      catalogInput({ escapePattern: 'PC_OR_APP_FORCED', forcedChannel: 'PC_WEB' }),
+    );
+    const sponsored = await createSubmitted(catalog);
+
+    await expect(
+      catalog.updateCatalogItem(operator, forced.id, { changes: { forcedChannel: null } }),
+    ).rejects.toMatchObject({
+      code: 'VALIDATION_FAILED',
+      extensions: { errors: [expect.objectContaining({ field: 'forcedChannel' })] },
+    });
+    await expect(
+      catalog.updateCatalogItem(operator, sponsored.id, { changes: { signupUrl: null } }),
+    ).rejects.toMatchObject({
+      code: 'VALIDATION_FAILED',
+      extensions: { errors: [expect.objectContaining({ field: 'signupUrl' })] },
+    });
+    expect((await catalog.getAdminCatalogItem(forced.id)).forcedChannel).toBe('PC_WEB');
+  });
 });
