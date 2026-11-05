@@ -14,6 +14,18 @@ describe('SPA API 클라이언트 로그인 이동 [T25][S16]', () => {
     expect(url).toBe('/auth/kakao/login?returnTo=%2Ftrials%2Fabc');
   });
 
+  it('로그인 실패 안내용 loginError 쿼리는 returnTo에 싣지 않아 재로그인 후 오류 주소로 돌아오지 않는다', () => {
+    const url = buildLoginRedirect(undefined, '/?loginError=access_denied');
+
+    expect(url).toBe('/auth/kakao/login?returnTo=%2F');
+  });
+
+  it('loginError 외의 쿼리는 그대로 returnTo에 남긴다', () => {
+    const url = buildLoginRedirect(undefined, '/catalog?q=a&loginError=failed');
+
+    expect(url).toBe('/auth/kakao/login?returnTo=%2Fcatalog%3Fq%3Da');
+  });
+
   it.each(['//evil.example/path', 'https://evil.example/path', 'catalog'])(
     '내부 경로가 아닌 현재 경로(%s)는 홈(/)으로 대체해 서버가 거부할 값을 보내지 않는다',
     (currentPath) => {

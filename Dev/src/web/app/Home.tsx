@@ -1,4 +1,5 @@
 import { useLocation } from 'react-router';
+import { loginErrorNotice } from '../api/login-error';
 import { buildLoginRedirect } from '../api/login-redirect';
 import { useMe } from '../api/me';
 import buttons from '../ui/buttons.module.css';
@@ -8,6 +9,7 @@ import styles from './Home.module.css';
 export function Home() {
   const location = useLocation();
   const me = useMe();
+  const loginError = me.data ? null : loginErrorNotice(location.search);
 
   return (
     <>
@@ -32,6 +34,12 @@ export function Home() {
           </div>
         </div>
       </section>
+
+      {loginError ? (
+        <div className={styles.notice}>
+          <ErrorNotice title={loginError.title} detail={loginError.detail} />
+        </div>
+      ) : null}
 
       {me.isError ? (
         <div className={styles.notice}>
