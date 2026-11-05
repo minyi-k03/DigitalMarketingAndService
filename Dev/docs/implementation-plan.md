@@ -93,7 +93,7 @@ T01 → T02 → T03 → T04 → T05 → T06 → T09 ─┐
 ### 7.1 전제와 결정 (2026-10-27)
 
 - **조건**
-  - 1인 개발에 Claude Code와 Google Antigravity를 함께 씁니다.
+  - 1인 개발에 Claude Code와 Google Antigravity를 함께 씁니다(구현은 Claude Code, 검증은 Antigravity, §7.7).
   - 개발 시간은 주 20시간 기준이며, 필요하면 늘립니다.
   - 개발 기간은 10/27~12/5(약 5.7주), 12/6~12/8은 기능 동결과 리허설입니다.
 - **사용자 결정**
@@ -157,7 +157,7 @@ T01 → T02 → T03 → T04 → T05 → T06 → T09 ─┐
 - **열에 적힌 것은 TASK 특화 Skill입니다.** 라이브러리·외부 API 문서(Hono, zod, TanStack Query, 카카오 메시지 API)는 Skill 대신 `context7`로 조회합니다.
 - **설치가 필요한 Skill**: `wrangler`(`cloudflare/skills@wrangler`, 11/17 주 시험 배포 전), `agent-browser`(스킬은 2026-10-31 `vercel-labs/agent-browser`, Apache-2.0에서 재설치 완료. 스킬은 사용 안내일 뿐이라 브라우저를 조종하는 프로그램(CLI)은 쓰기 전에 따로 설치해야 하며, 11/24 주 전에 프로젝트 의존성 또는 `npx` 중 방식을 정합니다). 설치는 사용자 승인 후 AGENTS §5 절차로 합니다.
 
-| 기간 | Claude Code (`src/worker`, `tests`, `migrations`, `api`, `src/shared`) | Antigravity (`src/web`) | 비코드 | 점검 | 스킬 |
+| 기간 | Claude Code (`src/worker`, `tests`, `migrations`, `api`, `src/shared`) | 화면 TASK (`src/web`, 2026-11-05부터 Claude Code가 구현, §7.7) | 비코드 | 점검 | 스킬 |
 | :--- | :--- | :--- | :--- | :--- | :--- |
 | 10/27~11/2 | T01~T04, 빈 Worker 첫 배포(T32 일부) | — | N7 Cloudflare 계정, N8 카카오 앱 등록, 현재 문서 커밋 | M1, workers.dev 접속 확인 | 공통만 |
 | 11/3~11/9 | T05·T06·T07, T08, T09(간소), T10 | T25 | N5 해지 경로 검증 시작 | M2·M3 | 서버: `workers-best-practices`(T05~T10), T07 `codebase-design`·`writing-plans`(포트·`openapi.yaml` 변경 계획), T08 `domain-modeling`<br>화면: T25 `frontend-design`, `vercel-react-best-practices` |
@@ -178,12 +178,19 @@ T01 → T02 → T03 → T04 → T05 → T06 → T09 ─┐
 
 다음 TASK는 줄이지 않습니다: T13~T15, T17, T34, T20·T21, T63, T32(Cloudflare 배포).
 
-### 7.7 두 에이전트 병행 규칙
+### 7.7 두 에이전트 역할 규칙 (2026-11-05 변경: 구현 Claude Code, 검증 Antigravity)
 
-- 위 표처럼 디렉터리로 담당을 나눕니다.
-  - `api/openapi.yaml`과 `src/shared`는 Claude Code만 고칩니다.
-  - Antigravity는 생성된 타입을 읽기만 합니다.
-- 두 에이전트가 같은 TASK를 동시에 맡지 않습니다. 화면 TASK는 해당 API TASK가 끝나고 커밋된 뒤에 시작합니다.
+- **구현은 Claude Code**가 서버와 화면(`src/web`) 모두 맡습니다. 위 §7.5 표의 'Antigravity (`src/web`)' 열에 적힌 화면 TASK(T25~T30, T60~T63)도 Claude Code가 구현합니다.
+  - 일정 영향: 서버와 화면을 병행하는 전제로 짠 일정이라 직렬 작업이 늘어납니다. 점검 A·B·C에서 밀리면 §7.6 순서로 줄입니다.
+  - 화면 TASK의 스킬(`frontend-design`, `design-taste-frontend`, `vercel-react-best-practices`)은 Claude Code가 씁니다.
+- **검증은 Antigravity**가 맡고 코드는 고치지 않습니다. 결과는 사용자에게 보고하고 수정은 Claude Code가 합니다.
+  - TASK 단위 `code-review`, 브라우저 점검(S-01~S-05, 360px·PC), 점검 A·B·C와 최종 배포 전 인수 점검
+  - Antigravity의 통과는 `npm run verify`를 대신하지 않습니다. 지적 사항은 Claude Code가 코드로 확인한 뒤 타당한 것만 반영합니다.
+- **한도 소진 시 인계**: Claude Code 한도가 다 됐을 때만 Antigravity가 구현을 이어받습니다.
+  - 인계 전에 `docs/progress.md`에 진행 중 TASK, 마지막 `verify` 결과, 다음 할 일을 갱신합니다.
+  - `api/openapi.yaml`·`src/shared`·`migrations/` 변경은 한도가 풀릴 때까지 보류하거나 사용자 승인 후에만 합니다.
+  - 이어받은 구현은 같은 에이전트가 검증할 수 없으므로 사용자 판단이나 다른 모델로 검증합니다(Harness §0-4).
+- 두 에이전트가 같은 TASK나 같은 파일을 동시에 다루지 않습니다. 검증은 사용자가 구현 결과를 커밋한 뒤에 시작합니다.
 - TASK가 하나 끝날 때마다 사용자가 직접 커밋해 되돌릴 지점을 남깁니다. 에이전트는 커밋하지 않습니다(AGENTS §6).
 
 ### 7.8 발표용 범위의 위험

@@ -35,6 +35,7 @@
 | `docs/architecture.md` | 모듈 구조·공개 인터페이스·D1 테이블 소유권·시간/알림 설계 등 "어떻게"를 정의 (요구사항을 바꾸지 못함) |
 | `api/openapi.yaml` | HTTP 경로·메서드·요청/응답 스키마 및 오류 코드 계약 (`D-06`) |
 | `docs/adr/ADR-0008-*.md` | 기술 스택·프런트엔드(`D-07`)·라우터·테스트 도구 결정 기록 |
+| `docs/DESIGN-notion.md` | 화면 시각 디자인 기준(색·글꼴·간격·컴포넌트). 스타일만 정하며 화면별 배치는 정하지 않는다. `src/web/` 작업 전에 읽고, `SPEC.md`·`architecture.md`와 충돌하면 임의로 해석하지 않고 보고한다 |
 | `docs/tasks.md` · `docs/implementation-plan.md` | TASK(T00~T52, 발표용 T34·T35·T60~T63) 분할, 선행 관계, 수용 기준·스토리 매핑, 발표용 범위(§7) |
 
 - `SPEC.md`가 용어집·ADR과 다르면 `SPEC.md`(Further Notes §2 포함)가 우선하며, 아키텍처·API 문서가 `SPEC.md`와 충돌하면 임의로 해석하지 않고 위치와 함께 보고한다.
@@ -132,10 +133,18 @@
   - 모든 에이전트는 `Dev/AGENTS.md`를 공통 기준으로 삼는다.
     - Claude Code는 `Dev/CLAUDE.md`(`@AGENTS.md`)를 통해 로드한다.
     - Antigravity는 `Dev/`를 작업 공간으로 열거나 작업 규칙에서 이 파일을 참조해 읽는다.
-  - **담당 구분** (발표 전까지, `docs/implementation-plan.md` §7.7):
-    - Claude Code: `src/worker/`, `tests/`, `migrations/`, `api/openapi.yaml`, `src/shared/`
-    - Antigravity: `src/web/`. `api/openapi.yaml`·`src/shared/`는 읽기만 하고, 계약 변경이 필요하면 직접 고치지 않고 사용자에게 보고한다.
-    - 두 에이전트가 같은 TASK나 같은 파일을 동시에 다루지 않는다. 화면 TASK는 해당 API TASK가 끝나고 사용자가 커밋한 뒤에 시작한다.
+  - **담당 구분** (발표 전까지, 2026-11-05 변경, `docs/implementation-plan.md` §7.7):
+    - Claude Code(구현): `src/worker/`, `tests/`, `migrations/`, `api/openapi.yaml`, `src/shared/`, `src/web/`. 구현은 Claude Code가 맡고 `npm run verify`와 `verification-before-completion`으로 자체 검증한다.
+    - Antigravity(검증): 코드를 고치지 않고 검증만 한다. 결과는 사용자에게 보고하고, 수정은 Claude Code가 한다.
+      - TASK 단위 `code-review`(명세·표준 준수)
+      - 브라우저 점검(S-01~S-05 흐름, 360px·PC 레이아웃. `agent-browser`는 CLI 설치 후)
+      - 점검 A·B·C와 최종 배포 전 인수 점검
+    - Antigravity의 통과는 `npm run verify`를 대신하지 않는다. 지적 사항은 Claude Code가 코드로 확인한 뒤 타당한 것만 반영한다.
+    - Claude Code 한도 소진 시에만 Antigravity가 구현을 이어받을 수 있다.
+      - 인계 전에 `docs/progress.md`에 진행 중 TASK, 마지막 `verify` 결과, 다음 할 일을 갱신한다.
+      - `api/openapi.yaml`·`src/shared/`·`migrations/` 변경은 한도가 풀릴 때까지 보류하거나 사용자 승인 후에만 한다.
+      - 이어받은 구현은 같은 에이전트가 검증할 수 없으므로 사용자 판단이나 다른 모델로 검증한다.
+    - 두 에이전트가 같은 TASK나 같은 파일을 동시에 다루지 않는다. 검증은 사용자가 구현 결과를 커밋한 뒤에 시작한다.
     - 작업을 시작할 때 `git status`와 `docs/tasks.md` 상태를 확인해 다른 에이전트가 진행 중인 TASK와 겹치지 않는지 본다.
 
 ## 6. Security and Permissions

@@ -15,6 +15,7 @@
   - **완료 기준**: 통과해야 하는 테스트. Testing Decisions 모듈 약어(TT·EB·CM·IA·BA)와 V-nn을 씁니다.
   - **주요 파일**
 - **상태**: `대기` / `차단(사유)` / `진행` / `완료`. 작업하면서 이 문서를 갱신합니다.
+- 담당: 서버·화면 TASK 모두 Claude Code가 구현하고 Antigravity가 검증합니다(2026-11-05 변경, [implementation-plan.md §7.7](implementation-plan.md)).
 - 테스트 이름에는 스토리 번호와 Testing Decisions 항목을 붙입니다(AGENTS §7).
 - 경로 접두사: `w/` = `src/worker/`, `m/` = `src/worker/modules/`
 
@@ -199,7 +200,7 @@
 
 ## Phase 4: Trial Tracking & Schedule (P0 핵심, 테스트 우선)
 
-### T13 체험 기록 생성 (1초 간편 등록) — `대기`
+### T13 체험 기록 생성 (1초 간편 등록) — `완료 (2026-11-05. 응답 actions는 TRACKING 상태만 정의해 나머지는 T19에서 채움. SUBMITTED·REJECTED 항목은 404, UNPUBLISHED는 422. 알림 예약은 T15·T16)`
 - **근거**: §3 경로 A·입력 검증, §4 날짜 산정, S7·S8·S11·S12, V-08
 - **선행**: T05, T10
 - **내용**:
@@ -342,7 +343,7 @@
 
 공통 완료 기준: 모바일 폭(360px)과 PC에서 레이아웃이 깨지지 않고, 모든 API 호출은 생성된 타입을 씁니다.
 
-### T25 SPA 골격 — `대기`
+### T25 SPA 골격 — `완료 (2026-11-05. npm run verify 통과. Antigravity 브라우저 점검·code-review 반영(loginError 안내, 재로그인 returnTo 정리), 실제 카카오 로그인 수동 확인 통과. 보류: PWA 아이콘(로고 필요), 화면 배치·문구는 임시이며 와이어프레임 확정 뒤 T26부터 정함)`
 - **선행**: T04, T05
 - **내용**: Vite + React + Router + TanStack Query, PWA manifest·SW, API 클라이언트(401 → `loginUrl` 이동), 공통 레이아웃·오류 표시
 - **주요 파일**: `src/web/*`, `vite.config.ts`
