@@ -391,3 +391,82 @@ describe('CM 카탈로그 등록 [S38][S47][T09]', () => {
     expect(await catalog.getAdminCatalogItem(created.id)).toEqual(created);
   });
 });
+
+describe('CM 카탈로그 입력 검증 보강 [S38][T09]', () => {
+  it.each(['', '   '])(
+    '해지 가이드 단계가 비어 있으면(%j) escapeGuideSteps 검증 오류다',
+    async (blankStep) => {
+      const { catalog } = setup();
+
+      await expect(
+        catalog.createCatalogItem(
+          operator,
+          catalogInput({ escapeGuideSteps: ['설정에서 멤버십을 연다', blankStep] }),
+        ),
+      ).rejects.toMatchObject({
+        code: 'VALIDATION_FAILED',
+        extensions: { errors: [expect.objectContaining({ field: 'escapeGuideSteps' })] },
+      });
+    },
+  );
+
+  // 값이 없으면 필드를 보내지 않는다. 보냈는데 비어 있으면 빈 값이 저장되므로 거부한다
+  it.each([
+    { name: 'signupUrl', field: 'signupUrl', input: { signupUrl: '' } },
+    {
+      name: 'escapeLinkFallbackUrl',
+      field: 'escapeLinkFallbackUrl',
+      input: { escapeLinkFallbackUrl: '   ' },
+    },
+    {
+      name: 'eduBenefit.url',
+      field: 'eduBenefit.url',
+      input: { eduBenefit: { description: '학생 할인', url: '' } },
+    },
+    {
+      name: 'eduBenefit.description',
+      field: 'eduBenefit.description',
+      input: { eduBenefit: { description: '  ', url: 'https://edu.example.com' } },
+    },
+    {
+      name: 'supportContact.email',
+      field: 'supportContact.email',
+      input: { supportContact: { email: '', url: 'https://help.example.com' } },
+    },
+    {
+      name: 'supportContact.url',
+      field: 'supportContact.url',
+      input: { supportContact: { email: 'help@example.com', url: '   ' } },
+    },
+  ])('값이 있는데 비어 있는 $name은 검증 오류다', async ({ field, input }) => {
+    const { catalog } = setup();
+
+    await expect(catalog.createCatalogItem(operator, catalogInput(input))).rejects.toMatchObject({
+      code: 'VALIDATION_FAILED',
+      extensions: { errors: expect.arrayContaining([expect.objectContaining({ field })]) },
+    });
+  });
+
+  it('PC_OR_APP_FORCED 항목을 다른 해지 방식으로 바꾸면 강제 접속 채널이 함께 비워진다 [D-15]', async () => {
+    const { catalog } = setup();
+    const forced = await catalog.createCatalogItem(
+      operator,
+      catalogInput({ escapePattern: 'PC_OR_APP_FORCED', forcedChannel: 'PC_WEB' }),
+    );
+
+    const updated = await catalog.updateCatalogItem(operator, forced.id, {
+      changes: { escapePattern: 'DIRECT_LINK' },
+    });
+
+    expect(updated.escapePattern).toBe('DIRECT_LINK');
+    expect(updated.forcedChannel).toBeUndefined();
+    expect(await catalog.getAdminCatalogItem(forced.id)).toEqual(updated);
+    const [latest] = await catalog.listChangeLogs(forced.id);
+    expect(latest?.changes).toEqual(
+      expect.arrayContaining([
+        { field: 'escapePattern', before: 'PC_OR_APP_FORCED', after: 'DIRECT_LINK' },
+        { field: 'forcedChannel', before: 'PC_WEB' },
+      ]),
+    );
+  });
+});

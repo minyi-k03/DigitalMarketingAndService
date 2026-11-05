@@ -90,6 +90,15 @@ export async function updateCatalogItem(
     ...definedChanges,
     lastVerifiedAt: request.markVerified ? todayKst(deps.clock) : before.lastVerifiedAt,
   };
+  // D-15: PC_OR_APP_FORCED가 아닌 항목에는 forcedChannel이 없다. JSON 본문으로는 필드를 지울 수 없어서,
+  // 해지 방식을 바꿀 때 이전 채널이 남아 항상 검증에 걸리지 않도록 함께 비운다
+  if (
+    definedChanges.escapePattern !== undefined &&
+    definedChanges.escapePattern !== 'PC_OR_APP_FORCED' &&
+    definedChanges.forcedChannel === undefined
+  ) {
+    delete merged.forcedChannel;
+  }
   merged.darkPatternLevel = computeDarkPatternLevel(
     merged.darkPatternScores,
     settings.darkPatternRubric,

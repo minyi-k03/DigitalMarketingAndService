@@ -7,7 +7,7 @@ import { insertUser } from '../support/user-seed';
 const NOON_KST_NOV_5 = '2026-11-05T03:00:00.000Z';
 
 describe('TT 체험 기록 생성 [S7][S8][T13]', () => {
-  it('같은 사용자·같은 항목에 진행 중인 기록이 있으면 기존 기록 id와 함께 중복으로 거부한다 [S11]', async () => {
+  it('같은 사용자·같은 항목에 진행 중인 기록이 있으면 기존 기록 id와 함께 중복으로 거부한다 [S7]', async () => {
     const { catalog, trialTracking } = buildTrialTracking(NOON_KST_NOV_5);
     const item = await seedItem(catalog, 'PUBLISHED');
     const userId = await insertUser();
@@ -37,7 +37,7 @@ describe('TT 체험 기록 생성 [S7][S8][T13]', () => {
     expect(a.id).not.toBe(b.id);
   });
 
-  it('동시에 두 번 요청해도 기록은 하나만 만들어지고 나머지는 중복으로 거부된다 [S11]', async () => {
+  it('동시에 두 번 요청해도 기록은 하나만 만들어지고 나머지는 중복으로 거부된다 [S7]', async () => {
     const { catalog, trialTracking } = buildTrialTracking(NOON_KST_NOV_5);
     const item = await seedItem(catalog, 'PUBLISHED');
     const userId = await insertUser();
@@ -305,7 +305,7 @@ describe('TT 체험 기록 생성 [S7][S8][T13]', () => {
       billing: '2027-03-01',
       safe: '2027-03-01',
     },
-  ])('날짜 산정: $name', async ({ start, days, buffer, today, billing, safe }) => {
+  ])('날짜 산정 [S11][S12]: $name', async ({ start, days, buffer, today, billing, safe }) => {
     const { catalog, trialTracking } = buildTrialTracking(`${today}T03:00:00.000Z`);
     const item = await seedItem(catalog, 'PUBLISHED', { isGlobalTimeZoneBufferRequired: buffer });
     const userId = await insertUser();

@@ -42,6 +42,12 @@ export function validateCatalogItemInput(
       message: `해지 가이드는 1~${MAX_ESCAPE_GUIDE_STEPS}단계로만 저장할 수 있습니다`,
     });
   }
+  if (item.escapeGuideSteps.some((step) => isBlank(step))) {
+    errors.push({
+      field: 'escapeGuideSteps',
+      message: '해지 가이드의 각 단계는 비워 둘 수 없습니다',
+    });
+  }
 
   const isForcedPattern = item.escapePattern === 'PC_OR_APP_FORCED';
   if (isForcedPattern && item.forcedChannel === undefined) {
@@ -81,6 +87,28 @@ export function validateCatalogItemInput(
       field: 'supportContact',
       message: '고객센터 연락처는 이메일과 문의 페이지 URL 중 하나 이상이 필요합니다',
     });
+  }
+
+  // 선택 필드는 값이 없으면 보내지 않는다. 보냈는데 비어 있으면 빈 값이 저장되므로 막는다.
+  // 같은 필드에 필수 오류가 이미 있으면 중복해서 알리지 않고, 연락처가 둘 다 없는 경우는 위 규칙이 알린다
+  const hasSupportContact =
+    !isBlank(item.supportContact.email) || !isBlank(item.supportContact.url);
+  const optionalFields: [field: string, value: string | undefined][] = [
+    ['signupUrl', item.signupUrl],
+    ['escapeLinkFallbackUrl', item.escapeLinkFallbackUrl],
+    ['eduBenefit.description', item.eduBenefit?.description],
+    ['eduBenefit.url', item.eduBenefit?.url],
+    ...(hasSupportContact
+      ? ([
+          ['supportContact.email', item.supportContact.email],
+          ['supportContact.url', item.supportContact.url],
+        ] as [string, string | undefined][])
+      : []),
+  ];
+  for (const [field, value] of optionalFields) {
+    if (value !== undefined && isBlank(value) && !errors.some((e) => e.field === field)) {
+      errors.push({ field, message: '값이 없으면 비워 두지 말고 항목을 보내지 마세요' });
+    }
   }
 
   const httpsOnlyFields: [field: string, value: string | undefined][] = [

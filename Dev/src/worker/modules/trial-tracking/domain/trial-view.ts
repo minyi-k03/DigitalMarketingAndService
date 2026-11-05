@@ -1,8 +1,8 @@
 import type { components } from '../../../../shared/api-types';
 import { daysBetween, type KstDate } from '../../../../shared/kst-date';
-import type { TrialStatus } from '../infra/trial-repo';
 
 export type TrialAction = components['schemas']['TrialAction'];
+type TrialStatus = components['schemas']['TrialStatus'];
 
 /**
  * D-Day 표기 (SPEC §13). 오늘 < 안전 만료일이면 'D-n', 같으면 'D-Day',

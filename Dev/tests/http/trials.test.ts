@@ -152,7 +152,7 @@ describe('TT 체험 기록 생성 API [S7][S8][T13]', () => {
     expect(await missing.json()).toMatchObject({ code: 'NOT_FOUND' });
   });
 
-  it('진행 중인 기록이 있으면 409 DUPLICATE_ACTIVE_RECORD와 기존 기록 id를 돌려준다 [S11]', async () => {
+  it('진행 중인 기록이 있으면 409 DUPLICATE_ACTIVE_RECORD와 기존 기록 id를 돌려준다 [S7]', async () => {
     const built = buildLoginApp();
     const { cookie } = await loggedIn(built);
     const item = await seedItem(built.catalog, 'PUBLISHED');
@@ -170,7 +170,7 @@ describe('TT 체험 기록 생성 API [S7][S8][T13]', () => {
     });
   });
 
-  it('동시에 두 번 요청하면 하나는 201, 하나는 409다 [S11]', async () => {
+  it('동시에 두 번 요청하면 하나는 201, 하나는 409다 [S7]', async () => {
     const built = buildLoginApp();
     const { cookie } = await loggedIn(built);
     const item = await seedItem(built.catalog, 'PUBLISHED');
