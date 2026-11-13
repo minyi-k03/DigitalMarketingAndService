@@ -1,0 +1,59 @@
+.logo,
+.logoLg {
+  flex: none;
+  display: grid;
+  place-items: center;
+  object-fit: cover;
+  background: var(--color-canvas-soft);
+  border: 1px solid var(--color-hairline);
+  color: var(--color-ink-muted);
+  font-weight: 700;
+}
+
+.logo {
+  width: 44px;
+  height: 44px;
+  border-radius: var(--radius-md);
+  font-size: 18px;
+}
+
+.logoLg {
+  width: 56px;
+  height: 56px;
+  border-radius: var(--radius-lg);
+  font-size: 22px;
+}
+
+/* 문서에 오류·경고 전용 색이 없어 스티커 팔레트의 주황·초록을 쓴다. 강도는 채움 → 옅은 채움 → 옅은 초록 순이고, 글자(상·중·하)로도 구분한다 */
+.badge {
+  display: inline-flex;
+  align-items: center;
+  padding: 2px var(--space-xs);
+  border-radius: var(--radius-full);
+  font-size: 12px;
+  font-weight: 600;
+  line-height: 1.33;
+  letter-spacing: 0.125px;
+  white-space: nowrap;
+}
+
+.bad {
+  background: var(--color-accent-orange-deep);
+  color: var(--color-on-primary);
+}
+
+.warn {
+  background: #fff1e6;
+  color: #793400;
+}
+
+.good {
+  background: #e8f6ec;
+  color: #0b6b21;
+}
+
+.plain {
+  background: var(--color-canvas-soft);
+  color: var(--color-ink-secondary);
+  border: 1px solid var(--color-hairline);
+}

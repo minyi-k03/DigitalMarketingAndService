@@ -1,0 +1,197 @@
+.page {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-md);
+  width: 100%;
+  max-width: var(--container-max);
+  margin: 0 auto;
+  padding: var(--space-md) var(--space-md) 0;
+}
+
+.back {
+  display: inline-flex;
+  align-items: center;
+  align-self: flex-start;
+  min-height: var(--tap-target);
+  color: var(--color-ink-muted);
+  font-size: 14px;
+  text-decoration: none;
+}
+
+/* 모바일: 본문 아래에 등록 영역이 화면 아래에 붙는다. PC: 오른쪽 열에 고정된다 */
+.layout {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr);
+  gap: var(--space-lg);
+  align-items: start;
+}
+
+.main {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-md);
+  min-width: 0;
+  padding-bottom: var(--space-lg);
+}
+
+.aside {
+  position: sticky;
+  bottom: 0;
+  z-index: 5;
+  margin: 0 calc(-1 * var(--space-md));
+  padding: var(--space-sm) var(--space-md) calc(var(--space-sm) + env(safe-area-inset-bottom, 0px));
+  border-top: 1px solid var(--color-hairline);
+  background: var(--color-surface);
+}
+
+@media (min-width: 900px) {
+  .layout {
+    grid-template-columns: minmax(0, 1fr) 320px;
+    padding-bottom: var(--space-xxl);
+  }
+
+  .aside {
+    /* 위쪽 내비게이션(약 61px) 아래에 붙는다 */
+    top: 80px;
+    bottom: auto;
+    margin: 0;
+    padding: var(--space-md);
+    border: 1px solid var(--color-hairline);
+    border-radius: var(--radius-lg);
+  }
+}
+
+.head {
+  display: flex;
+  align-items: center;
+  gap: var(--space-md);
+}
+
+.headText {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-xxs);
+  min-width: 0;
+}
+
+.title {
+  font-size: 26px;
+  font-weight: 700;
+  line-height: 1.23;
+  letter-spacing: -0.625px;
+  overflow-wrap: anywhere;
+}
+
+.sub,
+.muted {
+  font-size: 14px;
+  line-height: 1.43;
+  color: var(--color-ink-muted);
+}
+
+.strong {
+  font-weight: 600;
+}
+
+.box {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-xs);
+  padding: var(--space-md);
+  border: 1px solid var(--color-hairline);
+  border-radius: var(--radius-lg);
+  background: var(--color-surface);
+}
+
+.boxTitle {
+  font-size: 14px;
+  font-weight: 600;
+  color: var(--color-ink-muted);
+}
+
+.steps,
+.checks {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-xs);
+  margin: 0;
+  padding-left: 20px;
+}
+
+.checks {
+  padding-left: 0;
+  list-style: none;
+}
+
+.checks li::before {
+  content: '☐ ';
+  color: var(--color-ink-muted);
+}
+
+.info {
+  padding: var(--space-sm) var(--space-md);
+  border-radius: var(--radius-lg);
+  background: var(--color-surface);
+  border: 1px solid var(--color-hairline);
+  font-size: 14px;
+  color: var(--color-ink-secondary);
+}
+
+.banner,
+.bannerOk {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-xs);
+  padding: var(--space-md);
+  border-radius: var(--radius-lg);
+  border: 1px solid var(--color-hairline);
+  background: var(--color-surface);
+}
+
+/* 완료 알림: 초록은 장식 팔레트의 "긍정 체크"로만 쓴다 */
+.bannerOk {
+  border-color: var(--color-accent-green);
+}
+
+.bannerTitle {
+  font-size: 18px;
+  font-weight: 700;
+}
+
+.bannerActions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-xs);
+  margin-top: var(--space-xxs);
+}
+
+.dates {
+  display: grid;
+  grid-template-columns: auto 1fr;
+  gap: var(--space-xxs) var(--space-md);
+  margin: 0;
+  font-variant-numeric: tabular-nums;
+}
+
+.dates dt {
+  color: var(--color-ink-muted);
+}
+
+.dates dd {
+  margin: 0;
+  font-weight: 600;
+}
+
+.skeleton {
+  height: 240px;
+  border-radius: var(--radius-lg);
+  background: linear-gradient(90deg, #efeeec, #e6e4e1, #efeeec);
+  background-size: 200% 100%;
+  animation: shimmer 1.4s linear infinite;
+}
+
+@keyframes shimmer {
+  to {
+    background-position: -200% 0;
+  }
+}

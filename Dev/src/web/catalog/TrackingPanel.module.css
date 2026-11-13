@@ -1,0 +1,51 @@
+.panel {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-sm);
+}
+
+.panel > button:disabled {
+  opacity: 0.6;
+  cursor: wait;
+}
+
+.startLine {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--space-sm);
+  font-size: 14px;
+  color: var(--color-ink-muted);
+}
+
+.link {
+  min-height: var(--tap-target);
+  padding: 0;
+  border: 0;
+  background: none;
+  color: var(--color-primary);
+  font: inherit;
+  font-size: 14px;
+  text-decoration: underline;
+  cursor: pointer;
+}
+
+.note {
+  font-size: 14px;
+  line-height: 1.43;
+  color: var(--color-ink-muted);
+}
+
+.stopped {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-xxs);
+  padding: var(--space-md);
+  border-radius: var(--radius-lg);
+  background: var(--color-canvas-soft);
+  border: 1px solid var(--color-hairline);
+}
+
+.stoppedTitle {
+  font-weight: 600;
+}
