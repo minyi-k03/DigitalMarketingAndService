@@ -3,6 +3,7 @@ import type { KstDate, UtcInstant } from '../../../../shared/kst-date';
 
 export type TrialSource = components['schemas']['TrialSource'];
 export type TrialStatus = components['schemas']['TrialStatus'];
+export type ExitReason = components['schemas']['ExitReason'];
 
 /** `trial_records` 한 행을 앱 쪽 이름으로 옮긴 것 (SPEC §19 TrialRecord) */
 export interface TrialRecord {
@@ -16,9 +17,96 @@ export interface TrialRecord {
   billingDate: KstDate;
   safeEndDate: KstDate;
   status: TrialStatus;
+  /** `exit_poll_responses.reason`의 사본. TRACKING이면 없다 (SPEC §5 불변식) */
+  exitReason?: ExitReason;
+  cancelAttemptedAt?: UtcInstant;
+  confirmedAt?: UtcInstant;
   savedAmount: number | null;
   statusChangedAt: UtcInstant;
   createdAt: UtcInstant;
+}
+
+interface TrialRecordRow {
+  id: string;
+  user_id: string;
+  catalog_item_id: string;
+  source: TrialSource;
+  start_date: string;
+  trial_days: number;
+  buffer_applied: number;
+  billing_date: string;
+  safe_end_date: string;
+  status: TrialStatus;
+  exit_reason: ExitReason | null;
+  cancel_attempted_at: string | null;
+  confirmed_at: string | null;
+  saved_amount: number | null;
+  status_changed_at: string;
+  created_at: string;
+}
+
+function fromRow(row: TrialRecordRow): TrialRecord {
+  return {
+    id: row.id,
+    userId: row.user_id,
+    catalogItemId: row.catalog_item_id,
+    source: row.source,
+    startDate: row.start_date as KstDate,
+    trialDays: row.trial_days,
+    bufferApplied: row.buffer_applied === 1,
+    billingDate: row.billing_date as KstDate,
+    safeEndDate: row.safe_end_date as KstDate,
+    status: row.status,
+    ...(row.exit_reason !== null && { exitReason: row.exit_reason }),
+    ...(row.cancel_attempted_at !== null && {
+      cancelAttemptedAt: row.cancel_attempted_at as UtcInstant,
+    }),
+    ...(row.confirmed_at !== null && { confirmedAt: row.confirmed_at as UtcInstant }),
+    savedAmount: row.saved_amount,
+    statusChangedAt: row.status_changed_at as UtcInstant,
+    createdAt: row.created_at as UtcInstant,
+  };
+}
+
+/** 본인 기록만 돌려준다. 남의 기록은 없는 기록과 똑같이 `undefined`다 (AGENTS §6) */
+export async function findOwnedRecord(
+  db: D1Database,
+  userId: string,
+  trialRecordId: string,
+): Promise<TrialRecord | undefined> {
+  const row = await db
+    .prepare('SELECT * FROM trial_records WHERE id = ? AND user_id = ?')
+    .bind(trialRecordId, userId)
+    .first<TrialRecordRow>();
+  return row === null ? undefined : fromRow(row);
+}
+
+/**
+ * 전이 결과를 저장하는 조건부 UPDATE (architecture §5.2). 읽은 뒤 다른 요청이 먼저 상태를 바꿨으면
+ * `WHERE status = :from`이 맞지 않아 0행이 바뀐다. 호출한 쪽이 `meta.changes`로 충돌을 판정한다.
+ */
+export function prepareStatusUpdate(
+  db: D1Database,
+  from: TrialStatus,
+  next: TrialRecord,
+): D1PreparedStatement {
+  return db
+    .prepare(
+      `UPDATE trial_records
+          SET status = ?, status_changed_at = ?, exit_reason = ?,
+              cancel_attempted_at = ?, confirmed_at = ?, saved_amount = ?
+        WHERE id = ? AND status = ?`,
+    )
+    .bind(
+      next.status,
+      next.statusChangedAt,
+      next.exitReason ?? null,
+      next.cancelAttemptedAt ?? null,
+      next.confirmedAt ?? null,
+      next.savedAmount,
+      next.id,
+      from,
+    );
 }
 
 /**

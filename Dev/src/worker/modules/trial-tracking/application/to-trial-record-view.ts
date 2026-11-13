@@ -7,7 +7,6 @@ export type TrialRecordView = components['schemas']['TrialRecordView'];
 
 /**
  * 기록을 화면용 응답으로 옮긴다 (SPEC §13, §19). 필드를 하나씩 적어 `userId`가 나가지 않게 한다.
- * `exitReason`·`cancelAttemptedAt`·`confirmedAt`은 TRACKING 기록에 없으므로 T14에서 더한다.
  */
 export function toTrialRecordView(
   record: TrialRecord,
@@ -25,6 +24,11 @@ export function toTrialRecordView(
     billingDate: record.billingDate,
     safeEndDate: record.safeEndDate,
     status: record.status,
+    ...(record.exitReason !== undefined && { exitReason: record.exitReason }),
+    ...(record.cancelAttemptedAt !== undefined && {
+      cancelAttemptedAt: record.cancelAttemptedAt,
+    }),
+    ...(record.confirmedAt !== undefined && { confirmedAt: record.confirmedAt }),
     savedAmount: record.savedAmount,
     statusChangedAt: record.statusChangedAt,
     dDayLabel: dDayLabel(today, record.safeEndDate, record.billingDate),

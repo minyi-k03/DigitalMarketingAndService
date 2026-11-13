@@ -214,7 +214,7 @@
   - HTTP "생략 시 기본값 주입"
 - **주요 파일**: `m/trial-tracking/*`, `w/http/routes/trials.ts`
 
-### T14 상태 머신과 ExitPoll 원자성, SavedAmount — `대기`
+### T14 상태 머신과 ExitPoll 원자성, SavedAmount — `완료 (2026-11-13. 응답이 이미 있는 기록의 확정·정정 요청에 온 exitReason은 무시하고 기존 응답 보존(사용자 결정). 사유 선택 시 탈출 알림(ESCAPE_ALERT) PENDING 취소까지만 하고 D1_CONFIRM·SAME_DAY_CONFIRM 예약은 T15·T16. 결과 확인용 getTrialRecord 핸들러 추가(GET 경로는 T19). confirmedAt은 CANCELED_CONFIRMED 전이에만 기록)`
 - **근거**: §5 전체, §7 단일 명령, §8, S10·S20·S25·S28·S29·S30·S31
 - **선행**: T13
 - **내용**:
