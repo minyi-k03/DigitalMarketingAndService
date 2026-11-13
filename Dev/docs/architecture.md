@@ -255,8 +255,9 @@ DB와 애플리케이션 두 겹으로 지킵니다.
 ### 5.4 알림 계획기 (§6) — 순수 함수
 
 ```ts
-planInitialSlots(record, terms, now, settings): PlannedSlot[]        // TRACKING 생성·재예약 (D3·D1·LATE_REGISTRATION)
+planInitialSlots(record, now, settings): PlannedSlot[]               // TRACKING 생성·재예약 (D3·D1·LATE_REGISTRATION)
 planCancelConfirmSlots(record, now, settings): PlannedSlot[]         // CANCEL_ATTEMPTED 확인 알림 (D1_CONFIRM·SAME_DAY_CONFIRM)
+templateKeyFor({ kind, variant }, retentionPolicy): string           // 문구 선택 키. ESCAPE_ALERT만 정책이 키에 들어감 (§5.5 "(같음)")
                                                                      //  - 사유 선택(TRACKING → CANCEL_ATTEMPTED) 시: 기존 D3·D1 취소 후 호출
                                                                      //  - CANCEL_ATTEMPTED 재예약(기록 수정·버퍼 변경, G3) 시: PENDING 전부 취소 후 호출
 ```
@@ -275,7 +276,7 @@ planCancelConfirmSlots(record, now, settings): PlannedSlot[]         // CANCEL_A
 | 그 밖의 사유 선택 또는 `CANCEL_ATTEMPTED` 재예약 | 없음 (결제 확인 흐름) | — | — |
 | `MISSED_BILLED` 전이 | `BILLING_CHECK` | `BILLING_CHECK` | `T(billingDate + 1)` |
 
-- **늦은 등록 문구 변형**은 위에서부터 먼저 해당하는 것을 씁니다: `today = billingDate` → `BILLING_DAY`, `today = safeEndDate` → `SAFE_END_DAY`, 그 밖 → `GENERAL`.
+- **늦은 등록 문구 변형**은 위에서부터 먼저 해당하는 것을 씁니다: `today = billingDate` → `LATE_BILLING_DAY`, `today = safeEndDate` → `LATE_SAFE_END_DAY`, 그 밖 → `REGULAR`.
 - **재예약**(§6, G3 확정): `PENDING` 슬롯을 모두 `CANCELED`로 바꾼 뒤 새 `safeEndDate`로 다시 계산합니다. 유일 키에 `safeEndDate`가 들어가므로 같은 슬롯이라도 새로 넣을 수 있습니다. 새 날짜 기준으로 정규 슬롯이 모두 지났고 `today <= billingDate`이면 `TRACKING`은 `LATE_REGISTRATION`을 즉시 1회 보내고, `CANCEL_ATTEMPTED`는 위 표의 `SAME_DAY_CONFIRM` 규칙을 따릅니다(마감 시각 이전이면 `SAME_DAY_CONFIRM` 1회 예약·발송, 마감 시각 이후이면 추가 발송 없음).
 
 ### 5.5 알림 문구와 템플릿 코드 (§6, FN §3)
@@ -284,7 +285,7 @@ planCancelConfirmSlots(record, now, settings): PlannedSlot[]         // CANCEL_A
 
 | kind | variant | `RETAIN_UNTIL_END` | `IMMEDIATE_TERMINATION` |
 | :--- | :--- | :--- | :--- |
-| `ESCAPE_ALERT` | `REGULAR` (D3·D1·늦은 등록 GENERAL) | 조기 해지 권장 | 백업 후 D-1 해지 권장 |
+| `ESCAPE_ALERT` | `REGULAR` (D3·D1·늦은 등록 일반 문구) | 조기 해지 권장 | 백업 후 D-1 해지 권장 |
 | `ESCAPE_ALERT` | `LATE_BILLING_DAY` | 오늘 결제 경고 | 오늘 결제 경고 + 백업 후 바로 해지 |
 | `ESCAPE_ALERT` | `LATE_SAFE_END_DAY` | 마지막 날 안내 | 마지막 날 + 백업 후 바로 해지 |
 | `CANCEL_CONFIRM_CHECK` | `REGULAR` | "해지를 마치셨나요?" | (같음) |

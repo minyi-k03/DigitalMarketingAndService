@@ -229,7 +229,7 @@
   - TT "SavedAmount(당일 포함, 다음 날·정정·`BILLED_CONFIRMED` 제외, `monthlyPrice` 변경 후 불변)"
 - **주요 파일**: `m/trial-tracking/domain/transitions.ts`, `m/trial-tracking/application/*`, `w/http/routes/trials.ts`
 
-### T15 알림 계획기 — `대기`
+### T15 알림 계획기 — `완료 (2026-11-13. 계획기는 terms 인자 없이 record의 날짜·bufferApplied만 사용. 템플릿 키는 templateKeyFor(kind·variant·정책)이며 해지 확인·결제 확인 알림은 정책을 키에 넣지 않음. BILLING_CHECK 슬롯 계획은 T18)`
 - **근거**: §6 전체, S13·S14·S15·S26·S27
 - **선행**: T14
 - **내용**:

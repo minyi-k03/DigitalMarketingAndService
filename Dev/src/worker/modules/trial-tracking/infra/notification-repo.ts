@@ -1,6 +1,7 @@
+import type { NotificationKind } from '../domain/notification-planner';
 import type { TrialStatus } from './trial-repo';
 
-export type NotificationKind = 'ESCAPE_ALERT' | 'CANCEL_CONFIRM_CHECK' | 'BILLING_CHECK';
+export type { NotificationKind };
 
 /**
  * 기록의 `PENDING` 알림을 `CANCELED`로 바꾼다 (SPEC §6 알림 취소). `kinds`를 주면 그 종류만 취소한다.
