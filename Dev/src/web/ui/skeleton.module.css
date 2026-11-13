@@ -1,0 +1,18 @@
+/* 불러오는 중 자리표시. 높이는 쓰는 화면이 정한다 */
+.block {
+  border-radius: var(--radius-lg);
+  background: linear-gradient(
+    90deg,
+    var(--color-canvas-soft),
+    var(--color-hairline),
+    var(--color-canvas-soft)
+  );
+  background-size: 200% 100%;
+  animation: shimmer 1.4s linear infinite;
+}
+
+@keyframes shimmer {
+  to {
+    background-position: -200% 0;
+  }
+}

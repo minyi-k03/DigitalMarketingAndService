@@ -348,7 +348,7 @@
 - **내용**: Vite + React + Router + TanStack Query, PWA manifest·SW, API 클라이언트(401 → `loginUrl` 이동), 공통 레이아웃·오류 표시
 - **주요 파일**: `src/web/*`, `vite.config.ts`
 
-### T26 카탈로그 화면 — `구현 완료, 브라우저 점검 대기 (2026-11-13. npm run verify 통과(test 28파일 480건, 웹 순수 로직 4개 seam 37건 추가). 와이어프레임은 Artifact로 합의(홈을 카탈로그로 대체). 같은 날 Claude Code가 Chrome 헤드리스(CDP)로 360px·PC 렌더링과 비로그인·로그인 등록 흐름을 확인했다(`progress.md`). 사람 눈과 실제 카카오 로그인·실기기 확인은 남았고 Antigravity 점검(360px·PC, S-01 등록 흐름)과 code-review 대기. 알림 안내 문구는 T16 연결 전이라 넣지 않았다. 보류: 제휴 라운지·signupUrl 버튼(P1), 기록 없는 서비스 추가 요청(T46))`
+### T26 카탈로그 화면 — `구현 완료, 브라우저 점검 대기 (2026-11-13. npm run verify 통과(test 28파일 480건, 웹 순수 로직 4개 seam 37건 추가). 와이어프레임은 Artifact로 합의(홈을 카탈로그로 대체). 같은 날 Claude Code가 Chrome 헤드리스(CDP)로 360px·PC 렌더링과 비로그인·로그인 등록 흐름을 확인했다(`progress.md`). 사람 눈과 실제 카카오 로그인·실기기 확인은 남았고 code-review는 받아 6건 반영했다(`progress.md`, 미커밋). Antigravity 브라우저 점검(360px·PC, S-01 등록 흐름) 대기. 알림 안내 문구는 T16 연결 전이라 넣지 않았다. 보류: 제휴 라운지·signupUrl 버튼(P1), 기록 없는 서비스 추가 요청(T46))`
 - **근거**: S1·S2·S4·S5·S6·S8·S46, V-08
 - **선행**: T25, T10, T13
 - **내용**: 분야별 목록·검색, 상세(다크패턴 등급, 가이드, 보존 정책, 백업, EduBenefit, 'YYYY-MM-DD 확인'), 1회 클릭 등록, 시작일 변경, '이미 가입했어요', '게시 중단' 안내와 등록 버튼 숨김

@@ -1,4 +1,4 @@
-import { useMemo, useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import { Link, useLocation, useSearchParams } from 'react-router';
 import { loginErrorNotice } from '../api/login-error';
 import { buildLoginRedirect } from '../api/login-redirect';
@@ -6,7 +6,7 @@ import { useMe } from '../api/me';
 import buttons from '../ui/buttons.module.css';
 import { ErrorNotice } from '../ui/ErrorNotice';
 import { useCatalogList, type CatalogItemPublicView } from './api';
-import { filterCatalog, type CategoryFilter, type ServiceCategory } from './filter';
+import { filterCatalog, reconcileQuery, type CategoryFilter, type ServiceCategory } from './filter';
 import { categoryLabel, retentionText } from './labels';
 import { Badge, DifficultyBadge, Logo, won } from './parts';
 import styles from './CatalogPage.module.css';
@@ -31,8 +31,13 @@ export function CatalogPage() {
   const catalog = useCatalogList();
   const [params, setParams] = useSearchParams();
   const category = readCategory(params.get('category'));
-  // IME 입력 중 글자가 흔들리지 않도록 입력값은 따로 들고, 주소에는 뒤따라 반영한다
-  const [query, setQuery] = useState(params.get('q') ?? '');
+  // IME 입력 중 글자가 흔들리지 않도록 입력값은 따로 들고, 주소에는 뒤따라 반영한다.
+  // 홈 링크·뒤로가기로 주소의 검색어가 달라지면 입력값도 따라간다
+  const urlQuery = params.get('q') ?? '';
+  const [query, setQuery] = useState(urlQuery);
+  useEffect(() => {
+    setQuery((current) => reconcileQuery(current, urlQuery));
+  }, [urlQuery]);
   const loginError = me.data ? null : loginErrorNotice(location.search);
 
   const visible = useMemo(

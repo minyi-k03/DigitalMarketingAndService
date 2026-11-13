@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { filterCatalog, type CatalogListItem } from '../../src/web/catalog/filter';
+import { filterCatalog, reconcileQuery, type CatalogListItem } from '../../src/web/catalog/filter';
 
 function item(
   id: string,
@@ -67,5 +67,24 @@ describe('카탈로그 목록 필터 [T26][S1][S2]', () => {
     filterCatalog(items, { category: 'ALL', query: '' });
 
     expect(items.map((i) => i.id)).toEqual(before);
+  });
+});
+
+describe('검색어와 주소 쿼리 맞추기 [T26][S1]', () => {
+  it('주소의 검색어가 입력값과 같으면 입력값을 그대로 둔다 (입력 중 글자가 흔들리지 않게)', () => {
+    expect(reconcileQuery('plus', 'plus')).toBe('plus');
+  });
+
+  it('입력 끝의 공백은 주소에서 달라도 같은 검색어로 보고 입력값을 그대로 둔다', () => {
+    expect(reconcileQuery('plus ', 'plus')).toBe('plus ');
+    expect(reconcileQuery(' ', '')).toBe(' ');
+  });
+
+  it('홈 링크나 뒤로가기로 주소의 검색어가 사라지면 입력값도 비운다', () => {
+    expect(reconcileQuery('plus', '')).toBe('');
+  });
+
+  it('뒤로가기로 주소의 검색어가 다른 값으로 바뀌면 입력값을 따라간다', () => {
+    expect(reconcileQuery('plus', 'naver')).toBe('naver');
   });
 });

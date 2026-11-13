@@ -183,15 +183,6 @@
 }
 
 .skeleton {
+  composes: block from '../ui/skeleton.module.css';
   height: 240px;
-  border-radius: var(--radius-lg);
-  background: linear-gradient(90deg, #efeeec, #e6e4e1, #efeeec);
-  background-size: 200% 100%;
-  animation: shimmer 1.4s linear infinite;
-}
-
-@keyframes shimmer {
-  to {
-    background-position: -200% 0;
-  }
 }

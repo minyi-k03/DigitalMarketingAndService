@@ -46,7 +46,8 @@ export function CatalogDetail() {
       </div>
     );
   }
-  return <DetailBody item={query.data} />;
+  // 서비스가 바뀌면 이전 서비스의 등록 결과·시트 상태가 남지 않도록 새로 그린다
+  return <DetailBody key={query.data.id} item={query.data} />;
 }
 
 function BackLink() {
@@ -143,7 +144,7 @@ function DetailBody({ item }: { item: CatalogItemPublicView }) {
           ) : null}
 
           {item.isGlobalTimeZoneBufferRequired ? (
-            <p className={styles.info}>해외 결제 서비스라 결제일보다 하루 일찍 알려드려요.</p>
+            <p className={styles.info}>해외 결제 서비스라 결제 예정일보다 하루 일찍 알려드려요.</p>
           ) : null}
 
           <p className={styles.muted}>

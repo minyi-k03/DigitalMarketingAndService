@@ -93,6 +93,17 @@ describe('카탈로그 등록 시작일 미리보기 [T26][S8][S11][S12]', () =>
     expect(plan).toEqual({ ok: false, reason: 'ENDED' });
   });
 
+  it('결제 예정일이 어제면(오늘 하루 차이) 이미 끝난 체험으로 거부한다', () => {
+    const plan = previewTrialPlan({
+      startDate: '2026-10-29',
+      trialDays: 14,
+      bufferApplied: false,
+      today,
+    });
+
+    expect(plan).toEqual({ ok: false, reason: 'ENDED' });
+  });
+
   it.each(['', '2026-13-01', '2026-02-30', '26-11-13', 'abc'])(
     '날짜 형식이 아니거나 없는 날짜(%s)는 INVALID로 거부한다',
     (startDate) => {

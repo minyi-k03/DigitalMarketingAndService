@@ -98,7 +98,7 @@
 
 .chip {
   flex: none;
-  min-height: 36px;
+  min-height: var(--tap-target);
   padding: 4px 14px;
   border: 1px solid var(--color-hairline);
   border-radius: var(--radius-full);
@@ -203,17 +203,8 @@
 }
 
 .skeleton {
+  composes: block from '../ui/skeleton.module.css';
   height: 128px;
-  border-radius: var(--radius-lg);
-  background: linear-gradient(90deg, #efeeec, #e6e4e1, #efeeec);
-  background-size: 200% 100%;
-  animation: shimmer 1.4s linear infinite;
-}
-
-@keyframes shimmer {
-  to {
-    background-position: -200% 0;
-  }
 }
 
 .empty {
