@@ -3,6 +3,7 @@ import { Link, Outlet, useLocation } from 'react-router';
 import { apiFetch } from '../api/client';
 import { buildLoginRedirect } from '../api/login-redirect';
 import { ME_QUERY_KEY, useMe } from '../api/me';
+import { BrandMark } from '../ui/BrandMark';
 import buttons from '../ui/buttons.module.css';
 import styles from './Layout.module.css';
 
@@ -19,7 +20,8 @@ export function Layout() {
     <div className={styles.page}>
       <header className={styles.nav}>
         <div className={styles.navInner}>
-          <Link to="/" className={styles.wordmark}>
+          <Link to="/" className={styles.wordmark} aria-label="구독컷 홈">
+            <BrandMark />
             구독컷
           </Link>
           <nav className={styles.actions} aria-label="계정">
@@ -50,10 +52,6 @@ export function Layout() {
       <main className={styles.main}>
         <Outlet />
       </main>
-
-      <footer className={styles.footer}>
-        <div className={styles.footerInner}>카드 정보는 받지 않아요.</div>
-      </footer>
     </div>
   );
 }

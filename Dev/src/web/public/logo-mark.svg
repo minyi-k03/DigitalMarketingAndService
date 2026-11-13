@@ -1,0 +1,9 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64" width="64" height="64" role="img" aria-label="구독컷">
+  <path d="M12 16H38V48H12Q6 48 6 42V37A5 5 0 0 0 6 27V22Q6 16 12 16Z" fill="#0075de"/>
+  <rect x="14" y="24" width="17" height="4.5" rx="2.25" fill="#ffffff"/>
+  <rect x="14" y="34" width="11" height="4.5" rx="2.25" fill="#ffffff"/>
+  <line x1="41" y1="14" x2="41" y2="50" stroke="#dd5b00" stroke-width="2.4" stroke-linecap="round" stroke-dasharray="0.1 5"/>
+  <g transform="rotate(9 50 32)">
+    <path d="M44 16H52Q58 16 58 22V27A5 5 0 0 0 58 37V42Q58 48 52 48H44Z" fill="#62aef0"/>
+  </g>
+</svg>

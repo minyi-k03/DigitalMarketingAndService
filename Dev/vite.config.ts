@@ -37,7 +37,7 @@ export default defineConfig({
     react(),
     VitePWA({
       registerType: 'autoUpdate',
-      // 아이콘은 로고가 정해진 뒤 추가한다(아이콘이 없으면 설치 안내가 뜨지 않을 수 있다)
+      includeAssets: ['favicon.svg', 'icons/apple-touch-icon.png'],
       manifest: {
         name: '구독컷',
         short_name: '구독컷',
@@ -48,6 +48,16 @@ export default defineConfig({
         display: 'standalone',
         background_color: '#f6f5f4',
         theme_color: '#ffffff',
+        icons: [
+          { src: '/icons/icon-192.png', sizes: '192x192', type: 'image/png', purpose: 'any' },
+          { src: '/icons/icon-512.png', sizes: '512x512', type: 'image/png', purpose: 'any' },
+          {
+            src: '/icons/maskable-512.png',
+            sizes: '512x512',
+            type: 'image/png',
+            purpose: 'maskable',
+          },
+        ],
       },
       workbox: {
         navigateFallback: '/index.html',
