@@ -125,7 +125,7 @@ function conflict() {
   return new DomainError('CONFLICT', '기록 상태가 바뀌었습니다. 새로 고친 뒤 다시 시도해 주세요');
 }
 
-async function toView(deps: TrialTrackingDeps, record: TrialRecord, terms: TrackingTerms) {
+function toView(deps: TrialTrackingDeps, record: TrialRecord, terms: TrackingTerms) {
   return toTrialRecordView(record, terms.name, todayKst(deps.clock));
 }
 

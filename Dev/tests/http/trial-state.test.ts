@@ -66,13 +66,16 @@ describe('TT 상태 전이 API [S10][S28][S29][S31][T14]', () => {
     const { built, userId, record, base } = await withTrackingRecord();
     const other = await loginAs(built, { kakaoId: `k-${crypto.randomUUID()}` });
 
-    for (const action of ['keep', 'void', 'confirm-cancel']) {
-      const res = await post(built, `${base}/${action}`, {
-        cookie: other.cookie,
-        body: { exitReason: 'PRICE_BURDEN' },
-      });
-      expect(res.status).toBe(404);
-      expect(((await res.json()) as Problem).code).toBe('NOT_FOUND');
+    // 본문 검증(400)을 통과하는 본문을 경로마다 줘야 소유 확인(404)까지 간다
+    for (const [action, body] of [
+      ['keep', undefined],
+      ['void', undefined],
+      ['confirm-cancel', { exitReason: 'PRICE_BURDEN' }],
+      ['billing-resolution', { resolution: 'BILLED' }],
+    ] as const) {
+      const res = await post(built, `${base}/${action}`, { cookie: other.cookie, body });
+      expect(res.status, action).toBe(404);
+      expect(((await res.json()) as Problem).code, action).toBe('NOT_FOUND');
     }
     expect(
       await built.trialTracking.getTrialRecord({ userId, trialRecordId: record.id }),
