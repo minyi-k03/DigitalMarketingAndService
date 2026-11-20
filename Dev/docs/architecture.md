@@ -278,6 +278,11 @@ templateKeyFor({ kind, variant }, retentionPolicy): string           // 문구 �
 
 - **늦은 등록 문구 변형**은 위에서부터 먼저 해당하는 것을 씁니다: `today = billingDate` → `LATE_BILLING_DAY`, `today = safeEndDate` → `LATE_SAFE_END_DAY`, 그 밖 → `REGULAR`.
 - **재예약**(§6, G3 확정): `PENDING` 슬롯을 모두 `CANCELED`로 바꾼 뒤 새 `safeEndDate`로 다시 계산합니다. 유일 키에 `safeEndDate`가 들어가므로 같은 슬롯이라도 새로 넣을 수 있습니다. 새 날짜 기준으로 정규 슬롯이 모두 지났고 `today <= billingDate`이면 `TRACKING`은 `LATE_REGISTRATION`을 즉시 1회 보내고, `CANCEL_ATTEMPTED`는 위 표의 `SAME_DAY_CONFIRM` 규칙을 따릅니다(마감 시각 이전이면 `SAME_DAY_CONFIRM` 1회 예약·발송, 마감 시각 이후이면 추가 발송 없음).
+- **저장 규칙**(T16): 알림은 상태 전이·기록 수정과 같은 D1 `batch`로 저장합니다.
+  - 저장 문장은 `INSERT … ON CONFLICT (trial_record_id, slot, safe_end_date) DO UPDATE … WHERE status = 'CANCELED'`입니다. 같은 키의 취소된 행만 새 시각·변형으로 되살리고(`attempts`·`last_attempt_at` 초기화) `SENT`·`FAILED`·`EXPIRED`·`SKIPPED` 행은 같은 마감일에 다시 보내지 않도록 그대로 둡니다. 날짜를 A→B→A로 되돌려도 A 마감일의 슬롯이 사라지지 않게 하기 위해서입니다.
+  - 기록 수정에서 `safeEndDate`가 그대로이면(시작일과 일수의 합이 같음) 알림 마감일이 같으므로 예약을 건드리지 않습니다.
+  - 동시성: 알림 취소·저장 문장은 같은 batch에서 기록이 명령이 읽은 상태 그대로일 때만 적용됩니다. 상태 전이는 앞선 UPDATE가 새 상태로 만들었는지(`EXISTS status = :to`)로, 기록 수정은 읽은 상태·시작일·체험 일수(`EXISTS status, start_date, trial_days`)로 확인하고 날짜 UPDATE를 batch의 **마지막**에 둡니다. 상태 전이의 조건부 UPDATE도 읽은 시작일·체험 일수를 `WHERE`에 넣어, 기록 수정에 밀린 전이가 옛 `safeEndDate`로 알림을 예약하거나 `SavedAmount`를 확정하지 않게 합니다. 어느 쪽이든 밀린 요청은 `CONFLICT`이고 먼저 저장된 요청의 알림은 그대로입니다.
+  - `notification.sendTime`이 없거나 `HH:mm`이 아니면 기본값으로 덮지 않고 오류로 던집니다. 상태 전이 명령도 배치 전에 읽어 실패하므로 전이·응답·알림이 모두 그대로입니다.
 
 ### 5.5 알림 문구와 템플릿 코드 (§6, FN §3)
 

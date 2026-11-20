@@ -6,19 +6,26 @@ import type { TrialStatus } from './trial-repo';
 export type { NotificationKind };
 
 /**
- * 알림을 바꿀 때 같은 batch의 앞선 UPDATE가 기록에 반영됐는지 확인하는 조건. 상태 전이는 상태로, 날짜 수정은
- * 상태와 새 `safeEndDate`로 확인한다. 동시 요청에 밀려 앞선 UPDATE가 0행이면 조건이 맞지 않아 알림도 그대로다.
+ * 알림을 바꿀 때 같은 batch에서 기록이 명령이 읽은 상태 그대로인지 확인하는 조건. 상태 전이는 앞선 UPDATE가
+ * 기록을 새 상태로 만들었는지(`status`)로, 날짜 수정은 기록이 읽은 상태·시작일·체험 일수 그대로인지
+ * (`status`, `startDate`, `trialDays`)로 확인한다. 동시 요청에 밀려 조건이 맞지 않으면 알림은 그대로다.
+ * 날짜 수정은 알림 문장을 날짜 UPDATE보다 먼저 실행하므로 읽은 날짜 기준으로 확인해야 하며, 이 조건은
+ * 같은 batch의 날짜 UPDATE가 성공할 조건과 같아서 둘이 함께 성공하거나 함께 건너뛴다.
  */
-export type RecordGuard = TrialStatus | { status: TrialStatus; safeEndDate: KstDate };
+export type RecordGuard =
+  TrialStatus | { status: TrialStatus; startDate: KstDate; trialDays: number };
 
 function guardClause(trialRecordId: string, guard: RecordGuard) {
-  const { status, safeEndDate } =
-    typeof guard === 'string' ? { status: guard, safeEndDate: undefined } : guard;
+  if (typeof guard === 'string') {
+    return {
+      sql: 'EXISTS (SELECT 1 FROM trial_records WHERE id = ? AND status = ?)',
+      params: [trialRecordId, guard],
+    };
+  }
   return {
-    sql: `EXISTS (SELECT 1 FROM trial_records WHERE id = ? AND status = ?${
-      safeEndDate === undefined ? '' : ' AND safe_end_date = ?'
-    })`,
-    params: [trialRecordId, status, ...(safeEndDate === undefined ? [] : [safeEndDate])],
+    sql: `EXISTS (SELECT 1 FROM trial_records
+                   WHERE id = ? AND status = ? AND start_date = ? AND trial_days = ?)`,
+    params: [trialRecordId, guard.status, guard.startDate, guard.trialDays],
   };
 }
 

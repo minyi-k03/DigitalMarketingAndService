@@ -244,7 +244,7 @@
   - 늦은 등록은 `BillingDate` 당일 등록과 글로벌·국내 각각을 포함합니다.
 - **주요 파일**: `m/trial-tracking/domain/notification-planner.ts`
 
-### T16 알림 저장·재예약·버퍼 변경 적용 — `완료 (2026-11-19, 발표용 간소화: prepareBufferChange 제외, T09 applyBufferToActiveRecords=true는 계속 400. 기록 생성·사유 선택(D1_CONFIRM·SAME_DAY_CONFIRM)·기록 수정이 알림을 같은 batch로 저장한다. 같은 유일 키(기록·슬롯·safeEndDate)의 CANCELED 행만 되살리고(날짜를 A→B→A로 되돌린 경우) SENT·FAILED·EXPIRED·SKIPPED는 재발송하지 않는다. safeEndDate가 그대로인 수정은 재예약하지 않는다. notification.sendTime 설정이 올바르지 않으면 기본값으로 덮지 않고 오류로 던진다. LATE_REGISTRATION은 행만 저장하며 실제 발송은 T17(waitUntil·Cron). 수정 불가 상태는 INVALID_TRANSITION 409, 과거 BillingDate는 TRIAL_ALREADY_ENDED 422. code-review 대기)`
+### T16 알림 저장·재예약·버퍼 변경 적용 — `완료 (2026-11-19, 발표용 간소화: prepareBufferChange 제외, T09 applyBufferToActiveRecords=true는 계속 400. 기록 생성·사유 선택(D1_CONFIRM·SAME_DAY_CONFIRM)·기록 수정이 알림을 같은 batch로 저장한다. 같은 유일 키(기록·슬롯·safeEndDate)의 CANCELED 행만 되살리고(날짜를 A→B→A로 되돌린 경우) SENT·FAILED·EXPIRED·SKIPPED는 재발송하지 않는다. safeEndDate가 그대로인 수정은 재예약하지 않는다. notification.sendTime 설정이 올바르지 않으면 기본값으로 덮지 않고 오류로 던진다. LATE_REGISTRATION은 행만 저장하며 실제 발송은 T17(waitUntil·Cron). 수정 불가 상태는 INVALID_TRANSITION 409, 과거 BillingDate는 TRIAL_ALREADY_ENDED 422. 2026-11-20 code-review(Antigravity, `23cbe8f..8f0dbd2`) 반영: 기록 수정과 겹친 상태 전이·겹친 수정이 알림을 덮거나 옛 safeEndDate로 저장하던 경쟁 2건 수정(상태 전이 UPDATE와 알림 가드가 읽은 시작일·체험 일수까지 확인, 수정 batch는 알림 문장 먼저·날짜 UPDATE 마지막), 전이표 `UPDATE_DATES` 사용·시계 1회 읽기, 테스트 공백 보강, architecture §5.4 저장 규칙 추가)`
 - **근거**: §6 재예약 규칙(G3 확정), §2 버퍼 반영, §5 수정 범위, S42·S48
 - **선행**: T15, T09
 - **내용**:

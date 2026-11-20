@@ -82,8 +82,10 @@ export async function findOwnedRecord(
 }
 
 /**
- * 전이 결과를 저장하는 조건부 UPDATE (architecture §5.2). 읽은 뒤 다른 요청이 먼저 상태를 바꿨으면
- * `WHERE status = :from`이 맞지 않아 0행이 바뀐다. 호출한 쪽이 `meta.changes`로 충돌을 판정한다.
+ * 전이 결과를 저장하는 조건부 UPDATE (architecture §5.2). 읽은 뒤 다른 요청이 먼저 상태나 날짜(기록 수정)를
+ * 바꿨으면 `WHERE`가 맞지 않아 0행이 바뀐다. 날짜가 바뀐 기록에 옛 안전 만료일로 알림을 예약하거나
+ * `SavedAmount`를 확정하지 않도록, 읽은 시작일·체험 일수도 조건에 넣는다(전이는 날짜를 바꾸지 않으므로
+ * `next`의 값이 읽은 값이다). 호출한 쪽이 `meta.changes`로 충돌을 판정한다.
  */
 export function prepareStatusUpdate(
   db: D1Database,
@@ -95,7 +97,7 @@ export function prepareStatusUpdate(
       `UPDATE trial_records
           SET status = ?, status_changed_at = ?, exit_reason = ?,
               cancel_attempted_at = ?, confirmed_at = ?, saved_amount = ?
-        WHERE id = ? AND status = ?`,
+        WHERE id = ? AND status = ? AND start_date = ? AND trial_days = ?`,
     )
     .bind(
       next.status,
@@ -106,6 +108,8 @@ export function prepareStatusUpdate(
       next.savedAmount,
       next.id,
       from,
+      next.startDate,
+      next.trialDays,
     );
 }
 

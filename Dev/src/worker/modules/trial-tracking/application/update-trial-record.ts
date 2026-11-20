@@ -1,8 +1,8 @@
-import { todayKst, toUtcInstant } from '../../../../shared/kst-date';
-import { DomainError } from '../../../platform/errors';
+import { kstDateOf, toUtcInstant } from '../../../../shared/kst-date';
 import type { TrialTrackingDeps } from '../deps';
 import { planCancelConfirmSlots, planInitialSlots } from '../domain/notification-planner';
 import { computeTrialDates } from '../domain/trial-dates';
+import { applyTransition } from '../domain/transitions';
 import { assertNotEnded, validateTrialDates } from '../domain/validate-trial-input';
 import {
   preparePendingSlotCancel,
@@ -21,8 +21,14 @@ export interface UpdateTrialRecordCommand extends TrialRecordRef {
 }
 
 /**
- * 기록 수정 (SPEC §5 수정 범위, §6 재예약, 스토리 42). `TRACKING`·`CANCEL_ATTEMPTED`만 허용하고 상태는 바꾸지 않는다.
- * 날짜 UPDATE, 아직 보내지 않은 알림 취소, 새 날짜 기준 재예약을 한 batch로 저장한다.
+ * 기록 수정 (SPEC §5 수정 범위, §6 재예약, 스토리 42). `TRACKING`·`CANCEL_ATTEMPTED`만 허용하고(전이표의
+ * `UPDATE_DATES`) 상태는 바꾸지 않는다. 아직 보내지 않은 알림 취소, 새 날짜 기준 재예약, 날짜 UPDATE를
+ * 한 batch로 저장한다.
+ *
+ * 문장 순서: 알림 문장이 먼저, 날짜 UPDATE가 마지막이다. 알림 문장의 가드와 날짜 UPDATE의 `WHERE`가 모두
+ * "기록이 읽은 상태·시작일·체험 일수 그대로"를 조건으로 삼으므로, 다른 요청이 먼저 기록을 바꿨다면 둘 다
+ * 적용되지 않고 `CONFLICT`다. 먼저 저장된 요청의 알림은 밀린 요청이 취소하거나 덮지 않는다.
+ *
  * `safeEndDate`가 그대로이면(예: 시작일과 일수를 함께 바꿔 합이 같음) 알림 마감일이 같으므로 예약은 건드리지 않는다.
  */
 export async function updateTrialRecord(
@@ -30,14 +36,11 @@ export async function updateTrialRecord(
   cmd: UpdateTrialRecordCommand,
 ): Promise<TrialRecordView> {
   const record = await loadOwned(deps, cmd);
-  if (record.status !== 'TRACKING' && record.status !== 'CANCEL_ATTEMPTED') {
-    throw new DomainError(
-      'INVALID_TRANSITION',
-      `${record.status} 상태의 기록은 수정할 수 없습니다`,
-    );
-  }
+  // 시계는 한 번만 읽고 오늘(KST)도 거기서 얻는다. 검증과 알림 계획이 같은 시점을 본다
+  const now = toUtcInstant(deps.clock.now());
+  applyTransition(record, 'UPDATE_DATES', now);
+  const today = kstDateOf(now);
 
-  const today = todayKst(deps.clock);
   const { startDate, trialDays } = validateTrialDates({
     startDate: cmd.startDate ?? record.startDate,
     trialDays: cmd.trialDays ?? record.trialDays,
@@ -53,11 +56,14 @@ export async function updateTrialRecord(
     return toTrialRecordView(record, terms.name, today);
   }
 
-  const statements = [prepareDatesUpdate(deps.db, record, next)];
+  const statements: D1PreparedStatement[] = [];
   if (next.safeEndDate !== record.safeEndDate) {
-    const now = toUtcInstant(deps.clock.now());
     const settings = { sendTime: await readSendTime(deps.db) };
-    const guard = { status: record.status, safeEndDate: next.safeEndDate };
+    const guard = {
+      status: record.status,
+      startDate: record.startDate,
+      trialDays: record.trialDays,
+    };
     const newSlots =
       record.status === 'TRACKING'
         ? planInitialSlots(next, now, settings)
@@ -67,8 +73,9 @@ export async function updateTrialRecord(
       ...prepareSlotInserts(deps.db, record.id, newSlots, guard),
     );
   }
+  statements.push(prepareDatesUpdate(deps.db, record, next));
 
-  const [update] = await runBatch(deps.db, statements);
-  if (update?.meta.changes !== 1) throw conflict();
+  const results = await runBatch(deps.db, statements);
+  if (results[results.length - 1]?.meta.changes !== 1) throw conflict();
   return toTrialRecordView(next, terms.name, today);
 }

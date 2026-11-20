@@ -1,11 +1,14 @@
 import { afterEach, describe, expect, it } from 'vitest';
+import { operator, seedItem } from '../support/catalog-seed';
 import {
   forceMissedBilled,
   markSlot,
   setSendTimeSetting,
+  setSlotAttempts,
+  slotAttemptsOf,
   slotsOf,
 } from '../support/trial-state-seed';
-import { registerTrial } from '../support/trial-tracking';
+import { buildTrialTracking, registerTrial } from '../support/trial-tracking';
 import { insertUser } from '../support/user-seed';
 
 // 2026-11-05 12:00 KST. 기본 항목(글로벌, 30일)을 오늘 등록하면 startDate 11-05, billingDate 12-05, safeEndDate 12-04
@@ -346,5 +349,187 @@ describe('TT 기록 수정: 동시 요청 [S42][T16]', () => {
       ['D3', '2026-12-04', 'CANCELED'],
       ['D1', '2026-12-04', 'CANCELED'],
     ]);
+  });
+});
+
+describe('TT 기록 수정과 다른 명령의 동시 요청 [S42][S14][S28][T16]', () => {
+  it('기록을 읽은 뒤 날짜 수정이 먼저 저장되면 사유 선택은 CONFLICT이고 수정이 저장한 알림을 건드리지 않는다', async () => {
+    const { trialTracking, interleaveOnce, ref } = await registered();
+    interleaveOnce(() => trialTracking.updateTrialRecord({ ...ref, trialDays: 20 }));
+
+    await expect(
+      trialTracking.startCancelAttempt({ ...ref, exitReason: 'PRICE_BURDEN' }),
+    ).rejects.toMatchObject({ code: 'CONFLICT' });
+
+    expect(await trialTracking.getTrialRecord(ref)).toMatchObject({
+      status: 'TRACKING',
+      safeEndDate: '2026-11-24',
+    });
+    // 옛 마감일(12-04) 기준 D1_CONFIRM이 생기거나 새 마감일의 탈출 알림이 취소되면 안 된다
+    expect(await slotSummary(ref.trialRecordId)).toEqual([
+      ['D3', '2026-11-24', 'PENDING'],
+      ['D1', '2026-11-24', 'PENDING'],
+      ['D3', '2026-12-04', 'CANCELED'],
+      ['D1', '2026-12-04', 'CANCELED'],
+    ]);
+  });
+
+  it('기록을 읽은 뒤 날짜 수정이 먼저 저장되면 해지 확정은 CONFLICT이고 기록은 그대로다', async () => {
+    const { trialTracking, interleaveOnce, ref } = await registered();
+    interleaveOnce(() => trialTracking.updateTrialRecord({ ...ref, trialDays: 20 }));
+
+    await expect(
+      trialTracking.confirmCancel({ ...ref, exitReason: 'PRICE_BURDEN' }),
+    ).rejects.toMatchObject({ code: 'CONFLICT' });
+
+    // 옛 안전 만료일 기준으로 SavedAmount를 계산해 확정하면 안 된다 (SPEC §8)
+    expect(await trialTracking.getTrialRecord(ref)).toMatchObject({
+      status: 'TRACKING',
+      savedAmount: null,
+    });
+  });
+
+  it('같은 날짜로 겹친 수정에서 뒤늦은 쪽이 409가 되면 먼저 저장된 수정의 알림을 다시 만들지 않는다', async () => {
+    const { trialTracking, interleaveOnce, ref } = await registered();
+    // 먼저 저장되는 수정은 10:00 발송으로 예약한다. 뒤늦은 수정이 저장을 시도할 때는 발송 시각 설정이
+    // 08:30으로 바뀌어 있어, 뒤늦은 쪽의 계획은 먼저 저장된 쪽과 다르다(같은 새 마감일, 다른 발송 시각)
+    interleaveOnce(async () => {
+      await trialTracking.updateTrialRecord({ ...ref, trialDays: 20 });
+      await setSendTimeSetting('"08:30"');
+    });
+
+    await expect(trialTracking.updateTrialRecord({ ...ref, trialDays: 20 })).rejects.toMatchObject({
+      code: 'CONFLICT',
+    });
+
+    // 뒤늦은 수정이 먼저 저장된 알림을 취소한 뒤 08:30으로 다시 넣으면 안 된다
+    expect((await pendingSlots(ref.trialRecordId)).map((s) => [s.slot, s.sendAt])).toEqual([
+      ['D3', '2026-11-21T01:00:00.000Z'], // 11-21 10:00 KST
+      ['D1', '2026-11-23T01:00:00.000Z'], // 11-23 10:00 KST
+    ]);
+  });
+
+  it('다른 수정이 시작일만 먼저 바꿨다면 체험 일수만 보낸 수정은 CONFLICT이고 시작일을 되돌리지 않는다', async () => {
+    const { trialTracking, interleaveOnce, ref } = await registered();
+    interleaveOnce(() => trialTracking.updateTrialRecord({ ...ref, startDate: '2026-11-01' }));
+
+    await expect(trialTracking.updateTrialRecord({ ...ref, trialDays: 20 })).rejects.toMatchObject({
+      code: 'CONFLICT',
+    });
+
+    expect(await trialTracking.getTrialRecord(ref)).toMatchObject({
+      startDate: '2026-11-01',
+      trialDays: 30,
+    });
+  });
+});
+
+describe('TT 기록 수정: 보강 [S42][G5][T16]', () => {
+  it('값이 그대로인 수정은 기록과 알림을 바꾸지 않고 현재 기록을 돌려준다', async () => {
+    const { trialTracking, ref } = await registered();
+    const before = await slotsOf(ref.trialRecordId);
+    await setSendTimeSetting('"08:30"');
+
+    const updated = await trialTracking.updateTrialRecord({
+      ...ref,
+      startDate: '2026-11-05',
+      trialDays: 30,
+    });
+
+    expect(updated).toMatchObject({ status: 'TRACKING', trialDays: 30, safeEndDate: '2026-12-04' });
+    expect(await slotsOf(ref.trialRecordId)).toEqual(before);
+  });
+
+  it('국내 항목(버퍼 없음)은 안전 만료일이 결제 예정일과 같고 알림도 그 마감일로 예약한다 [S42]', async () => {
+    const { trialTracking, ref } = await registered({ isGlobalTimeZoneBufferRequired: false });
+
+    const updated = await trialTracking.updateTrialRecord({ ...ref, trialDays: 20 });
+
+    expect(updated).toMatchObject({
+      bufferApplied: false,
+      billingDate: '2026-11-25',
+      safeEndDate: '2026-11-25',
+    });
+    expect((await pendingSlots(ref.trialRecordId)).map((s) => [s.slot, s.sendAt])).toEqual([
+      ['D3', '2026-11-22T01:00:00.000Z'], // 11-22 10:00 KST
+      ['D1', '2026-11-24T01:00:00.000Z'], // 11-24 10:00 KST
+    ]);
+  });
+
+  it('등록 뒤 카탈로그의 버퍼 설정이 바뀌어도 기록의 bufferApplied 스냅샷으로 다시 계산한다 [S42]', async () => {
+    const { catalog, item, trialTracking, ref } = await registered();
+    await catalog.updateCatalogItem(operator, item.id, {
+      changes: { isGlobalTimeZoneBufferRequired: false },
+    });
+
+    const updated = await trialTracking.updateTrialRecord({ ...ref, trialDays: 20 });
+
+    // 카탈로그는 이제 버퍼 없음이지만 기록은 등록 때의 버퍼(-1일)를 유지한다
+    expect(updated).toMatchObject({
+      bufferApplied: true,
+      billingDate: '2026-11-25',
+      safeEndDate: '2026-11-24',
+    });
+  });
+
+  it.each(['FAILED', 'EXPIRED', 'SKIPPED'] as const)(
+    '날짜를 원래대로 되돌려도 %s 처리된 슬롯은 되살리지 않는다',
+    async (settled) => {
+      const { trialTracking, ref } = await registered();
+      await markSlot(ref.trialRecordId, 'D3', settled);
+
+      await trialTracking.updateTrialRecord({ ...ref, trialDays: 20 });
+      await trialTracking.updateTrialRecord({ ...ref, trialDays: 30 });
+
+      expect(await slotSummary(ref.trialRecordId)).toContainEqual(['D3', '2026-12-04', settled]);
+    },
+  );
+
+  it('되살린 슬롯은 새 발송 시각·변형으로 갱신하고 시도 횟수를 초기화한다', async () => {
+    // 11-03 12:00 KST에 등록: 10-06 시작 30일 → 결제 예정일 11-05, 안전 만료일 11-04 (정규 슬롯은 이미 지남)
+    const ctx = buildTrialTracking('2026-11-03T03:00:00.000Z');
+    const item = await seedItem(ctx.catalog, 'PUBLISHED');
+    const userId = await insertUser();
+    const record = await ctx.trialTracking.createTrialRecord({
+      userId,
+      catalogItemId: item.id,
+      startDate: '2026-10-06',
+    });
+    const ref = { userId, trialRecordId: record.id };
+    expect(await pendingSlots(ref.trialRecordId)).toEqual([
+      expect.objectContaining({ slot: 'LATE_REGISTRATION', variant: 'REGULAR' }),
+    ]);
+
+    await ctx.trialTracking.updateTrialRecord({ ...ref, trialDays: 40 }); // 늦은 등록 슬롯 취소
+    await setSlotAttempts(ref.trialRecordId, 'LATE_REGISTRATION', 2);
+    ctx.clock.set(NOON_KST_NOV_5); // 11-05 = 결제 예정일 당일
+    await ctx.trialTracking.updateTrialRecord({ ...ref, trialDays: 30 }); // 원래 마감일(11-04)로 되돌림
+
+    expect(
+      (await pendingSlots(ref.trialRecordId)).filter((s) => s.safeEndDate === '2026-11-04'),
+    ).toEqual([
+      expect.objectContaining({
+        slot: 'LATE_REGISTRATION',
+        variant: 'LATE_BILLING_DAY',
+        sendAt: NOON_KST_NOV_5,
+      }),
+    ]);
+    expect(await slotAttemptsOf(ref.trialRecordId, 'LATE_REGISTRATION')).toEqual({
+      attempts: 0,
+      lastAttemptAt: null,
+    });
+  });
+
+  it('발송 시각 설정이 올바르지 않으면 수정은 오류로 실패하고 기록·알림이 그대로다', async () => {
+    const { trialTracking, ref } = await registered();
+    const before = await slotsOf(ref.trialRecordId);
+    await setSendTimeSetting('"25:00"');
+
+    await expect(trialTracking.updateTrialRecord({ ...ref, trialDays: 20 })).rejects.toThrow(
+      'notification.sendTime',
+    );
+
+    expect(await trialTracking.getTrialRecord(ref)).toMatchObject({ trialDays: 30 });
+    expect(await slotsOf(ref.trialRecordId)).toEqual(before);
   });
 });

@@ -90,6 +90,25 @@ export async function markSlot(
     .run();
 }
 
+/** 발송 시도 횟수를 흉내 낸다(디스패처 T17 전). 재예약으로 되살릴 때 초기화되는지 확인하는 데 쓴다 */
+export async function setSlotAttempts(trialRecordId: string, slot: string, attempts: number) {
+  await env.DB.prepare(
+    `UPDATE notification_schedules SET attempts = ?, last_attempt_at = '2026-11-04T00:00:00.000Z'
+      WHERE trial_record_id = ? AND slot = ?`,
+  )
+    .bind(attempts, trialRecordId, slot)
+    .run();
+}
+
+export async function slotAttemptsOf(trialRecordId: string, slot: string) {
+  return env.DB.prepare(
+    `SELECT attempts, last_attempt_at AS lastAttemptAt
+       FROM notification_schedules WHERE trial_record_id = ? AND slot = ?`,
+  )
+    .bind(trialRecordId, slot)
+    .first<{ attempts: number; lastAttemptAt: string | null }>();
+}
+
 /** 기본 발송 시각 설정(`notification.sendTime`)을 바꾼다. 설정 화면(T12)은 발표 범위 밖이라 SQL로 바꾼다 */
 export async function setSendTimeSetting(rawJson: string) {
   await env.DB.prepare("UPDATE app_settings SET value = ? WHERE key = 'notification.sendTime'")

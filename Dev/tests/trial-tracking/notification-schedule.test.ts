@@ -1,7 +1,7 @@
 import { env } from 'cloudflare:test';
 import { afterEach, describe, expect, it } from 'vitest';
 import { seedItem } from '../support/catalog-seed';
-import { setSendTimeSetting, slotsOf } from '../support/trial-state-seed';
+import { exitPollResponsesOf, setSendTimeSetting, slotsOf } from '../support/trial-state-seed';
 import { buildTrialTracking, registerTrial } from '../support/trial-tracking';
 import { insertUser } from '../support/user-seed';
 
@@ -197,5 +197,38 @@ describe('TT 알림 저장: 사유 선택 [S14][S26][T16]', () => {
     ).rejects.toMatchObject({ code: 'CONFLICT' });
 
     expect(confirmSlots(await slotsOf(ref.trialRecordId))).toEqual([]);
+  });
+});
+
+describe('TT 알림 저장: 발송 시각 설정 [G5][T16]', () => {
+  it('사유 선택이 저장하는 해지 확인 알림도 기본 발송 시각 설정을 쓴다 [G5]', async () => {
+    const { clock, trialTracking, ref } = await registered();
+    await setSendTimeSetting('"08:30"');
+    clock.set('2026-11-06T03:00:00.000Z');
+
+    await trialTracking.startCancelAttempt({ ...ref, exitReason: 'PRICE_BURDEN' });
+
+    expect(confirmSlots(await slotsOf(ref.trialRecordId))).toEqual([
+      expect.objectContaining({
+        slot: 'D1_CONFIRM',
+        sendAt: '2026-12-02T23:30:00.000Z', // 12-03 08:30 KST
+      }),
+    ]);
+  });
+
+  it('발송 시각 설정이 올바르지 않으면 사유 선택은 오류로 실패하고 상태·응답·알림이 그대로다', async () => {
+    const { trialTracking, ref } = await registered();
+    await setSendTimeSetting('"25:00"');
+
+    await expect(
+      trialTracking.startCancelAttempt({ ...ref, exitReason: 'PRICE_BURDEN' }),
+    ).rejects.toThrow('notification.sendTime');
+
+    expect(await trialTracking.getTrialRecord(ref)).toMatchObject({ status: 'TRACKING' });
+    expect(await exitPollResponsesOf(ref.trialRecordId)).toEqual([]);
+    expect((await slotsOf(ref.trialRecordId)).map((s) => [s.slot, s.status])).toEqual([
+      ['D3', 'PENDING'],
+      ['D1', 'PENDING'],
+    ]);
   });
 });
