@@ -70,6 +70,8 @@ export async function getCatalogItem(
 /** Trial Tracking이 기록을 만들 때 쓰는 조건 (architecture §3). 게시 상태를 함께 줘 호출한 쪽이 거부한다 */
 export interface TrackingTerms {
   name: string;
+  /** 내 체험 카드 등 화면 표시용. 공개 데이터다 (`CatalogItemPublicView.logoUrl`과 같은 값) */
+  logoUrl?: string;
   publicationStatus: PublicationStatus;
   defaultTrialDays: number;
   isGlobalTimeZoneBufferRequired: boolean;
@@ -82,6 +84,7 @@ export async function getTrackingTerms(deps: CatalogDeps, id: string): Promise<T
   const item = await getAdminCatalogItem(deps, id);
   return {
     name: item.name,
+    ...(item.logoUrl !== undefined && { logoUrl: item.logoUrl }),
     publicationStatus: item.publicationStatus,
     defaultTrialDays: item.defaultTrialDays,
     isGlobalTimeZoneBufferRequired: item.isGlobalTimeZoneBufferRequired,

@@ -1,5 +1,6 @@
 import type { components } from '../../../../shared/api-types';
 import type { KstDate, UtcInstant } from '../../../../shared/kst-date';
+import { ACTIVE_STATUSES, PAST_STATUSES } from '../domain/trial-view';
 
 export type TrialSource = components['schemas']['TrialSource'];
 export type TrialStatus = components['schemas']['TrialStatus'];
@@ -79,6 +80,56 @@ export async function findOwnedRecord(
     .bind(trialRecordId, userId)
     .first<TrialRecordRow>();
   return row === null ? undefined : fromRow(row);
+}
+
+export type TrialTab = 'ACTIVE' | 'PAST';
+
+const sqlList = (values: readonly string[]) => values.map((v) => `'${v}'`).join(', ');
+const ACTIVE_IN = sqlList(ACTIVE_STATUSES);
+const PAST_IN = sqlList(PAST_STATUSES);
+
+/**
+ * 내 체험 목록 한 탭과 화면 상단 요약 (SPEC §13). 상태 목록은 코드 상수라 SQL에 직접 적는다.
+ * - 진행 중: `MISSED_BILLED` 먼저, 이어서 안전 만료일 오름차순(동률은 등록 순)
+ * - 지난 체험: 상태 변경 시각 내림차순
+ * 요약(누적 방어 금액·진행 중 건수)은 탭과 무관한 본인 기록 전체의 값이다. 목록과 요약은 batch 하나로
+ * 읽어 같은 시점의 값으로 맞춘다.
+ */
+export async function listOwnedRecords(
+  db: D1Database,
+  userId: string,
+  tab: TrialTab,
+): Promise<{ records: TrialRecord[]; savedAmountTotal: number; activeCount: number }> {
+  const list =
+    tab === 'ACTIVE'
+      ? db
+          .prepare(
+            `SELECT * FROM trial_records WHERE user_id = ? AND status IN (${ACTIVE_IN})
+              ORDER BY (status = 'MISSED_BILLED') DESC, safe_end_date ASC, created_at ASC, id ASC`,
+          )
+          .bind(userId)
+      : db
+          .prepare(
+            `SELECT * FROM trial_records WHERE user_id = ? AND status IN (${PAST_IN})
+              ORDER BY status_changed_at DESC, id ASC`,
+          )
+          .bind(userId);
+  const summary = db
+    .prepare(
+      `SELECT COALESCE(SUM(saved_amount), 0) AS saved_amount_total,
+              COALESCE(SUM(status IN (${ACTIVE_IN})), 0) AS active_count
+         FROM trial_records WHERE user_id = ?`,
+    )
+    .bind(userId);
+
+  const [listResult, summaryResult] = await db.batch([list, summary]);
+  const totals = summaryResult?.results[0] as
+    { saved_amount_total: number; active_count: number } | undefined;
+  return {
+    records: ((listResult?.results ?? []) as TrialRecordRow[]).map(fromRow),
+    savedAmountTotal: totals?.saved_amount_total ?? 0,
+    activeCount: totals?.active_count ?? 0,
+  };
 }
 
 /**

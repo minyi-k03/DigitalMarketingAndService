@@ -5,18 +5,25 @@ import type { TrialRecord } from '../infra/trial-repo';
 
 export type TrialRecordView = components['schemas']['TrialRecordView'];
 
+/** 화면에 같이 보일 카탈로그 쪽 값 (`getTrackingTerms`의 일부) */
+export interface CatalogDisplay {
+  name: string;
+  logoUrl?: string | undefined;
+}
+
 /**
  * 기록을 화면용 응답으로 옮긴다 (SPEC §13, §19). 필드를 하나씩 적어 `userId`가 나가지 않게 한다.
  */
 export function toTrialRecordView(
   record: TrialRecord,
-  catalogItemName: string,
+  catalog: CatalogDisplay,
   today: KstDate,
 ): TrialRecordView {
   return {
     id: record.id,
     catalogItemId: record.catalogItemId,
-    catalogItemName,
+    catalogItemName: catalog.name,
+    ...(catalog.logoUrl !== undefined && { catalogItemLogoUrl: catalog.logoUrl }),
     source: record.source,
     startDate: record.startDate,
     trialDays: record.trialDays,
@@ -31,7 +38,7 @@ export function toTrialRecordView(
     ...(record.confirmedAt !== undefined && { confirmedAt: record.confirmedAt }),
     savedAmount: record.savedAmount,
     statusChangedAt: record.statusChangedAt,
-    dDayLabel: dDayLabel(today, record.safeEndDate, record.billingDate),
+    dDayLabel: dDayLabel(record.status, today, record.safeEndDate, record.billingDate),
     actions: actionsFor(record.status),
   };
 }

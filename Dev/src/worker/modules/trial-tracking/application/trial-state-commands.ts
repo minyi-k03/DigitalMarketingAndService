@@ -110,7 +110,7 @@ async function commitTransition(
 }
 
 function toView(deps: TrialTrackingDeps, record: TrialRecord, terms: TrackingTerms) {
-  return toTrialRecordView(record, terms.name, todayKst(deps.clock));
+  return toTrialRecordView(record, terms, todayKst(deps.clock));
 }
 
 /**

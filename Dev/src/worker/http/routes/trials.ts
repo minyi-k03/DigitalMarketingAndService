@@ -4,7 +4,10 @@ import type { components } from '../../../shared/api-types';
 import type { AppEnv } from '../app-env';
 import type { AppDeps } from '../deps';
 import { requireSession } from '../middleware/session';
-import { validateJson } from '../validate';
+import { validateJson, validateQuery } from '../validate';
+
+// 내 체험 목록의 탭. 없거나 다른 값이면 400 (api/openapi.yaml GET /api/trials)
+const listTrialsQuery = z.object({ tab: z.enum(['ACTIVE', 'PAST']) });
 
 // api/openapi.yaml의 CreateTrialRecordRequest. userId는 본문에서 받지 않으므로 알 수 없는 필드로 거부한다.
 // 날짜의 실제 존재 여부와 오늘 이후 여부는 도메인이 검증한다 (SPEC §3).
@@ -70,6 +73,23 @@ export const trialRoutes = ({
 
   return (
     new Hono<AppEnv>()
+      // 내 체험 목록과 상세 (SPEC §13). 본인 기록만 읽고 남의 기록은 404다
+      .get('/api/trials', requireSession(identity), validateQuery(listTrialsQuery), async (c) =>
+        c.json(
+          await trialTracking.listMyTrials({
+            userId: c.get('user').userId,
+            tab: c.req.valid('query').tab,
+          }),
+        ),
+      )
+      .get('/api/trials/:trialRecordId', requireSession(identity), async (c) =>
+        c.json(
+          await trialTracking.getTrialRecord({
+            userId: c.get('user').userId,
+            trialRecordId: c.req.param('trialRecordId'),
+          }),
+        ),
+      )
       .post('/api/trials', requireSession(identity), validateJson(createTrialBody), async (c) => {
         const record = await trialTracking.createTrialRecord({
           userId: c.get('user').userId,

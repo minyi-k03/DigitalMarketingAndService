@@ -76,5 +76,5 @@ export async function createTrialRecord(
     });
   }
 
-  return toTrialRecordView(record, terms.name, today);
+  return toTrialRecordView(record, terms, today);
 }

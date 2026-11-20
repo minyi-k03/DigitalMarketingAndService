@@ -15,6 +15,7 @@ import {
   voidTrialRecord,
 } from './application/trial-state-commands';
 import { dispatchDueNotifications, type DispatchCommand } from './application/dispatch';
+import { listMyTrials, type ListMyTrialsQuery } from './application/list-my-trials';
 import { runMissedBilledBatch } from './application/missed-billed-batch';
 import {
   updateTrialRecord,
@@ -34,6 +35,7 @@ export type {
   StartCancelAttemptResult,
   TrialRecordRef,
 } from './application/trial-state-commands';
+export type { ListMyTrialsQuery, MyTrialsView } from './application/list-my-trials';
 export type { TrialRecordView } from './application/to-trial-record-view';
 
 /** Trial Tracking & Schedule 모듈의 공개 인터페이스. 다른 모듈은 이 객체로만 호출한다 */
@@ -46,6 +48,7 @@ export function createTrialTrackingService(deps: TrialTrackingDeps) {
     voidTrialRecord: (ref: TrialRecordRef) => voidTrialRecord(deps, ref),
     resolveMissedBilling: (cmd: ResolveMissedBillingCommand) => resolveMissedBilling(deps, cmd),
     getTrialRecord: (ref: TrialRecordRef) => getTrialRecord(deps, ref),
+    listMyTrials: (query: ListMyTrialsQuery) => listMyTrials(deps, query),
     updateTrialRecord: (cmd: UpdateTrialRecordCommand) => updateTrialRecord(deps, cmd),
     dispatchDueNotifications: (cmd?: DispatchCommand) => dispatchDueNotifications(deps, cmd),
     runMissedBilledBatch: () => runMissedBilledBatch(deps),

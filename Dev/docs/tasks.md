@@ -278,7 +278,7 @@
 - **완료 기준**: TT "`MISSED_BILLED` 배치 두 번 실행해도 전이·알림 1회", 00:10 KST 실행 시 `todayKst` 판정
 - **주요 파일**: `m/trial-tracking/application/missed-billed-batch.ts`
 
-### T19 내 체험 목록·상세 조회 — `대기`
+### T19 내 체험 목록·상세 조회 — `완료 (2026-11-20. actionsFor를 전 상태로 채움(architecture §5.9 표). dDayLabel은 TRACKING·CANCEL_ATTEMPTED만 표시하고 MISSED_BILLED·종료 상태는 null(사용자 승인). 요약(savedAmountTotal·activeCount)은 탭과 무관하며 목록과 같은 D1 batch로 읽음. 카탈로그 getTrackingTerms에 선택 필드 logoUrl 추가(사용자 승인)해 catalogItemLogoUrl 채움. openapi GET /api/trials에 400 추가. 라우트의 userId·trialRecordId 조립 정리는 T20·T21 뒤로 보류)`
 - **근거**: §13 전체, D-09, S23·S41
 - **선행**: T14
 - **내용**: `listMyTrials{tab}`(탭, 정렬, `dDayLabel`, `actions` — `MISSED_BILLED`에 `GO_TO_BRIDGE_GUIDE` 포함, `savedAmountTotal`, `activeCount`), `getTrialRecord`(본인 소유 확인, 타인 소유는 404), `GET /api/trials`, `GET /api/trials/{id}`

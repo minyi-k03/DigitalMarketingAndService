@@ -53,7 +53,7 @@ export async function updateTrialRecord(
 
   const next: TrialRecord = { ...record, startDate, trialDays, ...dates };
   if (startDate === record.startDate && trialDays === record.trialDays) {
-    return toTrialRecordView(record, terms.name, today);
+    return toTrialRecordView(record, terms, today);
   }
 
   const statements: D1PreparedStatement[] = [];
@@ -77,5 +77,5 @@ export async function updateTrialRecord(
 
   const results = await runBatch(deps.db, statements);
   if (results[results.length - 1]?.meta.changes !== 1) throw conflict();
-  return toTrialRecordView(next, terms.name, today);
+  return toTrialRecordView(next, terms, today);
 }

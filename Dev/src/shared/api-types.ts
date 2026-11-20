@@ -357,13 +357,14 @@ export interface paths {
                     content: {
                         "application/json": {
                             items: components["schemas"]["TrialRecordView"][];
-                            /** @description savedAmount 합계 (원) */
+                            /** @description 본인 기록 전체의 savedAmount 합계 (원). 탭과 무관 */
                             savedAmountTotal: number;
-                            /** @description 진행 중 건수 */
+                            /** @description 진행 중(TRACKING·CANCEL_ATTEMPTED·MISSED_BILLED) 건수. 탭과 무관 */
                             activeCount: number;
                         };
                     };
                 };
+                400: components["responses"]["ValidationFailed"];
                 401: components["responses"]["Unauthenticated"];
             };
         };

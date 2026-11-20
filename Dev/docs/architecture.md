@@ -105,7 +105,7 @@ Dev/
 | :--- | :--- | :--- | :--- |
 | 조회 | `listCatalog({ category?, q? })` → `CatalogItemPublicView[]` | HTTP(사용자) | §2 D-11, §7, V-01 |
 | 조회 | `getCatalogItem(id)` → `CatalogItemPublicView` | HTTP(사용자) | §7, V-03, V-08 |
-| 조회 | `getTrackingTerms(id)` → `{ publicationStatus, defaultTrialDays, isGlobalTimeZoneBufferRequired, monthlyPrice, serviceCategory, accessRetentionPolicy, name }` | Trial Tracking | §3, §4, §8 |
+| 조회 | `getTrackingTerms(id)` → `{ publicationStatus, defaultTrialDays, isGlobalTimeZoneBufferRequired, monthlyPrice, serviceCategory, accessRetentionPolicy, name, logoUrl? }` | Trial Tracking | §3, §4, §8 |
 | 조회 | `getEscapeContent(id)` → `{ name, escapePattern, forcedChannel?, escapeGuideSteps, escapeLink, escapeLinkFallbackUrl?, accessRetentionPolicy, backupChecklist?, supportContact, lastVerifiedAt }` | EscapeBridge, Trial Tracking | §7, §9 |
 | 명령 | `createCatalogItem(actor, input)` | HTTP(OPERATOR+) | §2, §16 |
 | 명령 | `updateCatalogItem(actor, id, patch, { applyBufferToActiveRecords })` | HTTP(OPERATOR+) | §2 반영 규칙, 스토리 48 |
@@ -372,7 +372,12 @@ SELECT …, 'BILLING_CHECK', 'REGULAR', r.safe_end_date, :T(today), 'PENDING'
 | 그 밖의 종료 상태 | 없음 |
 
 - **정렬**: '진행 중' 탭은 `MISSED_BILLED`를 먼저 두고, 나머지는 `safeEndDate` 오름차순입니다. '지난 체험' 탭은 `statusChangedAt` 내림차순입니다.
-- **D-Day 표기**(`dDayLabel`)는 서버가 계산해 내려 줍니다. 클라이언트 시계 차이가 생기지 않게 하기 위해서입니다.
+  - 같은 정렬 값끼리는 `created_at`, `id` 순(진행 중) 또는 `id` 순(지난 체험)으로 정해, 같은 입력이면 항상 같은 순서입니다.
+- **D-Day 표기**(`dDayLabel`)는 서버가 계산해 내려 줍니다. 클라이언트 시계 차이가 생기지 않게 하기 위해서입니다. 진행 중 중에서도 `TRACKING`·`CANCEL_ATTEMPTED`만 표시하고 `MISSED_BILLED`와 종료 상태는 `null`입니다(T19, 2026-11-20 결정. 종료된 기록에 'D-3'이 남는 것을 막는다).
+- **요약**(`savedAmountTotal`, `activeCount`)은 탭과 무관한 본인 기록 전체의 값입니다(`COALESCE(SUM(saved_amount), 0)`, 진행 중 3개 상태의 건수). 목록과 요약은 D1 `batch` 한 번으로 읽어 같은 시점의 값입니다.
+- **페이지네이션 없음**: 한 사용자의 기록 수가 적다고 보고 전체를 돌려줍니다. 성능 목표(D-04)가 정해지면 다시 봅니다.
+- **서비스명·로고**는 카탈로그 공개 조회 `getTrackingTerms`로 얻습니다(항목마다 한 번). `logoUrl`은 선택 값이며 없으면 `catalogItemLogoUrl`을 응답에서 뺍니다.
+- `GET /api/trials/{id}`는 `getTrialRecord`를 쓰며 남의 기록은 `404 NOT_FOUND`입니다.
 
 ---
 
