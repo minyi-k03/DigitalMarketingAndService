@@ -1,7 +1,5 @@
 import { env } from 'cloudflare:test';
 import { beforeEach, describe, expect, it } from 'vitest';
-import { LogNotificationSender } from '../../src/worker/adapters/notification-log';
-import { createNotificationSender } from '../../src/worker/adapters/select-sender';
 import { createTrialTrackingService } from '../../src/worker/modules/trial-tracking';
 import { DISPATCH_CRON, MISSED_BILLED_CRON, runScheduled } from '../../src/worker/scheduled';
 import { slotStatusesOf } from '../support/trial-state-seed';
@@ -154,19 +152,6 @@ describe('scheduled 핸들러 MISSED_BILLED 배치 [S31][S-03][T18]', () => {
     expect(logs).toEqual([
       { level: 'error', event: 'missed_billed_batch_failed', fields: { name: 'TypeError' } },
     ]);
-  });
-});
-
-describe('발송 어댑터 선택 (NOTIFICATION_MODE) [T17]', () => {
-  it('log 모드는 log 어댑터를 쓴다', () => {
-    expect(createNotificationSender('log', { info: () => {} })).toBeInstanceOf(
-      LogNotificationSender,
-    );
-  });
-
-  it('kakao_memo·dealer는 어댑터가 생기기 전(T34·T31)까지 없다', () => {
-    expect(createNotificationSender('kakao_memo', { info: () => {} })).toBeUndefined();
-    expect(createNotificationSender('dealer', { info: () => {} })).toBeUndefined();
   });
 });
 

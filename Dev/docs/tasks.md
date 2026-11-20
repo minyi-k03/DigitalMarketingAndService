@@ -405,7 +405,7 @@
   - 카카오 인앱 브라우저 수동 점검 목록: 로그인 복귀, 딥링크 fallback, PC 안내, PWA 설치
 - **완료 기준**: S-01~S-05 통과, 점검 목록 결과 기록 → **M8 (P0 완료)**
 
-### T34 카카오 '나에게 보내기' 어댑터 — `대기` (발표용 신규)
+### T34 카카오 '나에게 보내기' 어댑터 — `구현 완료 (2026-11-20. 어댑터·수신처 조회·모드 조립·모의 fetch 테스트. 점검 B(실제 카카오톡 수신 확인)는 사용자 승인 후 배포하고 수동 확인하며 아직 하지 않음)` (발표용 신규)
 - **근거**: SPEC §17 발표용 알림 채널(D-16), V-10
 - **선행**: T17, T05
 - **내용**:
@@ -416,7 +416,7 @@
 - **완료 기준**:
   - V-10(모의 `fetch`: 토큰 갱신과 교체 저장, 동의 없음·만료 시 `SKIPPED`, API 오류 재시도)
   - 배포 환경에서 발표자 계정으로 늦은 등록 알림이 실제로 오는지 수동 확인(점검 B). 실제 발송은 사용자가 직접 실행합니다.
-- **주요 파일**: `w/adapters/kakao-memo.ts`, `m/identity/application/kakao-message-token.ts`
+- **주요 파일**: `w/adapters/kakao-memo.ts`, `w/adapters/kakao-memo-recipient.ts`, `w/adapters/select-sender.ts`, `w/ports/notification-sender.ts`(`RecipientUnavailableError`). 토큰 갱신은 T05의 `m/identity/application/kakao-token.ts`를 쓴다
 
 ### T35 시드·시연 데이터 — `대기` (발표용 신규)
 - **근거**: implementation-plan §7.3, N5

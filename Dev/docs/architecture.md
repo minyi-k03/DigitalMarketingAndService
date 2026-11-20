@@ -315,6 +315,7 @@ templateKeyFor({ kind, variant }, retentionPolicy): string           // 문구 �
 4. send    : 슬롯마다 recipient = Identity.getNotificationRecipient(userId)
              - enabled = false 또는 recipient 없음 → SKIPPED
              - NotificationSender.send(...) 성공 → SENT
+             - 던진 것이 RecipientUnavailableError(발송 시점에 확인된 동의 철회 등) → 재시도 없이 SKIPPED
              - 던지면 attempts+1, 3회 미만이면 PENDING, 3회째면 FAILED
 ```
 
@@ -324,7 +325,8 @@ templateKeyFor({ kind, variant }, retentionPolicy): string           // 문구 �
 - **의미 판정은 한 곳**: 2단계(expire)와 3단계(claim)가 같은 조건(`meaningfulClause`)을 쓴다. 닫히는 행은 선점되지 않으므로 선점 뒤 기록 상태를 다시 읽지 않는다. 시계는 한 번만 읽어 `now`와 `todayKst`가 같은 시점이다.
 - **링크**: `ESCAPE_ALERT`·`CANCEL_CONFIRM_CHECK`는 `/bridge/{id}`, `BILLING_CHECK`는 `/trials/{id}`다(기록 ID만, 도메인 접두는 어댑터가 붙인다). 문구는 `templateKey`(`kind.variant[.retentionPolicy]`)로 어댑터가 고른다.
 - **한 슬롯의 실패는 같은 회차의 다른 슬롯을 막지 않는다.** 오류 메시지에는 수신처 정보가 섞일 수 있어 기록하지 않는다. 회차 요약(`DispatchResult`)만 `scheduled`가 로그로 남긴다.
-- **발송 어댑터가 없으면**(`NOTIFICATION_MODE`가 `kakao_memo`·`dealer`인데 T34·T31 전) `sender`가 `undefined`이고 디스패처는 슬롯을 선점하지도 닫지도 않는다. 선점하면 보낼 수 없는 알림이 재시도로 소진돼 `FAILED`가 되기 때문이다. `scheduled`는 이때 `notification_sender_unavailable`을 기록한다.
+- **`kakao_memo` 조립(T34)**: `adapters/kakao-memo.ts`가 `POST https://kapi.kakao.com/v2/api/talk/memo/default/send`에 `template_object`(text, 링크 버튼, 문구는 §5.5의 9개 키)를 form으로 보낸다. 링크는 `APP_ORIGIN` + `OutgoingNotification.link`다. 수신처는 `adapters/kakao-memo-recipient.ts`가 Identity `getKakaoMessageAccessToken`(토큰 갱신·교체 저장)으로 만든다. `null`이면 수신처가 없어 `SKIPPED`다. 카카오가 동의 항목 미동의(`code -402`)로 거절하면(카카오 쪽에서 동의를 철회했으나 저장된 scopes에는 남은 경우) 포트의 `RecipientUnavailableError`로 던지고 디스패처가 재시도 없이 `SKIPPED`로 닫는다(SPEC §17, V-10). 그 밖의 오류 응답은 상태 코드·카카오 `code`만 담아 던져 디스패처의 재시도(3회째 `FAILED`)를 따른다. 200 응답은 본문을 읽어 연결을 놓아 주고 `result_code`가 0이 아닌 숫자면 실패로 본다(본문이 비었거나 JSON이 아니면 성공, 다시 보내면 중복이다). 문구가 200자를 넘으면 항목 이름만 `…`로 줄인다. `APP_ORIGIN`은 `parseAppOrigin`으로 `https` origin(로컬 개발만 `http://localhost`)으로 정규화·검증한다. `staging`(`APP_ENV`)이거나 `APP_ORIGIN`이 없거나 올바르지 않으면 어댑터를 만들지 않는다(아래 항목과 같이 `sender`가 `undefined`). `log`는 수신처 조회를 하지 않는다. `APP_ORIGIN`은 카카오 앱에 등록된 도메인이어야 링크 버튼이 열린다.
+- **발송 어댑터가 없으면**(`dealer`인데 T31 전, 또는 staging·`APP_ORIGIN` 없는 `kakao_memo`) `sender`가 `undefined`이고 디스패처는 슬롯을 선점하지도 닫지도 않는다. 선점하면 보낼 수 없는 알림이 재시도로 소진돼 `FAILED`가 되기 때문이다. `scheduled`는 이때 `notification_sender_unavailable`을 기록한다.
 - **즉시 발송**: `POST /api/trials`·`PATCH /api/trials/{id}` 라우트가 응답을 보낸 뒤 `ctx.waitUntil(dispatchDueNotifications({ trialRecordId }))`로 그 기록의 도래한 슬롯만 보낸다(`LATE_REGISTRATION`의 `sendAt = now`). 보낼 것이 없어도 복구·만료·선점 UPDATE 3문장은 실행하지만 바뀌는 행이 없다. 실패해도 응답은 그대로이며 다음 Cron이 다시 집어 간다. ExecutionContext가 없는 실행(ctx 없이 `app.request`를 부르는 단위 테스트)에서는 건너뛴다.
 - **`scheduled` 진입점**(`src/worker/scheduled.ts`)은 Cron 표현식으로 작업을 가른다. `*/10 * * * *`은 디스패치, `10 15 * * *`은 `MISSED_BILLED` 배치(§5.7)다.
 - 상태 전이로 종료 상태가 되면 그 기록의 `PENDING` 슬롯을 모두 `CANCELED`로 바꾼다(§6 알림 취소).

@@ -14,11 +14,13 @@ export class FakeNotificationSender implements NotificationSender {
   calls: SentCall[] = [];
   /** 남은 횟수만큼 던진다. 기본은 모두 성공 */
   private failures = 0;
+  private failure: Error = new Error('발송 실패(테스트)');
   /** 발송 도중(다른 호출이 겹치는 순간)에 끼어들 때 쓰는 훅. 인자는 이 호출의 0부터 센 순번이다 */
   onSend: ((callIndex: number) => Promise<void>) | undefined;
 
-  failNext(times: number): void {
+  failNext(times: number, error?: Error): void {
     this.failures = times;
+    this.failure = error ?? new Error('발송 실패(테스트)');
   }
 
   async send(input: SentCall): Promise<void> {
@@ -26,7 +28,7 @@ export class FakeNotificationSender implements NotificationSender {
     if (this.onSend) await this.onSend(this.calls.length - 1);
     if (this.failures > 0) {
       this.failures -= 1;
-      throw new Error('발송 실패(테스트)');
+      throw this.failure;
     }
   }
 }

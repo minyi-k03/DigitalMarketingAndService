@@ -1,5 +1,8 @@
 import { kstDateOf, toUtcInstant } from '../../../../shared/kst-date';
-import type { NotificationSender } from '../../../ports/notification-sender';
+import {
+  RecipientUnavailableError,
+  type NotificationSender,
+} from '../../../ports/notification-sender';
 import type { TrialTrackingDeps } from '../deps';
 import { buildOutgoingNotification } from '../domain/notification-message';
 import {
@@ -103,12 +106,19 @@ async function deliver(
     return 'skipped';
   }
   const terms = await deps.catalog.getTrackingTerms(target.catalogItemId);
-  await sender.send({
-    recipient,
-    notification: buildOutgoingNotification(slot, {
-      catalogItemName: terms.name,
-      retentionPolicy: terms.accessRetentionPolicy,
-    }),
-  });
+  try {
+    await sender.send({
+      recipient,
+      notification: buildOutgoingNotification(slot, {
+        catalogItemName: terms.name,
+        retentionPolicy: terms.accessRetentionPolicy,
+      }),
+    });
+  } catch (e) {
+    // 발송 시점에 확인된 수신 불가(예: 카카오 쪽 동의 철회)는 재시도해도 회복되지 않는다 (SPEC §17, V-10)
+    if (!(e instanceof RecipientUnavailableError)) throw e;
+    await markSkipped(deps.db, slot);
+    return 'skipped';
+  }
   return 'sent';
 }

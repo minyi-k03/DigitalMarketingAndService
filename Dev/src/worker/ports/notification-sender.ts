@@ -18,9 +18,19 @@ export interface OutgoingNotification {
 
 /**
  * 알림 발송 포트. 어댑터는 `NOTIFICATION_MODE`로 고른다(`log`, `kakao_memo`, `dealer`).
- * 발송에 실패하면 던진다. 호출한 쪽이 재시도 횟수를 올린다 (SPEC §17).
+ * 발송에 실패하면 던진다. 호출한 쪽이 재시도 횟수를 올린다 (SPEC §17). 수신처를 쓸 수 없다고 확인된 경우
+ * (예: 발송 시점에 확인된 동의 철회)만 `RecipientUnavailableError`로 던지고, 호출한 쪽은 재시도 없이 슬롯을
+ * `SKIPPED`로 닫는다 (SPEC §17, V-10).
  * 수신처(토큰·전화번호)는 로그에 남기지 않는다 (AGENTS §6).
  */
 export interface NotificationSender {
   send(input: { recipient: Recipient; notification: OutgoingNotification }): Promise<void>;
+}
+
+/** 재시도해도 회복되지 않는 수신처 문제. 메시지에는 수신처 정보를 담지 않는다 (AGENTS §6) */
+export class RecipientUnavailableError extends Error {
+  constructor(message: string) {
+    super(message);
+    this.name = 'RecipientUnavailableError';
+  }
 }

@@ -1,6 +1,7 @@
 import { env } from 'cloudflare:test';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { createTrialTrackingService } from '../../src/worker/modules/trial-tracking';
+import { RecipientUnavailableError } from '../../src/worker/ports/notification-sender';
 import {
   forceMissedBilled,
   insertPendingSlot,
@@ -135,6 +136,23 @@ describe('TT 알림 수신 거부 [S44][V-07][T17]', () => {
 });
 
 describe('TT 발송 실패와 재시도 [S13][T17]', () => {
+  it('발송 시점에 수신처를 쓸 수 없다고 확인되면(동의 철회) 재시도 없이 SKIPPED로 닫는다 [V-10][T34]', async () => {
+    const t = await registerWithRecipient();
+    t.clock.set(D3_AT);
+    t.sender.failNext(1, new RecipientUnavailableError('동의 없음'));
+
+    const result = await t.trialTracking.dispatchDueNotifications();
+
+    expect(result).toMatchObject({ sent: 0, skipped: 1, retried: 0, failed: 0 });
+    expect(await slotStatusesOf(t.record.id)).toEqual([
+      { slot: 'D1', status: 'PENDING' },
+      { slot: 'D3', status: 'SKIPPED' },
+    ]);
+    expect((await slotAttemptsOf(t.record.id, 'D3'))?.attempts).toBe(0);
+    await t.trialTracking.dispatchDueNotifications();
+    expect(t.sender.calls).toHaveLength(1);
+  });
+
   it('실패하면 시도 횟수를 올려 PENDING으로 되돌리고 다음 실행이 다시 보낸다', async () => {
     const t = await registerWithRecipient();
     t.clock.set(D3_AT);

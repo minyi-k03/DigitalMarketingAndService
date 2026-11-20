@@ -23,7 +23,8 @@
     // 10분 주기 알림 발송, 매일 15:10 UTC(KST 00:10) MISSED_BILLED 배치 (architecture §5)
     "crons": ["*/10 * * * *", "10 15 * * *"],
   },
-  "vars": { "NOTIFICATION_MODE": "log" },
+  // APP_ENV는 staging에서 kakao_memo를 막는 데 쓰고, APP_ORIGIN은 알림 링크의 도메인이다 (T34).
+  "vars": { "NOTIFICATION_MODE": "log", "APP_ENV": "dev", "APP_ORIGIN": "http://localhost:8787" },
   "env": {
     // 발표 전에는 staging을 만들지 않는다 (AGENTS.md §6).
     "production": {
@@ -40,8 +41,13 @@
       // R2는 무료 플랜 조건(카드 등록 없음)을 지키려고 첫 배포에서 뺐다. 로고 업로드가 필요한 T09 이후
       // R2를 쓸지 정하고, 쓰기로 하면 이 자리에 r2_buckets를 다시 넣는다. 현재 코드는 BLOBS를 사용하지 않는다.
       "triggers": { "crons": ["*/10 * * * *", "10 15 * * *"] },
-      // T34(kakao_memo 어댑터) 구현 전까지 log. 구현 후 kakao_memo로 바꾼다 (D-16).
-      "vars": { "NOTIFICATION_MODE": "log" },
+      // T34(kakao_memo 어댑터)는 구현했다. 발표용으로 kakao_memo로 바꾸는 것은 점검 B 때 사용자 승인 후 배포한다 (D-16).
+      // APP_ORIGIN 도메인은 카카오 앱에 등록돼 있어야 링크 버튼이 열린다.
+      "vars": {
+        "NOTIFICATION_MODE": "log",
+        "APP_ENV": "production",
+        "APP_ORIGIN": "https://subcut.june18806.workers.dev",
+      },
     },
   },
 }
