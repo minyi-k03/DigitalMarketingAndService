@@ -244,16 +244,16 @@
   - 늦은 등록은 `BillingDate` 당일 등록과 글로벌·국내 각각을 포함합니다.
 - **주요 파일**: `m/trial-tracking/domain/notification-planner.ts`
 
-### T16 알림 저장·재예약·버퍼 변경 적용 — `대기 (발표용 간소화: prepareBufferChange 제외)`
+### T16 알림 저장·재예약·버퍼 변경 적용 — `완료 (2026-11-19, 발표용 간소화: prepareBufferChange 제외, T09 applyBufferToActiveRecords=true는 계속 400. 기록 생성·사유 선택(D1_CONFIRM·SAME_DAY_CONFIRM)·기록 수정이 알림을 같은 batch로 저장한다. 같은 유일 키(기록·슬롯·safeEndDate)의 CANCELED 행만 되살리고(날짜를 A→B→A로 되돌린 경우) SENT·FAILED·EXPIRED·SKIPPED는 재발송하지 않는다. safeEndDate가 그대로인 수정은 재예약하지 않는다. notification.sendTime 설정이 올바르지 않으면 기본값으로 덮지 않고 오류로 던진다. LATE_REGISTRATION은 행만 저장하며 실제 발송은 T17(waitUntil·Cron). 수정 불가 상태는 INVALID_TRANSITION 409, 과거 BillingDate는 TRIAL_ALREADY_ENDED 422. code-review 대기)`
 - **근거**: §6 재예약 규칙(G3 확정), §2 버퍼 반영, §5 수정 범위, S42·S48
 - **선행**: T15, T09
 - **내용**:
-  - 생성·전이 시 `notification_schedules` 저장(`INSERT OR IGNORE`)
+  - 생성·전이 시 `notification_schedules` 저장(`INSERT … ON CONFLICT DO UPDATE … WHERE status = 'CANCELED'`: 같은 키의 취소된 행만 되살려 A→B→A 수정에서 슬롯이 사라지지 않게 한다. 2026-11-19 계획 승인에서 `INSERT OR IGNORE`를 대체)
   - `updateTrialRecord`(`TRACKING`·`CANCEL_ATTEMPTED`만, 재계산 → `PENDING` 취소 → 재계획 → 정규 슬롯 경과 시 `TRACKING`은 `LATE_REGISTRATION` 즉시 1회, `CANCEL_ATTEMPTED`는 마감 시각 이전이면 `SAME_DAY_CONFIRM` 1회 예약·발송)
   - `prepareBufferChange`(`BillingDate >= today`인 진행 중 기록만) → T09 `updateCatalogItem`과 한 batch로 실행
   - `PATCH /api/trials/{id}`
 - **완료 기준**: TT "기록 수정(허용·거부 상태, 과거 `BillingDate` 거부, 미래 슬롯 재예약, 정규 슬롯 경과 시 `TRACKING` 즉시 1회 및 `CANCEL_ATTEMPTED` 당일 해지 확인 규칙 적용)", TT "버퍼 변경 적용(선택 시 대상만 재계산, 미선택 시 불변)", S-05
-- **주요 파일**: `m/trial-tracking/application/update.ts`, `m/trial-tracking/application/buffer-change.ts`
+- **주요 파일**: `m/trial-tracking/application/update-trial-record.ts`, `m/trial-tracking/application/trial-command-support.ts`, `m/trial-tracking/infra/notification-repo.ts`, `m/trial-tracking/application/buffer-change.ts`(보류)
 
 ### T17 발송 디스패처 — `대기`
 - **근거**: §17 스케줄러·발송 멱등성, §6 발송 시각(G5 확정)·수신 거부, S13·S44

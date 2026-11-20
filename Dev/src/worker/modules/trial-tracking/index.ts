@@ -14,9 +14,14 @@ import {
   type TrialRecordRef,
   voidTrialRecord,
 } from './application/trial-state-commands';
+import {
+  updateTrialRecord,
+  type UpdateTrialRecordCommand,
+} from './application/update-trial-record';
 import type { TrialTrackingDeps } from './deps';
 
 export type { TrialTrackingDeps } from './deps';
+export type { UpdateTrialRecordCommand } from './application/update-trial-record';
 export type { CreateTrialRecordCommand } from './application/create-trial-record';
 export type {
   ConfirmCancelCommand,
@@ -37,6 +42,7 @@ export function createTrialTrackingService(deps: TrialTrackingDeps) {
     voidTrialRecord: (ref: TrialRecordRef) => voidTrialRecord(deps, ref),
     resolveMissedBilling: (cmd: ResolveMissedBillingCommand) => resolveMissedBilling(deps, cmd),
     getTrialRecord: (ref: TrialRecordRef) => getTrialRecord(deps, ref),
+    updateTrialRecord: (cmd: UpdateTrialRecordCommand) => updateTrialRecord(deps, cmd),
   };
 }
 

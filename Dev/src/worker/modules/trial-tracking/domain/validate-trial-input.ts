@@ -4,11 +4,19 @@ import { DomainError } from '../../../platform/errors';
 const MIN_TRIAL_DAYS = 1;
 const MAX_TRIAL_DAYS = 365;
 
-interface TrialInput {
+interface TrialDatesInput {
   startDate: string;
   trialDays: number;
-  source: string;
   today: KstDate;
+}
+
+interface TrialInput extends TrialDatesInput {
+  source: string;
+}
+
+interface FieldError {
+  field: string;
+  message: string;
 }
 
 /**
@@ -35,14 +43,14 @@ export function assertNotEnded(billingDate: KstDate, today: KstDate): void {
 }
 
 /**
- * 기록 생성 입력 검증 (SPEC §3, architecture §5.1). 날짜는 `YYYY-MM-DD`라 문자열 비교가 날짜순이다.
- * 위반한 필드를 모두 모아 VALIDATION_FAILED로 던진다.
+ * 시작일·체험 일수 검증 (SPEC §3, architecture §5.1). 기록 생성과 기록 수정(§5)이 같은 규칙을 쓴다.
+ * 날짜는 `YYYY-MM-DD`라 문자열 비교가 날짜순이다.
  */
-export function validateTrialInput({ startDate, trialDays, source, today }: TrialInput): {
-  startDate: KstDate;
-  trialDays: number;
+function checkDates({ startDate, trialDays, today }: TrialDatesInput): {
+  errors: FieldError[];
+  parsed: KstDate | undefined;
 } {
-  const errors: { field: string; message: string }[] = [];
+  const errors: FieldError[] = [];
 
   let parsed: KstDate | undefined;
   try {
@@ -62,14 +70,31 @@ export function validateTrialInput({ startDate, trialDays, source, today }: Tria
       message: `${MIN_TRIAL_DAYS} 이상 ${MAX_TRIAL_DAYS} 이하의 정수여야 합니다`,
     });
   }
+  return { errors, parsed };
+}
 
-  // 발표 범위(P0)에서는 카탈로그 선택 등록만 허용한다. SPONSORED_OUTBOUND_PROMPT는 P1(T43)이다
-  if (source !== 'MANUAL_CATALOG_SELECT') {
-    errors.push({ field: 'source', message: 'MANUAL_CATALOG_SELECT만 허용합니다' });
-  }
-
+function finish(errors: FieldError[], parsed: KstDate | undefined, trialDays: number) {
   if (errors.length > 0 || parsed === undefined) {
     throw new DomainError('VALIDATION_FAILED', '체험 기록 입력이 올바르지 않습니다', { errors });
   }
   return { startDate: parsed, trialDays };
+}
+
+/** 기록 생성 입력 검증. 위반한 필드를 모두 모아 VALIDATION_FAILED로 던진다 */
+export function validateTrialInput(input: TrialInput): { startDate: KstDate; trialDays: number } {
+  const { errors, parsed } = checkDates(input);
+  // 발표 범위(P0)에서는 카탈로그 선택 등록만 허용한다. SPONSORED_OUTBOUND_PROMPT는 P1(T43)이다
+  if (input.source !== 'MANUAL_CATALOG_SELECT') {
+    errors.push({ field: 'source', message: 'MANUAL_CATALOG_SELECT만 허용합니다' });
+  }
+  return finish(errors, parsed, input.trialDays);
+}
+
+/** 기록 수정 입력 검증 (SPEC §5). `source`는 수정할 수 없으므로 날짜 규칙만 생성과 같게 본다 */
+export function validateTrialDates(input: TrialDatesInput): {
+  startDate: KstDate;
+  trialDays: number;
+} {
+  const { errors, parsed } = checkDates(input);
+  return finish(errors, parsed, input.trialDays);
 }

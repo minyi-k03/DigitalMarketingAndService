@@ -110,12 +110,44 @@ export function prepareStatusUpdate(
 }
 
 /**
+ * 날짜 수정 결과를 저장하는 조건부 UPDATE (SPEC §5 기록 수정). 읽은 뒤 다른 요청이 상태나 날짜를 먼저
+ * 바꿨으면 `WHERE`가 맞지 않아 0행이 바뀌고, 호출한 쪽이 `meta.changes`로 충돌을 판정한다.
+ */
+export function prepareDatesUpdate(
+  db: D1Database,
+  prev: TrialRecord,
+  next: TrialRecord,
+): D1PreparedStatement {
+  return db
+    .prepare(
+      `UPDATE trial_records
+          SET start_date = ?, trial_days = ?, billing_date = ?, safe_end_date = ?
+        WHERE id = ? AND status = ? AND start_date = ? AND trial_days = ?`,
+    )
+    .bind(
+      next.startDate,
+      next.trialDays,
+      next.billingDate,
+      next.safeEndDate,
+      prev.id,
+      prev.status,
+      prev.startDate,
+      prev.trialDays,
+    );
+}
+
+/**
  * 기록을 저장한다. 같은 사용자·항목의 진행 중 기록이 이미 있으면(부분 UNIQUE 인덱스 위반) `false`다.
  * 확인 후 저장하는 사이에 끼어드는 동시 요청도 이 제약이 막으므로 중복 판정은 DB가 한다.
+ * `followUps`(알림 저장 등)는 같은 batch로 실행하며, 기록 INSERT가 실패하면 함께 롤백된다.
  */
-export async function insertTrialRecord(db: D1Database, record: TrialRecord): Promise<boolean> {
+export async function insertTrialRecord(
+  db: D1Database,
+  record: TrialRecord,
+  followUps: readonly D1PreparedStatement[] = [],
+): Promise<boolean> {
   try {
-    await runInsert(db, record);
+    await db.batch([prepareInsert(db, record), ...followUps]);
     return true;
   } catch (e) {
     if (e instanceof Error && e.message.includes('UNIQUE constraint failed')) return false;
@@ -139,8 +171,8 @@ export async function findActiveRecordId(
   return row?.id;
 }
 
-async function runInsert(db: D1Database, record: TrialRecord): Promise<void> {
-  await db
+function prepareInsert(db: D1Database, record: TrialRecord): D1PreparedStatement {
+  return db
     .prepare(
       `INSERT INTO trial_records (
          id, user_id, catalog_item_id, source, start_date, trial_days, buffer_applied,
@@ -161,6 +193,5 @@ async function runInsert(db: D1Database, record: TrialRecord): Promise<void> {
       record.savedAmount,
       record.statusChangedAt,
       record.createdAt,
-    )
-    .run();
+    );
 }

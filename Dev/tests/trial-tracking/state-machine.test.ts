@@ -226,13 +226,9 @@ describe('TT ExitPoll 원자성 (D1 batch) [S25][T14]', () => {
   });
 });
 
-const D3_AT = '2026-12-01T01:00:00.000Z'; // 12-01 10:00 KST
-const D1_AT = '2026-12-03T01:00:00.000Z'; // 12-03 10:00 KST
-
+// 생성 시 D3·D1이 실제로 저장된다(T16). 알림 시각·변형은 notification-schedule.test.ts에서 확인한다
 async function recordWithRegularSlots() {
   const ctx = await trackingRecord();
-  await insertPendingSlot(ctx.record.id, 'D3', '2026-12-04', D3_AT);
-  await insertPendingSlot(ctx.record.id, 'D1', '2026-12-04', D1_AT);
   return { ...ctx, ref: { userId: ctx.userId, trialRecordId: ctx.record.id } };
 }
 
@@ -262,13 +258,14 @@ describe('TT 전이 시 알림 취소 [S13][S26][T14]', () => {
     ]);
   });
 
-  it('사유를 고르면 아직 보내지 않은 탈출 알림(D3·D1)을 취소한다', async () => {
+  it('사유를 고르면 아직 보내지 않은 탈출 알림(D3·D1)을 취소하고 해지 확인 알림을 예약한다', async () => {
     const { trialTracking, ref } = await recordWithRegularSlots();
 
     await trialTracking.startCancelAttempt({ ...ref, exitReason: 'PRICE_BURDEN' });
 
     expect(await slotStatusesOf(ref.trialRecordId)).toEqual([
       { slot: 'D1', status: 'CANCELED' },
+      { slot: 'D1_CONFIRM', status: 'PENDING' },
       { slot: 'D3', status: 'CANCELED' },
     ]);
   });
@@ -279,8 +276,11 @@ describe('TT 전이 시 알림 취소 [S13][S26][T14]', () => {
 
     await trialTracking.resolveMissedBilling({ ...ref, resolution: 'KEEP_USING' });
 
+    // MISSED_BILLED 전이 배치(T18) 전이라 생성 때의 D3·D1도 아직 PENDING이었고, 종료 상태에서 모두 취소된다
     expect(await slotStatusesOf(ref.trialRecordId)).toEqual([
       { slot: 'BILLING_CHECK', status: 'CANCELED' },
+      { slot: 'D1', status: 'CANCELED' },
+      { slot: 'D3', status: 'CANCELED' },
     ]);
   });
 
@@ -300,8 +300,7 @@ describe('TT 전이 시 알림 취소 [S13][S26][T14]', () => {
   it('기록을 읽은 뒤 다른 전이에 밀려 CONFLICT가 나면 알림을 건드리지 않는다', async () => {
     const { trialTracking, interleaveOnce, ref } = await recordWithRegularSlots();
     interleaveOnce(() => trialTracking.startCancelAttempt({ ...ref, exitReason: 'PRICE_BURDEN' }));
-    // 끼어든 사유 선택은 탈출 알림만 취소하므로 D1_CONFIRM은 남는다. 밀린 유지 결정이 이것을 취소하면 안 된다
-    await insertPendingSlot(ref.trialRecordId, 'D1_CONFIRM', '2026-12-04', D1_AT);
+    // 끼어든 사유 선택은 탈출 알림만 취소하고 D1_CONFIRM을 저장한다. 밀린 유지 결정이 이것을 취소하면 안 된다
 
     await expect(trialTracking.decideKeep(ref)).rejects.toMatchObject({ code: 'CONFLICT' });
     expect(await trialTracking.getTrialRecord(ref)).toMatchObject({ status: 'CANCEL_ATTEMPTED' });

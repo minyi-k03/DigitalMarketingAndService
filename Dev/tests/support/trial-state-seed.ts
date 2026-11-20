@@ -2,7 +2,8 @@ import { env } from 'cloudflare:test';
 
 // T14 시점에는 아래 상태·행을 만드는 공개 명령이 아직 없어 테스트 준비·관찰에만 SQL을 쓴다.
 // - MISSED_BILLED 전이: T18 배치가 생기면 그 명령으로 바꾼다
-// - 알림 슬롯: T16(생성·전이 시 저장)이 생기면 그 명령으로, 관찰은 T17 디스패처로 바꾼다
+// - 알림 슬롯: 생성·사유 선택·기록 수정의 저장은 T16 명령이 한다. 여기 SQL은 결제 확인 알림(T18 전)과 발송 결과 흉내
+//   (SENT 등, T17 전)를 준비하고 저장된 행을 관찰하는 데만 쓰며, 관찰은 T17 디스패처 조회가 생기면 바꾼다
 // - ExitPoll 응답 원본: 공개 조회는 발표용 집계(T62)뿐이라 불변식(기록당 정확히 1건) 확인에만 직접 읽는다
 
 /** BillingDate 경과 배치(T18)가 한 일을 흉내 낸다. 응답이 있던 CANCEL_ATTEMPTED 기록은 응답을 보존한다 */
@@ -55,6 +56,44 @@ export async function insertPendingSlot(
      VALUES (?, ?, ?, ?, 'REGULAR', ?, ?, 'PENDING')`,
   )
     .bind(crypto.randomUUID(), trialRecordId, kind, slot, safeEndDate, sendAt)
+    .run();
+}
+
+/** 저장된 알림 행 전체. T17 디스패처의 공개 조회가 생기면 그 조회로 바꾼다 */
+export async function slotsOf(trialRecordId: string) {
+  const { results } = await env.DB.prepare(
+    `SELECT kind, slot, variant, safe_end_date AS safeEndDate, send_at AS sendAt, status
+       FROM notification_schedules WHERE trial_record_id = ? ORDER BY send_at, slot`,
+  )
+    .bind(trialRecordId)
+    .all<{
+      kind: string;
+      slot: string;
+      variant: string;
+      safeEndDate: string;
+      sendAt: string;
+      status: string;
+    }>();
+  return results;
+}
+
+/** 발송 결과를 흉내 낸다. 디스패처(T17) 전이라 SENT 같은 상태는 SQL로 만든다 */
+export async function markSlot(
+  trialRecordId: string,
+  slot: string,
+  status: 'SENT' | 'FAILED' | 'EXPIRED' | 'SKIPPED',
+) {
+  await env.DB.prepare(
+    'UPDATE notification_schedules SET status = ? WHERE trial_record_id = ? AND slot = ?',
+  )
+    .bind(status, trialRecordId, slot)
+    .run();
+}
+
+/** 기본 발송 시각 설정(`notification.sendTime`)을 바꾼다. 설정 화면(T12)은 발표 범위 밖이라 SQL로 바꾼다 */
+export async function setSendTimeSetting(rawJson: string) {
+  await env.DB.prepare("UPDATE app_settings SET value = ? WHERE key = 'notification.sendTime'")
+    .bind(rawJson)
     .run();
 }
 

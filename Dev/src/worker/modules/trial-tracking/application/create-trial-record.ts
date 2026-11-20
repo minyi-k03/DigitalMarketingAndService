@@ -2,12 +2,14 @@ import { todayKst, toUtcInstant } from '../../../../shared/kst-date';
 import { DomainError } from '../../../platform/errors';
 import { newId } from '../../../platform/id';
 import type { TrialTrackingDeps } from '../deps';
+import { planInitialSlots } from '../domain/notification-planner';
 import { computeTrialDates } from '../domain/trial-dates';
 import {
   assertNotEnded,
   assertRegistrable,
   validateTrialInput,
 } from '../domain/validate-trial-input';
+import { prepareSlotInserts, readSendTime } from '../infra/notification-repo';
 import {
   findActiveRecordId,
   insertTrialRecord,
@@ -60,7 +62,10 @@ export async function createTrialRecord(
     statusChangedAt: now,
     createdAt: now,
   };
-  if (!(await insertTrialRecord(deps.db, record))) {
+  // 정규 슬롯과 늦은 등록 즉시 슬롯. 즉시 슬롯의 실제 발송은 디스패처(T17)가 맡는다
+  const slots = planInitialSlots(record, now, { sendTime: await readSendTime(deps.db) });
+  const followUps = prepareSlotInserts(deps.db, record.id, slots, 'TRACKING');
+  if (!(await insertTrialRecord(deps.db, record, followUps))) {
     const existingTrialRecordId = await findActiveRecordId(deps.db, cmd.userId, cmd.catalogItemId);
     if (existingTrialRecordId === undefined) {
       // 충돌한 기록이 그 사이 끝난 경우. 호출자가 다시 시도하면 된다

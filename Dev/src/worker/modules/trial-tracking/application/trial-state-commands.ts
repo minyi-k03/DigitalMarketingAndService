@@ -3,34 +3,27 @@ import { todayKst, toUtcInstant, type UtcInstant } from '../../../../shared/kst-
 import { DomainError } from '../../../platform/errors';
 import type { CatalogService } from '../../catalog';
 import type { TrialTrackingDeps } from '../deps';
+import { planCancelConfirmSlots, type PlannedSlot } from '../domain/notification-planner';
 import { savedAmountOnConfirm } from '../domain/saved-amount';
 import { applyTransition, type Transition, type TrialEvent } from '../domain/transitions';
 import { prepareExitPollInsert } from '../infra/exit-poll-repo';
-import { preparePendingSlotCancel, type NotificationKind } from '../infra/notification-repo';
 import {
-  findOwnedRecord,
-  prepareStatusUpdate,
-  type ExitReason,
-  type TrialRecord,
-} from '../infra/trial-repo';
+  prepareSlotInserts,
+  preparePendingSlotCancel,
+  readSendTime,
+  type NotificationKind,
+} from '../infra/notification-repo';
+import { prepareStatusUpdate, type ExitReason, type TrialRecord } from '../infra/trial-repo';
 import { toTrialRecordView, type TrialRecordView } from './to-trial-record-view';
+import { conflict, loadOwned, runBatch, type TrialRecordRef } from './trial-command-support';
 
 type TrackingTerms = Awaited<ReturnType<CatalogService['getTrackingTerms']>>;
 export type StartCancelAttemptResult = components['schemas']['StartCancelAttemptResult'];
 
-export interface TrialRecordRef {
-  userId: string;
-  trialRecordId: string;
-}
+export type { TrialRecordRef };
 
 export interface StartCancelAttemptCommand extends TrialRecordRef {
   exitReason: ExitReason;
-}
-
-async function loadOwned(deps: TrialTrackingDeps, ref: TrialRecordRef): Promise<TrialRecord> {
-  const record = await findOwnedRecord(deps.db, ref.userId, ref.trialRecordId);
-  if (record === undefined) throw new DomainError('NOT_FOUND', '체험 기록을 찾을 수 없습니다');
-  return record;
 }
 
 interface TransitionContext {
@@ -46,6 +39,8 @@ interface TransitionEffects {
   newExitReason?: ExitReason;
   /** 종료 상태가 아닌 전이에서 취소할 `PENDING` 알림 종류. 종료 상태로 가면 지정 없이 모두 취소한다 */
   cancelPendingKinds?: readonly NotificationKind[];
+  /** 전이 뒤에 새로 예약할 알림. 취소 뒤에 같은 batch로 저장한다 */
+  newSlots?: readonly PlannedSlot[];
 }
 
 /**
@@ -67,6 +62,7 @@ async function commitTransition(
     fields = {},
     newExitReason,
     cancelPendingKinds,
+    newSlots = [],
   } = effects({
     record,
     transition,
@@ -105,24 +101,12 @@ async function commitTransition(
       preparePendingSlotCancel(deps.db, record.id, transition.to, cancelPendingKinds),
     );
   }
+  // 새 알림은 같은 batch에서 전이가 반영됐을 때만 들어간다
+  statements.push(...prepareSlotInserts(deps.db, record.id, newSlots, transition.to));
 
   const [update] = await runBatch(deps.db, statements);
   if (update?.meta.changes !== 1) throw conflict();
   return { record: next, terms };
-}
-
-async function runBatch(db: D1Database, statements: D1PreparedStatement[]) {
-  try {
-    return await db.batch(statements);
-  } catch (e) {
-    // 동시 요청이 같은 기록에 먼저 응답을 넣은 경우. batch는 통째로 롤백됐다
-    if (e instanceof Error && e.message.includes('constraint failed')) throw conflict();
-    throw e;
-  }
-}
-
-function conflict() {
-  return new DomainError('CONFLICT', '기록 상태가 바뀌었습니다. 새로 고친 뒤 다시 시도해 주세요');
 }
 
 function toView(deps: TrialTrackingDeps, record: TrialRecord, terms: TrackingTerms) {
@@ -132,17 +116,24 @@ function toView(deps: TrialTrackingDeps, record: TrialRecord, terms: TrackingTer
 /**
  * 브릿지 사유 선택 (SPEC §5, §7 단일 명령, 스토리 20·21·25). 응답 저장과 CANCEL_ATTEMPTED 전이를
  * 한 batch로 처리하고 이동할 직링크를 돌려준다. 아직 보내지 않은 탈출 알림(D3·D1·늦은 등록)은 같은 batch에서
- * 취소한다. 그 자리에 해지 확인 알림(D1_CONFIRM·SAME_DAY_CONFIRM)을 넣는 것은 T15 계획기·T16 저장에서 붙인다.
+ * 취소하고, 그 자리에 해지 확인 알림(D1_CONFIRM·SAME_DAY_CONFIRM, 계획기 `planCancelConfirmSlots`)을 저장한다.
  */
 export async function startCancelAttempt(
   deps: TrialTrackingDeps,
   cmd: StartCancelAttemptCommand,
 ): Promise<StartCancelAttemptResult> {
-  const { record } = await commitTransition(deps, cmd, 'START_CANCEL_ATTEMPT', ({ now }) => ({
-    fields: { cancelAttemptedAt: now },
-    newExitReason: cmd.exitReason,
-    cancelPendingKinds: ['ESCAPE_ALERT'],
-  }));
+  const settings = { sendTime: await readSendTime(deps.db) };
+  const { record } = await commitTransition(
+    deps,
+    cmd,
+    'START_CANCEL_ATTEMPT',
+    ({ record, now }) => ({
+      fields: { cancelAttemptedAt: now },
+      newExitReason: cmd.exitReason,
+      cancelPendingKinds: ['ESCAPE_ALERT'],
+      newSlots: planCancelConfirmSlots(record, now, settings),
+    }),
+  );
   const escape = await deps.catalog.getEscapeContent(record.catalogItemId);
   return {
     escapeLink: escape.escapeLink,

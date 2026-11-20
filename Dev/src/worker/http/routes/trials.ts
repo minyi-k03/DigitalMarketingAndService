@@ -8,16 +8,21 @@ import { validateJson } from '../validate';
 
 // api/openapi.yaml의 CreateTrialRecordRequest. userId는 본문에서 받지 않으므로 알 수 없는 필드로 거부한다.
 // 날짜의 실제 존재 여부와 오늘 이후 여부는 도메인이 검증한다 (SPEC §3).
+const startDateField = z.string().regex(/^\d{4}-\d{2}-\d{2}$/, 'YYYY-MM-DD 형식이어야 합니다');
+const trialDaysField = z.number().int().min(1).max(365);
+
 const createTrialBody = z.strictObject({
   catalogItemId: z.string().min(1),
-  startDate: z
-    .string()
-    .regex(/^\d{4}-\d{2}-\d{2}$/, 'YYYY-MM-DD 형식이어야 합니다')
-    .optional(),
-  trialDays: z.number().int().min(1).max(365).optional(),
+  startDate: startDateField.optional(),
+  trialDays: trialDaysField.optional(),
   // 발표 범위(P0)에서는 이 값만 허용한다. SPONSORED_OUTBOUND_PROMPT는 P1(T43)
   source: z.literal('MANUAL_CATALOG_SELECT').optional(),
 });
+
+// api/openapi.yaml의 UpdateTrialRecordRequest. `catalogItemId`·`source`는 수정할 수 없으므로 알 수 없는 필드로 거부한다 (SPEC §5)
+const updateTrialBody = z
+  .strictObject({ startDate: startDateField.optional(), trialDays: trialDaysField.optional() })
+  .refine((body) => Object.keys(body).length > 0, '수정할 필드를 하나 이상 보내야 합니다');
 
 const EXIT_REASONS = [
   'PRICE_BURDEN',
@@ -48,6 +53,20 @@ export const trialRoutes = ({
         }),
         201,
       ),
+    )
+    // 기록 수정 (SPEC §5 수정 범위, §6 재예약)
+    .patch(
+      '/api/trials/:trialRecordId',
+      requireSession(identity),
+      validateJson(updateTrialBody),
+      async (c) =>
+        c.json(
+          await trialTracking.updateTrialRecord({
+            userId: c.get('user').userId,
+            trialRecordId: c.req.param('trialRecordId'),
+            ...c.req.valid('json'),
+          }),
+        ),
     )
     // 상태 전이 (SPEC §5). 소유 확인은 명령이 userId로 하며 남의 기록은 404다
     .post(
