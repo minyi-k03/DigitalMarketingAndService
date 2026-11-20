@@ -32,7 +32,7 @@ export function TrialActions({ record, allowDirectCancel = false }: TrialActions
           <Link
             key={item.action}
             to={bridgePath}
-            className={item.primary ? buttons.primary : buttons.utility}
+            className={item.primary ? buttons.primary : buttons.secondary}
           >
             {item.label}
           </Link>
@@ -40,7 +40,7 @@ export function TrialActions({ record, allowDirectCancel = false }: TrialActions
           <button
             key={item.action}
             type="button"
-            className={item.primary ? buttons.primary : buttons.utility}
+            className={item.primary ? buttons.primary : buttons.secondary}
             onClick={() => setPending(item)}
           >
             {item.label}
