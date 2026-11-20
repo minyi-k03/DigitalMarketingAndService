@@ -15,6 +15,7 @@ import {
   voidTrialRecord,
 } from './application/trial-state-commands';
 import { dispatchDueNotifications, type DispatchCommand } from './application/dispatch';
+import { runMissedBilledBatch } from './application/missed-billed-batch';
 import {
   updateTrialRecord,
   type UpdateTrialRecordCommand,
@@ -23,6 +24,7 @@ import type { TrialTrackingDeps } from './deps';
 
 export type { TrialTrackingDeps } from './deps';
 export type { DispatchCommand, DispatchResult } from './application/dispatch';
+export type { MissedBilledBatchResult } from './application/missed-billed-batch';
 export type { UpdateTrialRecordCommand } from './application/update-trial-record';
 export type { CreateTrialRecordCommand } from './application/create-trial-record';
 export type {
@@ -46,6 +48,7 @@ export function createTrialTrackingService(deps: TrialTrackingDeps) {
     getTrialRecord: (ref: TrialRecordRef) => getTrialRecord(deps, ref),
     updateTrialRecord: (cmd: UpdateTrialRecordCommand) => updateTrialRecord(deps, cmd),
     dispatchDueNotifications: (cmd?: DispatchCommand) => dispatchDueNotifications(deps, cmd),
+    runMissedBilledBatch: () => runMissedBilledBatch(deps),
   };
 }
 

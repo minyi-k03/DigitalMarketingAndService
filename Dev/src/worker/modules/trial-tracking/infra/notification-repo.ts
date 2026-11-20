@@ -116,6 +116,44 @@ export function preparePendingSlotCancel(
 }
 
 /**
+ * `MISSED_BILLED` 기록에 남은 `PENDING` 알림 중 결제 확인 알림이 아닌 것을 취소한다 (SPEC §6 알림 취소, §17 배치).
+ * 기록 id를 따로 받지 않고 "지금 `MISSED_BILLED`인 기록 전체"를 대상으로 해서, 같은 batch의 앞선 UPDATE로 바뀐 기록과
+ * 이전 실행이 중간에 멈춰 알림 정리가 빠진 기록을 함께 정리한다. 몇 번을 실행해도 결과가 같다.
+ */
+export function prepareLeftoverSlotCancelForMissedBilled(db: D1Database): D1PreparedStatement {
+  return db.prepare(
+    `UPDATE notification_schedules SET status = 'CANCELED'
+      WHERE status = 'PENDING' AND kind <> 'BILLING_CHECK'
+        AND trial_record_id IN (SELECT id FROM trial_records WHERE status = 'MISSED_BILLED')`,
+  );
+}
+
+/**
+ * 결제 확인 알림(`BILLING_CHECK`)이 아직 없는 `MISSED_BILLED` 기록마다 하나씩 `PENDING`으로 저장한다
+ * (SPEC §6·§17, architecture §5.7). 유일 키(기록, 슬롯, `safeEndDate`)와 `INSERT OR IGNORE`, 슬롯이 이미 있는
+ * 기록을 거르는 `NOT EXISTS`로 몇 번을 실행해도 한 번만 들어가며, 이전 실행이 전이만 하고 멈춘 기록의 누락분도
+ * 채운다. 이미 보냈거나(`SENT`) 건너뛴 행이 있는 기록에는 다시 만들지 않는다.
+ * 한 문장으로 여러 행을 넣어야 해서 행 id는 SQL에서 만든다(불투명 TEXT 키, `newId()`의 UUID 형식은 아니다).
+ */
+export function prepareBillingCheckInserts(
+  db: D1Database,
+  sendAt: UtcInstant,
+): D1PreparedStatement {
+  return db
+    .prepare(
+      `INSERT OR IGNORE INTO notification_schedules
+         (id, trial_record_id, kind, slot, variant, safe_end_date, send_at, status)
+       SELECT lower(hex(randomblob(16))), r.id, 'BILLING_CHECK', 'BILLING_CHECK', 'REGULAR',
+              r.safe_end_date, ?, 'PENDING'
+         FROM trial_records r
+        WHERE r.status = 'MISSED_BILLED'
+          AND NOT EXISTS (SELECT 1 FROM notification_schedules n
+                           WHERE n.trial_record_id = r.id AND n.slot = 'BILLING_CHECK')`,
+    )
+    .bind(sendAt);
+}
+
+/**
  * 기록이 아직 이 알림을 보낼 의미가 있는지 (architecture §5.6). 탈출 알림은 기록이 `TRACKING`이고
  * `billingDate`가 지나지 않았을 때, 해지 확인 알림은 `CANCEL_ATTEMPTED`일 때, 결제 확인 알림은
  * `MISSED_BILLED`일 때만 의미가 있다. 발송 선점(claim)과 만료(expire)가 같은 조건을 쓴다.

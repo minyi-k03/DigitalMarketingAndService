@@ -271,10 +271,10 @@
   - TT "발송 시각 설정 변경(G5: 기존 `PENDING`의 `sendAt` 유지, 이후 생성·재예약 슬롯만 새 시각)"
 - **주요 파일**: `m/trial-tracking/application/dispatch.ts`, `m/trial-tracking/domain/notification-message.ts`, `m/trial-tracking/infra/notification-repo.ts`, `w/ports/notification-sender.ts`, `w/adapters/notification-log.ts`, `w/adapters/select-sender.ts`, `w/scheduled.ts`, `w/http/routes/trials.ts`(waitUntil)
 
-### T18 MISSED_BILLED 배치 — `대기`
+### T18 MISSED_BILLED 배치 — `완료 (2026-11-20. 전이·남은 알림 취소·BILLING_CHECK 저장을 D1 batch 하나로 실행해 중간 실패로 일부만 반영되지 않는다. 전이는 상태별 조건부 UPDATE(RETURNING 대신 batch 결과의 changes로 건수 집계), 알림 취소·저장은 "지금 MISSED_BILLED인 기록 전체"를 대상으로 해서 이전 실행이 멈춰 빠진 누락분도 같은 문장이 보충한다. BILLING_CHECK 발송 시각은 배치 당일의 기본 발송 시각 T(today)(SPEC §17 "같은 날", 정상 실행에서는 T(billingDate+1)과 같음). 발송 어댑터가 없어도 배치는 돈다. 상세는 architecture §5.7)`
 - **근거**: §5 `BillingDate` 경과, §6 결제 확인 알림, §17 배치, S31, S-03
 - **선행**: T17
-- **내용**: 조건부 UPDATE … RETURNING → `PENDING` 취소 → `BILLING_CHECK` `INSERT OR IGNORE`, 누락분 보충, `scheduled`(`10 15 * * *`)
+- **내용**: 조건부 UPDATE(상태별, `WHERE status = :from`) → `PENDING` 취소 → `BILLING_CHECK` `INSERT OR IGNORE`, 누락분 보충(한 batch), `scheduled`(`10 15 * * *`)
 - **완료 기준**: TT "`MISSED_BILLED` 배치 두 번 실행해도 전이·알림 1회", 00:10 KST 실행 시 `todayKst` 판정
 - **주요 파일**: `m/trial-tracking/application/missed-billed-batch.ts`
 

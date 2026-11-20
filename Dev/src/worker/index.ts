@@ -46,7 +46,7 @@ export default {
   fetch: (request, env, ctx) => createApp(buildDeps(env).app).fetch(request, env, ctx),
   scheduled: (controller, env, ctx) => {
     const { app, canSend } = buildDeps(env);
-    // 끝날 때까지 Worker를 유지한다. T18에서 MISSED_BILLED 배치도 같은 진입점으로 연결한다
+    // 끝날 때까지 Worker를 유지한다. 표현식에 따라 디스패치(`*/10`) 또는 MISSED_BILLED 배치(`10 15`)가 돈다
     ctx.waitUntil(
       runScheduled(controller.cron, {
         trialTracking: app.trialTracking,

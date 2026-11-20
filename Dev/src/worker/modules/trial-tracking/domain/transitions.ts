@@ -41,6 +41,14 @@ const TERMINAL: ReadonlySet<TrialStatus> = new Set([
   'BILLED_CONFIRMED',
 ]);
 
+/**
+ * 이벤트가 허용되는 출발 상태 (전이표 한 곳이 단일 출처). 배치처럼 상태를 묻지 않고 한꺼번에 전이하는 호출자가
+ * 전이표와 따로 목록을 들고 있지 않게 한다.
+ */
+export function statesAllowing(event: TrialEvent): TrialStatus[] {
+  return Object.keys(TRANSITIONS[event]) as TrialStatus[];
+}
+
 export interface Transition {
   from: TrialStatus;
   to: TrialStatus;

@@ -141,6 +141,27 @@ export function prepareDatesUpdate(
 }
 
 /**
+ * `BillingDate`가 `today`(KST)보다 이전인 `from` 상태 기록을 `to`로 바꾸는 배치용 조건부 UPDATE (SPEC §17,
+ * architecture §5.7). 상태 조건(`WHERE status = :from`)이라 배치가 겹치거나 다시 돌아도 이미 바뀐 기록은
+ * 건드리지 않는다. 응답(`exit_reason`)·`cancel_attempted_at`은 그대로 둔다(CANCEL_ATTEMPTED의 응답 보존).
+ * 바뀐 행 수는 batch 결과의 `meta.changes`다.
+ */
+export function prepareBillingDatePassedUpdate(
+  db: D1Database,
+  from: TrialStatus,
+  to: TrialStatus,
+  statusChangedAt: UtcInstant,
+  today: KstDate,
+): D1PreparedStatement {
+  return db
+    .prepare(
+      `UPDATE trial_records SET status = ?, status_changed_at = ?
+        WHERE status = ? AND billing_date < ?`,
+    )
+    .bind(to, statusChangedAt, from, today);
+}
+
+/**
  * 기록을 저장한다. 같은 사용자·항목의 진행 중 기록이 이미 있으면(부분 UNIQUE 인덱스 위반) `false`다.
  * 확인 후 저장하는 사이에 끼어드는 동시 요청도 이 제약이 막으므로 중복 판정은 DB가 한다.
  * `followUps`(알림 저장 등)는 같은 batch로 실행하며, 기록 INSERT가 실패하면 함께 롤백된다.

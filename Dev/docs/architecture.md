@@ -326,21 +326,34 @@ templateKeyFor({ kind, variant }, retentionPolicy): string           // 문구 �
 - **한 슬롯의 실패는 같은 회차의 다른 슬롯을 막지 않는다.** 오류 메시지에는 수신처 정보가 섞일 수 있어 기록하지 않는다. 회차 요약(`DispatchResult`)만 `scheduled`가 로그로 남긴다.
 - **발송 어댑터가 없으면**(`NOTIFICATION_MODE`가 `kakao_memo`·`dealer`인데 T34·T31 전) `sender`가 `undefined`이고 디스패처는 슬롯을 선점하지도 닫지도 않는다. 선점하면 보낼 수 없는 알림이 재시도로 소진돼 `FAILED`가 되기 때문이다. `scheduled`는 이때 `notification_sender_unavailable`을 기록한다.
 - **즉시 발송**: `POST /api/trials`·`PATCH /api/trials/{id}` 라우트가 응답을 보낸 뒤 `ctx.waitUntil(dispatchDueNotifications({ trialRecordId }))`로 그 기록의 도래한 슬롯만 보낸다(`LATE_REGISTRATION`의 `sendAt = now`). 보낼 것이 없어도 복구·만료·선점 UPDATE 3문장은 실행하지만 바뀌는 행이 없다. 실패해도 응답은 그대로이며 다음 Cron이 다시 집어 간다. ExecutionContext가 없는 실행(ctx 없이 `app.request`를 부르는 단위 테스트)에서는 건너뛴다.
-- **`scheduled` 진입점**(`src/worker/scheduled.ts`)은 Cron 표현식으로 작업을 가른다. `*/10 * * * *`은 디스패치, `10 15 * * *`(`MISSED_BILLED`)는 T18에서 연결한다.
+- **`scheduled` 진입점**(`src/worker/scheduled.ts`)은 Cron 표현식으로 작업을 가른다. `*/10 * * * *`은 디스패치, `10 15 * * *`은 `MISSED_BILLED` 배치(§5.7)다.
 - 상태 전이로 종료 상태가 되면 그 기록의 `PENDING` 슬롯을 모두 `CANCELED`로 바꾼다(§6 알림 취소).
 
 ### 5.7 `MISSED_BILLED` 배치 (§17) — 매일 15:10 UTC
 
 ```sql
-UPDATE trial_records
-   SET status='MISSED_BILLED', status_changed_at=:now
- WHERE status IN ('TRACKING','CANCEL_ATTEMPTED') AND billing_date < :todayKst
-RETURNING id, safe_end_date, billing_date;
+-- D1 batch 한 번 (T18). 1·2는 from 상태마다 한 문장이며 `to`는 applyTransition(BILLING_DATE_PASSED)의 결과다
+UPDATE trial_records SET status = :to, status_changed_at = :now
+ WHERE status = :from AND billing_date < :todayKst;               -- 1 TRACKING, 2 CANCEL_ATTEMPTED
+
+UPDATE notification_schedules SET status = 'CANCELED'
+ WHERE status = 'PENDING' AND kind <> 'BILLING_CHECK'
+   AND trial_record_id IN (SELECT id FROM trial_records WHERE status = 'MISSED_BILLED');   -- 3
+
+INSERT OR IGNORE INTO notification_schedules (…, slot, variant, safe_end_date, send_at, status)
+SELECT …, 'BILLING_CHECK', 'REGULAR', r.safe_end_date, :T(today), 'PENDING'
+  FROM trial_records r
+ WHERE r.status = 'MISSED_BILLED'
+   AND NOT EXISTS (SELECT 1 FROM notification_schedules n
+                    WHERE n.trial_record_id = r.id AND n.slot = 'BILLING_CHECK');           -- 4
 ```
 
-- 이어서 반환된 기록의 `PENDING` 슬롯을 `CANCELED`로 바꾸고, `INSERT OR IGNORE`로 `BILLING_CHECK`(`T(today)`)를 넣습니다.
-- 두 번 실행돼도 두 번째 UPDATE는 0행이고, INSERT는 유일 제약으로 무시되므로 결과가 같습니다.
-- 첫 단계와 두 번째 단계 사이에 실패하면 다음 실행에서 `BILLING_CHECK`가 빠진 `MISSED_BILLED` 기록을 찾아 보충합니다.
+- 세 단계가 한 batch라 중간에 실패해도 일부만 반영되지 않는다. 건수는 batch 결과의 `meta.changes`(1·2의 합이 `transitioned`, 4가 `scheduled`)이며 `RETURNING`은 쓰지 않는다.
+- 3·4는 방금 전이된 기록이 아니라 "지금 `MISSED_BILLED`인 기록 전체"가 대상이다. 그래서 두 번 실행돼도 결과가 같고(1·2는 0행, 3은 같은 행을 다시 취소할 뿐, 4는 `NOT EXISTS`와 유일 키로 0행), 과거에 전이만 되고 멈춘 기록의 `BILLING_CHECK` 누락분도 다음 실행이 보충한다. 이미 보낸(`SENT`)·건너뛴(`SKIPPED`) 슬롯이 있는 기록에는 다시 만들지 않는다.
+- 겹쳐 실행돼도 D1이 batch를 직렬로 처리하고 1·2가 상태 조건부이므로 같은 기록을 두 번 전이하지 않는다. 남은 알림의 취소는 디스패처의 expire(§5.6)와도 중복된 안전망이다.
+- `BILLING_CHECK`의 `send_at`은 배치 당일의 기본 발송 시각 `T(today)`다(SPEC §17 "같은 날 기본 발송 시각"). 00:10 KST 정상 실행에서는 §5.4 표의 `T(billingDate + 1)`과 같고, 늦게 따라잡는 실행이면 오늘 발송 시각이 지난 경우 다음 디스패치가 바로 보낸다. 시각은 `notification.sendTime`을 쓰며 올바르지 않은 값이면 batch 전에 던져 아무것도 바뀌지 않는다(G5).
+- `scheduled`는 `10 15 * * *`에서 이 배치를 호출하고 `missed_billed_batch`(`transitioned`·`scheduled`) 또는 `missed_billed_batch_failed`(오류 종류만)를 기록한다. 발송 어댑터 유무(`canSend`)와 무관하게 돈다. 배치 자체는 알림을 보내지 않으며 `BILLING_CHECK`는 10분 디스패치가 보낸다.
+- 공개 인터페이스: `trialTracking.runMissedBilledBatch(): { transitioned, scheduled }`.
 
 ### 5.8 `SavedAmount` (§8)
 
