@@ -1,0 +1,19 @@
+.actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-xs);
+}
+
+/* 글자만 있는 보조 행동. 터치 영역은 유지한다 */
+.quiet {
+  min-height: var(--tap-target);
+  padding: 4px var(--space-xs);
+  border: 0;
+  background: none;
+  color: var(--color-primary);
+  font: inherit;
+  font-size: 15px;
+  text-decoration: underline;
+  text-underline-offset: 3px;
+  cursor: pointer;
+}

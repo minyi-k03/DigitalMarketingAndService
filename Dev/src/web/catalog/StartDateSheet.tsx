@@ -5,7 +5,7 @@ import { ErrorNotice } from '../ui/ErrorNotice';
 import { Sheet } from '../ui/Sheet';
 import type { CatalogItemPublicView } from './api';
 import { previewTrialPlan, startDateMessage } from './trial-plan';
-import styles from './StartDateSheet.module.css';
+import styles from '../ui/sheetForm.module.css';
 
 export type StartDateMode = 'date' | 'already';
 

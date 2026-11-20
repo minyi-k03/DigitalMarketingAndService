@@ -1,4 +1,4 @@
-import { difficultyLabel } from './labels';
+import { difficultyLabel, type Tone } from './labels';
 import type { CatalogItemPublicView } from './api';
 import styles from './parts.module.css';
 
@@ -25,10 +25,8 @@ export function DifficultyBadge({ level }: { level: CatalogItemPublicView['darkP
   return <span className={`${styles.badge} ${styles[tone]}`}>해지 난이도 {text}</span>;
 }
 
-export function Badge({ children }: { children: string }) {
-  return <span className={`${styles.badge} ${styles.plain}`}>{children}</span>;
+export function Badge({ children, tone = 'plain' }: { children: string; tone?: Tone | 'plain' }) {
+  return <span className={`${styles.badge} ${styles[tone]}`}>{children}</span>;
 }
 
-export function won(amount: number): string {
-  return `${amount.toLocaleString('ko-KR')}원`;
-}
+export { won } from '../ui/money';

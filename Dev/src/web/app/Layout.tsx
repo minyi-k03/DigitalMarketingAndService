@@ -1,5 +1,5 @@
 import { useMutation, useQueryClient } from '@tanstack/react-query';
-import { Link, Outlet, useLocation } from 'react-router';
+import { Link, NavLink, Outlet, useLocation } from 'react-router';
 import { apiFetch } from '../api/client';
 import { buildLoginRedirect } from '../api/login-redirect';
 import { ME_QUERY_KEY, useMe } from '../api/me';
@@ -24,9 +24,12 @@ export function Layout() {
             <BrandMark />
             구독컷
           </Link>
-          <nav className={styles.actions} aria-label="계정">
+          <nav className={styles.actions} aria-label="사용자 메뉴">
             {me.data ? (
               <>
+                <NavLink to="/trials" className={styles.navLink}>
+                  내 체험
+                </NavLink>
                 <span className={styles.nickname}>{me.data.nickname ?? '회원'}</span>
                 <button
                   type="button"

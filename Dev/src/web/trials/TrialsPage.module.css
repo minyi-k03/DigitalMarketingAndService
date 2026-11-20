@@ -1,0 +1,119 @@
+.page {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-md);
+  width: 100%;
+  max-width: var(--container-max);
+  margin: 0 auto;
+  padding: var(--space-lg) var(--space-md) var(--space-xxl);
+}
+
+.heading {
+  font-size: 26px;
+  font-weight: 700;
+  line-height: 1.23;
+  letter-spacing: -0.625px;
+}
+
+/* 이 화면에서 기억에 남을 한 곳: 지켜 낸 금액. 나머지는 조용히 둔다 */
+.summary {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: flex-end;
+  justify-content: space-between;
+  gap: var(--space-md);
+  /* 페이지 배경이 이미 canvas-soft라 띠를 두지 않고 제목과 왼쪽 선을 맞춘다 */
+  padding: var(--space-xs) 0 var(--space-sm);
+}
+
+.saved,
+.active {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-xxs);
+}
+
+.label {
+  color: var(--color-ink-muted);
+  font-size: 14px;
+  line-height: 1.43;
+}
+
+.amount {
+  font-size: clamp(32px, 9vw, 40px);
+  font-weight: 700;
+  line-height: 1.1;
+  letter-spacing: -1px;
+  font-variant-numeric: tabular-nums;
+}
+
+.count {
+  font-size: 22px;
+  font-weight: 700;
+  line-height: 1.27;
+  letter-spacing: -0.25px;
+}
+
+.tabs {
+  display: flex;
+  gap: var(--space-xs);
+}
+
+.tab {
+  display: inline-flex;
+  align-items: center;
+  min-height: var(--tap-target);
+  padding: 4px 14px;
+  border: 1px solid var(--color-hairline);
+  border-radius: var(--radius-full);
+  background: var(--color-surface);
+  color: var(--color-ink);
+  font-size: 14px;
+  text-decoration: none;
+}
+
+.tab[aria-current='page'] {
+  border-color: var(--color-ink-secondary);
+  background: var(--color-ink-secondary);
+  color: var(--color-on-primary);
+  font-weight: 600;
+}
+
+.list {
+  display: grid;
+  /* 긴 서비스 이름이 열을 화면 밖으로 밀어내지 않게 열 폭의 최솟값을 0으로 둔다 */
+  grid-template-columns: minmax(0, 1fr);
+  gap: var(--space-sm);
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+@media (min-width: 720px) {
+  .list {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    align-items: start;
+  }
+}
+
+.skeletonCard {
+  height: 132px;
+}
+
+.empty {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: var(--space-sm);
+  padding: var(--space-lg) 0;
+}
+
+.emptyTitle {
+  font-size: 20px;
+  font-weight: 600;
+  line-height: 1.4;
+}
+
+.emptyDetail {
+  color: var(--color-ink-muted);
+}

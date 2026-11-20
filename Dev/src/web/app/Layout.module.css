@@ -48,6 +48,29 @@
   color: var(--color-ink-secondary);
 }
 
+.navLink {
+  display: inline-flex;
+  align-items: center;
+  min-height: var(--tap-target);
+  padding: 0 var(--space-xs);
+  color: var(--color-ink);
+  font-weight: 500;
+  text-decoration: none;
+}
+
+.navLink[aria-current='page'] {
+  font-weight: 700;
+  text-decoration: underline;
+  text-underline-offset: 6px;
+}
+
+/* 360px에서 닉네임이 로그아웃·내 체험 버튼을 밀어내지 않게 한다 */
+@media (max-width: 480px) {
+  .nickname {
+    display: none;
+  }
+}
+
 .main {
   flex: 1;
 }
