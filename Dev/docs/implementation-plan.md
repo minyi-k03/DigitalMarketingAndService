@@ -163,7 +163,7 @@ T01 → T02 → T03 → T04 → T05 → T06 → T09 ─┐
 | 11/3~11/9 | T05·T06·T07, T08, T09(간소), T10 | T25 | N5 해지 경로 검증 시작 | M2·M3 | 서버: `workers-best-practices`(T05~T10), T07 `codebase-design`·`writing-plans`(포트·`openapi.yaml` 변경 계획), T08 `domain-modeling`<br>화면: T25 `frontend-design`, `vercel-react-best-practices` |
 | 11/10~11/16 | **T13~T15** | T26 | | **점검 A**: T15 테스트 통과 | 서버: T13~T15 `codebase-design`, T14 `workers-best-practices`(D1 `batch`)<br>화면: T26 `frontend-design`, `design-taste-frontend`, `vercel-react-best-practices` |
 | 11/17~11/23 | T16(간소), T17, **T34**, T18, T19 | T27 | 시험 배포 1회 | **점검 B**: 실제 카카오톡 수신 확인 | 서버: T17·T18 `workers-best-practices`(Cron·`scheduled`), T34 `context7`(카카오 메시지 API), 시험 배포 `wrangler`(설치 필요)<br>화면: T27 `frontend-design`, `vercel-react-best-practices` |
-| 11/24~11/30 | T20~T23 | T28, T30(간소)·T61 | N5 데이터 입력 | **점검 C**: T62 범위 결정 | 서버: T20~T23 `codebase-design`(EscapeBridge 모듈 경계)<br>화면: T28·T30·T61 `frontend-design`, `design-taste-frontend`, 브라우저 점검 `agent-browser`(CLI 설치 필요) |
+| 11/24~11/30 | T20~T23 | T28, T30(간소)·T61, T27 환불 템플릿 보기 연결(T22 뒤, 2026-11-20 결정) | N5 해지 경로 직접 확인·데이터 입력(2026-11-20 결정: 이 주에 진행) | **점검 C**: T62 범위 결정 | 서버: T20~T23 `codebase-design`(EscapeBridge 모듈 경계)<br>화면: T28·T30·T61 `frontend-design`, `design-taste-frontend`, 브라우저 점검 `agent-browser`(CLI 설치 필요) |
 | 12/1~12/5 | T35, T60·T62·T63 서버, T33, **Cloudflare 최종 배포** | T60·T62·T63 화면 | N1 문안 | 기능 동결·최종 배포(12/5) | 서버: T35 전용 Skill 없음, T33 `agent-browser`(CLI 설치 필요), 최종 배포 `wrangler`<br>화면: T60·T62·T63 `frontend-design`, `design-taste-frontend` |
 | 12/6~12/8 | 버그 수정만 | 버그 수정만 | 리허설, 시연 영상 백업, 발표 자료 | | `systematic-debugging`, `verification-before-completion` |
 

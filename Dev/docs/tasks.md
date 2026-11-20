@@ -353,10 +353,12 @@
 - **선행**: T25, T10, T13
 - **내용**: 분야별 목록·검색, 상세(다크패턴 등급, 가이드, 보존 정책, 백업, EduBenefit, 'YYYY-MM-DD 확인'), 1회 클릭 등록, 시작일 변경, '이미 가입했어요', '게시 중단' 안내와 등록 버튼 숨김
 
-### T27 내 체험 화면 — `대기`
+### T27 내 체험 화면 — `진행 (2026-11-20 구현·npm run verify 통과(test 48파일 703건, 웹 순수 로직 6개 seam 51건 추가. Antigravity code-review·교차 검증 반영 2026-11-20). 목록 `/trials`(요약·탭·카드)와 상세 `/trials/:id`(BILLING_CHECK 알림 도착지), 유지·등록 취소·해지 확정·결제 확인 정정(확인 시트, ExitPoll 사유 필요 시 선택), 날짜 수정을 구현. 로컬 브라우저 확인(Chrome CDP, 360px·1280px, 가로 넘침 없음). 잔여: 환불 템플릿 보기 버튼·화면은 T22(API) 완료 뒤 11/24~11/30 주에 연결(그때까지 `VIEW_REFUND_TEMPLATE` 버튼 숨김, 사용자 결정 2026-11-20), 반영분 재점검(Antigravity))`
 - **근거**: S10·S23·S28~S32·S41·S42, D-09
-- **선행**: T25, T19, T16, T22
+- **선행**: T25, T19, T16, T22(환불 템플릿 부분만. 나머지는 T22 없이 구현)
 - **내용**: 탭 대시보드(누적 방어 금액·진행 중 건수), 카드 행동 버튼, 기록 상세·수정, 해지 확정(필요 시 ExitPoll), 결제 확인 정정 화면, 환불 템플릿 복사
+- **결정(2026-11-20)**: TRACKING 기록의 직접 해지 확정(S28)은 서버 `actions`에 없으므로 상세 화면의 보조 버튼 '이미 직접 해지했어요'(사유 선택 → `confirm-cancel`)로 둔다. 서버·`openapi.yaml` 변경 없음. 알림 수신 끔 안내 배너는 범위에서 제외했다.
+- **주요 파일**: `src/web/trials/*`(순수 로직 `actions`·`commands`·`command-error`·`edit-request`·`labels`·`tab`·`summary`, 데이터 `api`, 화면 `TrialsPage`·`TrialCard`·`TrialDetail`·`TrialActions`·`ActionSheet`·`EditDatesSheet`), `src/web/ui/money.ts`·`sheetForm.module.css`(공용으로 옮김), `src/web/app/router.tsx`·`Layout.tsx`, `tests/web/trial-*.test.ts`(6파일)
 
 ### T28 해지 브릿지 화면 — `대기`
 - **근거**: S16~S24·S34, V-05
