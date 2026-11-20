@@ -4,18 +4,24 @@ import { createTrialTrackingService } from '../../src/worker/modules/trial-track
 import { seedItem } from './catalog-seed';
 import type { CatalogItemInput } from './catalog-fixtures';
 import { FakeClock } from './fake-clock';
+import { FakeNotificationSender } from './fake-notification-sender';
+import { buildIdentity } from './identity';
 import { insertUser } from './user-seed';
 
 /** 실제 D1과 실제 카탈로그 서비스로 조립한 Trial Tracking. 시계만 FakeClock이다 */
 export function buildTrialTracking(startAt: string) {
   const clock = new FakeClock(startAt);
   const catalog = createCatalogService({ db: env.DB, clock });
+  const { identity, recipients } = buildIdentity(clock);
+  const sender = new FakeNotificationSender();
   let interleave: (() => Promise<unknown>) | undefined;
   // 동시 요청 재현용: 명령이 기록을 읽은 뒤 저장하기 전에 카탈로그 조건을 읽는 순간, 한 번만 다른 명령을 먼저 끝낸다.
   // 카탈로그 자체는 실제 서비스 그대로다
   const trialTracking = createTrialTrackingService({
     db: env.DB,
     clock,
+    identity,
+    sender,
     catalog: {
       getEscapeContent: (id) => catalog.getEscapeContent(id),
       getTrackingTerms: async (id) => {
@@ -29,7 +35,7 @@ export function buildTrialTracking(startAt: string) {
   const interleaveOnce = (run: () => Promise<unknown>) => {
     interleave = run;
   };
-  return { clock, catalog, trialTracking, interleaveOnce };
+  return { clock, catalog, identity, recipients, sender, trialTracking, interleaveOnce };
 }
 
 /** 새 사용자가 게시된 항목을 `startAt` 시각에 오늘 시작으로 등록한 상태 */

@@ -10,6 +10,7 @@ import { createIdentityService } from '../../src/worker/modules/identity';
 import { createTrialTrackingService } from '../../src/worker/modules/trial-tracking';
 import { FakeClock } from '../support/fake-clock';
 import { FakeKakaoOAuthClient } from '../support/fake-kakao-oauth';
+import { FakeNotificationSender } from '../support/fake-notification-sender';
 import { FakeRecipientResolver } from '../support/fake-recipient-resolver';
 
 type LogEntry = { level: 'info' | 'error'; event: string; fields: Record<string, unknown> };
@@ -31,7 +32,13 @@ function buildApp() {
     recipientResolver: new FakeRecipientResolver(),
   });
   const catalog = createCatalogService({ db: env.DB, clock });
-  const trialTracking = createTrialTrackingService({ db: env.DB, clock, catalog });
+  const trialTracking = createTrialTrackingService({
+    db: env.DB,
+    clock,
+    catalog,
+    identity,
+    sender: new FakeNotificationSender(),
+  });
   const app = createApp({ clock, db: env.DB, logger, identity, catalog, trialTracking });
 
   app.post(

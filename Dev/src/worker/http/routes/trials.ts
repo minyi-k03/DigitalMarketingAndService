@@ -1,4 +1,4 @@
-import { Hono } from 'hono';
+import { Hono, type Context } from 'hono';
 import { z } from 'zod';
 import type { components } from '../../../shared/api-types';
 import type { AppEnv } from '../app-env';
@@ -43,71 +43,98 @@ const billingResolutionBody = z.strictObject({
 export const trialRoutes = ({
   identity,
   trialTracking,
-}: Pick<AppDeps, 'identity' | 'trialTracking'>) =>
-  new Hono<AppEnv>()
-    .post('/api/trials', requireSession(identity), validateJson(createTrialBody), async (c) =>
-      c.json(
-        await trialTracking.createTrialRecord({
+  logger,
+}: Pick<AppDeps, 'identity' | 'trialTracking' | 'logger'>) => {
+  /**
+   * 응답을 보낸 뒤 그 기록의 도래한 알림을 바로 보낸다 (architecture §5.6). 등록·수정으로 정규 슬롯이 모두
+   * 지나면 `LATE_REGISTRATION`(`sendAt = now`)이 저장되는데, 다음 Cron(최대 10분 뒤)을 기다리면 늦은 등록의 의미가
+   * 없다. 보낼 것이 없어도 복구·만료·선점 UPDATE 3문장은 실행하지만 바뀌는 행은 없다. 실패해도 응답은 그대로이고 다음 Cron이 다시 집어 간다.
+   * ExecutionContext가 없는 실행(ctx 없이 `app.request`를 부르는 단위 테스트)에서는 건너뛴다. 배포 환경은 항상 있다.
+   */
+  const dispatchAfterResponse = (c: Context<AppEnv>, trialRecordId: string) => {
+    let waitUntil: ExecutionContext['waitUntil'];
+    try {
+      waitUntil = c.executionCtx.waitUntil.bind(c.executionCtx);
+    } catch {
+      return;
+    }
+    waitUntil(
+      trialTracking.dispatchDueNotifications({ trialRecordId }).catch((e: unknown) => {
+        // 오류 메시지에는 수신처 정보가 섞일 수 있어 종류만 남긴다 (SPEC §15)
+        logger.error('notification_dispatch_failed', {
+          name: e instanceof Error ? e.name : 'unknown',
+        });
+      }),
+    );
+  };
+
+  return (
+    new Hono<AppEnv>()
+      .post('/api/trials', requireSession(identity), validateJson(createTrialBody), async (c) => {
+        const record = await trialTracking.createTrialRecord({
           userId: c.get('user').userId,
           ...c.req.valid('json'),
-        }),
-        201,
-      ),
-    )
-    // 기록 수정 (SPEC §5 수정 범위, §6 재예약)
-    .patch(
-      '/api/trials/:trialRecordId',
-      requireSession(identity),
-      validateJson(updateTrialBody),
-      async (c) =>
-        c.json(
-          await trialTracking.updateTrialRecord({
+        });
+        dispatchAfterResponse(c, record.id);
+        return c.json(record, 201);
+      })
+      // 기록 수정 (SPEC §5 수정 범위, §6 재예약)
+      .patch(
+        '/api/trials/:trialRecordId',
+        requireSession(identity),
+        validateJson(updateTrialBody),
+        async (c) => {
+          const record = await trialTracking.updateTrialRecord({
             userId: c.get('user').userId,
             trialRecordId: c.req.param('trialRecordId'),
             ...c.req.valid('json'),
-          }),
-        ),
-    )
-    // 상태 전이 (SPEC §5). 소유 확인은 명령이 userId로 하며 남의 기록은 404다
-    .post(
-      '/api/trials/:trialRecordId/confirm-cancel',
-      requireSession(identity),
-      validateJson(confirmCancelBody),
-      async (c) =>
+          });
+          dispatchAfterResponse(c, record.id);
+          return c.json(record);
+        },
+      )
+      // 상태 전이 (SPEC §5). 소유 확인은 명령이 userId로 하며 남의 기록은 404다
+      .post(
+        '/api/trials/:trialRecordId/confirm-cancel',
+        requireSession(identity),
+        validateJson(confirmCancelBody),
+        async (c) =>
+          c.json(
+            await trialTracking.confirmCancel({
+              userId: c.get('user').userId,
+              trialRecordId: c.req.param('trialRecordId'),
+              ...c.req.valid('json'),
+            }),
+          ),
+      )
+      .post('/api/trials/:trialRecordId/keep', requireSession(identity), async (c) =>
         c.json(
-          await trialTracking.confirmCancel({
+          await trialTracking.decideKeep({
             userId: c.get('user').userId,
             trialRecordId: c.req.param('trialRecordId'),
-            ...c.req.valid('json'),
           }),
         ),
-    )
-    .post('/api/trials/:trialRecordId/keep', requireSession(identity), async (c) =>
-      c.json(
-        await trialTracking.decideKeep({
-          userId: c.get('user').userId,
-          trialRecordId: c.req.param('trialRecordId'),
-        }),
-      ),
-    )
-    .post('/api/trials/:trialRecordId/void', requireSession(identity), async (c) =>
-      c.json(
-        await trialTracking.voidTrialRecord({
-          userId: c.get('user').userId,
-          trialRecordId: c.req.param('trialRecordId'),
-        }),
-      ),
-    )
-    .post(
-      '/api/trials/:trialRecordId/billing-resolution',
-      requireSession(identity),
-      validateJson(billingResolutionBody),
-      async (c) =>
+      )
+      .post('/api/trials/:trialRecordId/void', requireSession(identity), async (c) =>
         c.json(
-          await trialTracking.resolveMissedBilling({
+          await trialTracking.voidTrialRecord({
             userId: c.get('user').userId,
             trialRecordId: c.req.param('trialRecordId'),
-            ...c.req.valid('json'),
           }),
         ),
-    );
+      )
+      .post(
+        '/api/trials/:trialRecordId/billing-resolution',
+        requireSession(identity),
+        validateJson(billingResolutionBody),
+        async (c) =>
+          c.json(
+            await trialTracking.resolveMissedBilling({
+              userId: c.get('user').userId,
+              trialRecordId: c.req.param('trialRecordId'),
+              ...c.req.valid('json'),
+            }),
+          ),
+      )
+  );
+};

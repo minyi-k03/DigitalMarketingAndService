@@ -2,11 +2,10 @@ import { env } from 'cloudflare:test';
 import { createApp } from '../../src/worker/http/app';
 import type { Logger } from '../../src/worker/http/logger';
 import { createCatalogService } from '../../src/worker/modules/catalog';
-import { createIdentityService } from '../../src/worker/modules/identity';
 import { createTrialTrackingService } from '../../src/worker/modules/trial-tracking';
 import { FakeClock } from './fake-clock';
-import { FakeKakaoOAuthClient } from './fake-kakao-oauth';
-import { FakeRecipientResolver } from './fake-recipient-resolver';
+import { FakeNotificationSender } from './fake-notification-sender';
+import { buildIdentity } from './identity';
 
 export const ORIGIN = 'http://localhost';
 export const silentLogger: Logger = { info: () => {}, error: () => {} };
@@ -14,18 +13,16 @@ export const silentLogger: Logger = { info: () => {}, error: () => {} };
 /** 가짜 카카오와 실제 D1로 조립한 앱. 로그인 헬퍼와 함께 쓴다 */
 export function buildLoginApp() {
   const clock = new FakeClock('2026-11-02T01:00:00.000Z');
-  const kakao = new FakeKakaoOAuthClient();
-  const identity = createIdentityService({
+  const { identity, kakao, recipients } = buildIdentity(clock);
+  const catalog = createCatalogService({ db: env.DB, clock });
+  const sender = new FakeNotificationSender();
+  const trialTracking = createTrialTrackingService({
     db: env.DB,
     clock,
-    kakao,
-    sessionSigningKey: 'test-session-signing-key',
-    tokenEncryptionKey: btoa('0123456789abcdef0123456789abcdef'),
-    notificationMode: 'kakao_memo',
-    recipientResolver: new FakeRecipientResolver(),
+    catalog,
+    identity,
+    sender,
   });
-  const catalog = createCatalogService({ db: env.DB, clock });
-  const trialTracking = createTrialTrackingService({ db: env.DB, clock, catalog });
   const app = createApp({
     clock,
     db: env.DB,
@@ -34,7 +31,7 @@ export function buildLoginApp() {
     catalog,
     trialTracking,
   });
-  return { app, clock, kakao, identity, catalog, trialTracking };
+  return { app, clock, kakao, identity, recipients, sender, catalog, trialTracking };
 }
 
 type LoginApp = ReturnType<typeof buildLoginApp>;

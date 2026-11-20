@@ -3,7 +3,8 @@ import { env } from 'cloudflare:test';
 // T14 시점에는 아래 상태·행을 만드는 공개 명령이 아직 없어 테스트 준비·관찰에만 SQL을 쓴다.
 // - MISSED_BILLED 전이: T18 배치가 생기면 그 명령으로 바꾼다
 // - 알림 슬롯: 생성·사유 선택·기록 수정의 저장은 T16 명령이 한다. 여기 SQL은 결제 확인 알림(T18 전)과 발송 결과 흉내
-//   (SENT 등, T17 전)를 준비하고 저장된 행을 관찰하는 데만 쓰며, 관찰은 T17 디스패처 조회가 생기면 바꾼다
+//   (SENT 등)를 준비하고 저장된 행을 관찰하는 데만 쓴다. 발송 결과는 T17 디스패처가 만들지만 T16 테스트가 "이미 보낸 행"을
+//   직접 만들어 쓰고, 관찰은 알림 조회 명령이 생기기 전까지 SQL로 한다
 // - ExitPoll 응답 원본: 공개 조회는 발표용 집계(T62)뿐이라 불변식(기록당 정확히 1건) 확인에만 직접 읽는다
 
 /** BillingDate 경과 배치(T18)가 한 일을 흉내 낸다. 응답이 있던 CANCEL_ATTEMPTED 기록은 응답을 보존한다 */
@@ -59,7 +60,7 @@ export async function insertPendingSlot(
     .run();
 }
 
-/** 저장된 알림 행 전체. T17 디스패처의 공개 조회가 생기면 그 조회로 바꾼다 */
+/** 저장된 알림 행 전체. 알림 조회 명령이 생기기 전까지 SQL로 관찰한다 */
 export async function slotsOf(trialRecordId: string) {
   const { results } = await env.DB.prepare(
     `SELECT kind, slot, variant, safe_end_date AS safeEndDate, send_at AS sendAt, status
@@ -77,7 +78,7 @@ export async function slotsOf(trialRecordId: string) {
   return results;
 }
 
-/** 발송 결과를 흉내 낸다. 디스패처(T17) 전이라 SENT 같은 상태는 SQL로 만든다 */
+/** 발송 결과를 흉내 낸다. T16 테스트가 "이미 보낸·실패한 행"을 만들 때 쓴다 */
 export async function markSlot(
   trialRecordId: string,
   slot: string,
@@ -90,7 +91,7 @@ export async function markSlot(
     .run();
 }
 
-/** 발송 시도 횟수를 흉내 낸다(디스패처 T17 전). 재예약으로 되살릴 때 초기화되는지 확인하는 데 쓴다 */
+/** 발송 시도 횟수를 흉내 낸다. 재예약으로 되살릴 때 초기화되는지 확인하는 데 쓴다 */
 export async function setSlotAttempts(trialRecordId: string, slot: string, attempts: number) {
   await env.DB.prepare(
     `UPDATE notification_schedules SET attempts = ?, last_attempt_at = '2026-11-04T00:00:00.000Z'
@@ -123,4 +124,14 @@ export async function slotStatusesOf(trialRecordId: string) {
     .bind(trialRecordId)
     .all<{ slot: string; status: string }>();
   return results;
+}
+
+/** 선점만 하고 끝내지 못한(Worker가 중간에 죽은) 실행을 흉내 낸다. 복구 규칙(T17) 확인에 쓴다 */
+export async function markSending(trialRecordId: string, slot: string, lastAttemptAt: string) {
+  await env.DB.prepare(
+    `UPDATE notification_schedules SET status = 'SENDING', last_attempt_at = ?
+      WHERE trial_record_id = ? AND slot = ?`,
+  )
+    .bind(lastAttemptAt, trialRecordId, slot)
+    .run();
 }

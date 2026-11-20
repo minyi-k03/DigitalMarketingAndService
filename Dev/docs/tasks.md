@@ -255,7 +255,7 @@
 - **완료 기준**: TT "기록 수정(허용·거부 상태, 과거 `BillingDate` 거부, 미래 슬롯 재예약, 정규 슬롯 경과 시 `TRACKING` 즉시 1회 및 `CANCEL_ATTEMPTED` 당일 해지 확인 규칙 적용)", TT "버퍼 변경 적용(선택 시 대상만 재계산, 미선택 시 불변)", S-05
 - **주요 파일**: `m/trial-tracking/application/update-trial-record.ts`, `m/trial-tracking/application/trial-command-support.ts`, `m/trial-tracking/infra/notification-repo.ts`, `m/trial-tracking/application/buffer-change.ts`(보류)
 
-### T17 발송 디스패처 — `대기`
+### T17 발송 디스패처 — `완료 (2026-11-20. 선점은 UPDATE … RETURNING 한 문장이고 expire와 같은 의미 판정을 쓴다. BILLING_CHECK(MISSED_BILLED 기록)도 판정에 포함해 T18은 슬롯 저장만 추가하면 된다. 즉시 발송은 POST·PATCH 라우트의 waitUntil. 발송 어댑터가 없는 모드(kakao_memo·dealer, T34·T31 전)는 슬롯을 선점하지 않고 scheduled가 오류를 기록한다. 지금 composition root의 수신처 자리표시자는 "수신처 없음"이라 production(log 모드)의 도래한 슬롯은 SKIPPED로 닫힌다 — T34에서 교체. 2026-11-20 code-review(Antigravity) 반영: 결과 기록 펜싱(선점 시각 `last_attempt_at` 조건, 복구 뒤 늦게 끝난 이전 실행이 새 실행의 행을 덮던 문제), 보낸 뒤 SENT 기록 실패가 재시도로 가던 문제, 복구 경계를 SPEC "15분 넘게"에 맞춰 `<`로, 알림 항목 이름 필드를 `catalogItemName`으로. 상세는 architecture §5.6)`
 - **근거**: §17 스케줄러·발송 멱등성, §6 발송 시각(G5 확정)·수신 거부, S13·S44
 - **선행**: T16, T07
 - **내용**:
@@ -269,7 +269,7 @@
   - TT "알림 수신 거부(`SKIPPED`, 상태 전이 지속, 다시 켜면 이후 슬롯만)"
   - 3회 실패 시 `FAILED`, `SENDING` 15분 복구, `BillingDate`가 지난 `ESCAPE_ALERT`는 `EXPIRED`
   - TT "발송 시각 설정 변경(G5: 기존 `PENDING`의 `sendAt` 유지, 이후 생성·재예약 슬롯만 새 시각)"
-- **주요 파일**: `m/trial-tracking/application/dispatch.ts`, `w/ports/notification-sender.ts`, `w/adapters/notification-log.ts`
+- **주요 파일**: `m/trial-tracking/application/dispatch.ts`, `m/trial-tracking/domain/notification-message.ts`, `m/trial-tracking/infra/notification-repo.ts`, `w/ports/notification-sender.ts`, `w/adapters/notification-log.ts`, `w/adapters/select-sender.ts`, `w/scheduled.ts`, `w/http/routes/trials.ts`(waitUntil)
 
 ### T18 MISSED_BILLED 배치 — `대기`
 - **근거**: §5 `BillingDate` 경과, §6 결제 확인 알림, §17 배치, S31, S-03

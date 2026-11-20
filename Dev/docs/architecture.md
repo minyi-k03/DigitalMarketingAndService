@@ -131,7 +131,7 @@ Dev/
 | 명령 | `resolveMissedBilling(cmd: ResolveMissedBillingCommand)` | §5 |
 | 명령 | `prepareBufferChange(catalogItemId, newBuffer)` → `D1PreparedStatement[]` (= `ApplyBufferChangeToActiveRecords`) | §1, §2, §5 |
 | 명령 | `runMissedBilledBatch()` | §17 |
-| 명령 | `dispatchDueNotifications()` | §17 |
+| 명령 | `dispatchDueNotifications({ trialRecordId? })` → `{ reclaimed, expired, sent, skipped, retried, failed }` | §17 |
 | 조회/명령 | `getNotificationSettings()` / `updateNotificationSettings(actor, patch)` (`sendTime`, `templates`) | §6 G5, §17 |
 | 명령 | `prepareUserDeletion(userId)` → `D1PreparedStatement[]` | §15 D-08 |
 | 조회 | `listMyTrials({ userId, tab })` → `{ items, savedAmountTotal, activeCount }` | §13 |
@@ -304,21 +304,30 @@ templateKeyFor({ kind, variant }, retentionPolicy): string           // 문구 �
 ### 5.6 발송 디스패처 (§17) — Cron 10분
 
 ```
-1. reclaim : UPDATE … SET status='PENDING' WHERE status='SENDING' AND last_attempt_at < now-15m
-2. expire  : 의미를 잃은 PENDING을 닫는다
-             - ESCAPE_ALERT인데 billingDate < today 또는 기록이 TRACKING이 아님 → EXPIRED
-             - CANCEL_CONFIRM_CHECK인데 기록이 CANCEL_ATTEMPTED가 아님        → EXPIRED
-3. claim   : SELECT id FROM … WHERE status='PENDING' AND send_at <= now LIMIT N
-             각 행에 대해 UPDATE … SET status='SENDING', last_attempt_at=now
-                          WHERE id=? AND status='PENDING'   (changes = 1인 행만 진행)
-4. send    : 기록 상태를 다시 확인 → recipient = Identity.getNotificationRecipient(userId)
+1. reclaim : UPDATE … SET status='PENDING' WHERE status='SENDING' AND last_attempt_at < now-15m ("15분 넘게", SPEC §17)
+2. expire  : 의미를 잃은 PENDING을 닫는다 (send_at과 무관)
+             - ESCAPE_ALERT인데 billingDate < today 또는 기록이 TRACKING이 아님        → EXPIRED
+             - CANCEL_CONFIRM_CHECK인데 기록이 CANCEL_ATTEMPTED가 아님               → EXPIRED
+             - BILLING_CHECK인데 기록이 MISSED_BILLED가 아님                         → EXPIRED
+3. claim   : UPDATE … SET status='SENDING', last_attempt_at=now
+              WHERE status='PENDING' AND id IN (도래했고 의미 있는 슬롯 LIMIT 50) RETURNING …
+             한 문장이라 겹쳐 실행돼도 한 행은 한 실행만 가져간다
+4. send    : 슬롯마다 recipient = Identity.getNotificationRecipient(userId)
              - enabled = false 또는 recipient 없음 → SKIPPED
              - NotificationSender.send(...) 성공 → SENT
-             - 실패 → attempts+1, 3회 미만이면 PENDING, 3회째면 FAILED
+             - 던지면 attempts+1, 3회 미만이면 PENDING, 3회째면 FAILED
 ```
 
-- 늦은 등록처럼 즉시 보내야 하는 슬롯은 행을 넣은 뒤 `ctx.waitUntil(dispatchOne(id))`로 같은 3~4단계를 바로 실행합니다. 실패해도 다음 Cron이 다시 집어 갑니다.
-- 상태 전이로 종료 상태가 되면 그 기록의 `PENDING` 슬롯을 모두 `CANCELED`로 바꿉니다(§6 알림 취소).
+- **결과 기록의 펜싱**: `SENT`·`SKIPPED`·`FAILED`/`PENDING` 기록은 `WHERE id = ? AND status = 'SENDING' AND last_attempt_at = :claimedAt`이다. `claimedAt`은 선점한 `now`다. 15분이 지나 복구돼 다른 실행이 다시 선점하면 `last_attempt_at`이 달라지므로, 늦게 끝난 이전 실행의 실패·건너뜀·성공이 새 실행이 선점한 행을 `PENDING`으로 덮어 세 번째 발송을 만들지 못한다. 소유를 잃은 행의 실패 기록은 결과 요약에 세지 않는다.
+- **보낸 뒤의 기록 실패**: `send`가 성공한 뒤 `SENT` 기록이 D1 오류로 실패하면 재시도 경로(`attempts+1`·`PENDING`)로 보내지 않는다. 바로 다시 나가기 때문이다. 행은 `SENDING`으로 남고 15분 뒤 복구된다(명세가 중복을 허용하는 유일한 경우). 요약에는 `sent`로 센다.
+
+- **의미 판정은 한 곳**: 2단계(expire)와 3단계(claim)가 같은 조건(`meaningfulClause`)을 쓴다. 닫히는 행은 선점되지 않으므로 선점 뒤 기록 상태를 다시 읽지 않는다. 시계는 한 번만 읽어 `now`와 `todayKst`가 같은 시점이다.
+- **링크**: `ESCAPE_ALERT`·`CANCEL_CONFIRM_CHECK`는 `/bridge/{id}`, `BILLING_CHECK`는 `/trials/{id}`다(기록 ID만, 도메인 접두는 어댑터가 붙인다). 문구는 `templateKey`(`kind.variant[.retentionPolicy]`)로 어댑터가 고른다.
+- **한 슬롯의 실패는 같은 회차의 다른 슬롯을 막지 않는다.** 오류 메시지에는 수신처 정보가 섞일 수 있어 기록하지 않는다. 회차 요약(`DispatchResult`)만 `scheduled`가 로그로 남긴다.
+- **발송 어댑터가 없으면**(`NOTIFICATION_MODE`가 `kakao_memo`·`dealer`인데 T34·T31 전) `sender`가 `undefined`이고 디스패처는 슬롯을 선점하지도 닫지도 않는다. 선점하면 보낼 수 없는 알림이 재시도로 소진돼 `FAILED`가 되기 때문이다. `scheduled`는 이때 `notification_sender_unavailable`을 기록한다.
+- **즉시 발송**: `POST /api/trials`·`PATCH /api/trials/{id}` 라우트가 응답을 보낸 뒤 `ctx.waitUntil(dispatchDueNotifications({ trialRecordId }))`로 그 기록의 도래한 슬롯만 보낸다(`LATE_REGISTRATION`의 `sendAt = now`). 보낼 것이 없어도 복구·만료·선점 UPDATE 3문장은 실행하지만 바뀌는 행이 없다. 실패해도 응답은 그대로이며 다음 Cron이 다시 집어 간다. ExecutionContext가 없는 실행(ctx 없이 `app.request`를 부르는 단위 테스트)에서는 건너뛴다.
+- **`scheduled` 진입점**(`src/worker/scheduled.ts`)은 Cron 표현식으로 작업을 가른다. `*/10 * * * *`은 디스패치, `10 15 * * *`(`MISSED_BILLED`)는 T18에서 연결한다.
+- 상태 전이로 종료 상태가 되면 그 기록의 `PENDING` 슬롯을 모두 `CANCELED`로 바꾼다(§6 알림 취소).
 
 ### 5.7 `MISSED_BILLED` 배치 (§17) — 매일 15:10 UTC
 
