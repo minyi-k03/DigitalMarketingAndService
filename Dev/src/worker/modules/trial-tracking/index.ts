@@ -15,6 +15,7 @@ import {
   voidTrialRecord,
 } from './application/trial-state-commands';
 import { dispatchDueNotifications, type DispatchCommand } from './application/dispatch';
+import { getBridgeState } from './application/get-bridge-state';
 import { listMyTrials, type ListMyTrialsQuery } from './application/list-my-trials';
 import { runMissedBilledBatch } from './application/missed-billed-batch';
 import {
@@ -35,6 +36,7 @@ export type {
   StartCancelAttemptResult,
   TrialRecordRef,
 } from './application/trial-state-commands';
+export type { BridgeState } from './application/get-bridge-state';
 export type { ListMyTrialsQuery, MyTrialsView } from './application/list-my-trials';
 export type { TrialRecordView } from './application/to-trial-record-view';
 
@@ -48,6 +50,7 @@ export function createTrialTrackingService(deps: TrialTrackingDeps) {
     voidTrialRecord: (ref: TrialRecordRef) => voidTrialRecord(deps, ref),
     resolveMissedBilling: (cmd: ResolveMissedBillingCommand) => resolveMissedBilling(deps, cmd),
     getTrialRecord: (ref: TrialRecordRef) => getTrialRecord(deps, ref),
+    getBridgeState: (ref: TrialRecordRef) => getBridgeState(deps, ref),
     listMyTrials: (query: ListMyTrialsQuery) => listMyTrials(deps, query),
     updateTrialRecord: (cmd: UpdateTrialRecordCommand) => updateTrialRecord(deps, cmd),
     dispatchDueNotifications: (cmd?: DispatchCommand) => dispatchDueNotifications(deps, cmd),

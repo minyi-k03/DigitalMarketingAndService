@@ -6,6 +6,7 @@ import { createApp } from './http/app';
 import type { AppDeps } from './http/deps';
 import { createConsoleLogger } from './http/logger';
 import { createCatalogService } from './modules/catalog';
+import { createEscapeBridgeService } from './modules/escape-bridge';
 import { createIdentityService, type IdentityService } from './modules/identity';
 import { createTrialTrackingService } from './modules/trial-tracking';
 import { SystemClock } from './platform/clock';
@@ -45,7 +46,16 @@ function buildDeps(env: Env) {
     identity,
     sender,
   });
-  const app: AppDeps = { clock, db: env.DB, logger, identity, catalog, trialTracking };
+  const escapeBridge = createEscapeBridgeService({ trialTracking, catalog });
+  const app: AppDeps = {
+    clock,
+    db: env.DB,
+    logger,
+    identity,
+    catalog,
+    trialTracking,
+    escapeBridge,
+  };
   return { app, canSend: sender !== undefined };
 }
 

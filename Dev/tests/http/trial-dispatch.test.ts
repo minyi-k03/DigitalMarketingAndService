@@ -118,6 +118,7 @@ describe('늦은 등록 즉시 발송 (waitUntil) [S6][S13][T17]', () => {
           throw new Error('토큰 abc 포함 메시지');
         },
       },
+      escapeBridge: built.escapeBridge,
     });
 
     const res = await failing.request(

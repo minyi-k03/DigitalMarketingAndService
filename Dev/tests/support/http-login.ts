@@ -2,6 +2,7 @@ import { env } from 'cloudflare:test';
 import { createApp } from '../../src/worker/http/app';
 import type { Logger } from '../../src/worker/http/logger';
 import { createCatalogService } from '../../src/worker/modules/catalog';
+import { createEscapeBridgeService } from '../../src/worker/modules/escape-bridge';
 import { createTrialTrackingService } from '../../src/worker/modules/trial-tracking';
 import { FakeClock } from './fake-clock';
 import { FakeNotificationSender } from './fake-notification-sender';
@@ -23,6 +24,7 @@ export function buildLoginApp() {
     identity,
     sender,
   });
+  const escapeBridge = createEscapeBridgeService({ trialTracking, catalog });
   const app = createApp({
     clock,
     db: env.DB,
@@ -30,8 +32,9 @@ export function buildLoginApp() {
     identity,
     catalog,
     trialTracking,
+    escapeBridge,
   });
-  return { app, clock, kakao, identity, recipients, sender, catalog, trialTracking };
+  return { app, clock, kakao, identity, recipients, sender, catalog, trialTracking, escapeBridge };
 }
 
 type LoginApp = ReturnType<typeof buildLoginApp>;

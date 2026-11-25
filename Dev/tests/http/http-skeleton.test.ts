@@ -6,6 +6,7 @@ import { redact, type Logger } from '../../src/worker/http/logger';
 import { validateJson } from '../../src/worker/http/validate';
 import { DomainError, type DomainErrorCode } from '../../src/worker/platform/errors';
 import { createCatalogService } from '../../src/worker/modules/catalog';
+import { createEscapeBridgeService } from '../../src/worker/modules/escape-bridge';
 import { createIdentityService } from '../../src/worker/modules/identity';
 import { createTrialTrackingService } from '../../src/worker/modules/trial-tracking';
 import { FakeClock } from '../support/fake-clock';
@@ -39,7 +40,16 @@ function buildApp() {
     identity,
     sender: new FakeNotificationSender(),
   });
-  const app = createApp({ clock, db: env.DB, logger, identity, catalog, trialTracking });
+  const escapeBridge = createEscapeBridgeService({ trialTracking, catalog });
+  const app = createApp({
+    clock,
+    db: env.DB,
+    logger,
+    identity,
+    catalog,
+    trialTracking,
+    escapeBridge,
+  });
 
   app.post(
     '/api/_test/echo',

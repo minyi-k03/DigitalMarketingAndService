@@ -289,7 +289,7 @@
 
 ## Phase 5: EscapeBridge & Recovery (P0)
 
-### T20 브릿지 화면 데이터 — `대기`
+### T20 브릿지 화면 데이터 — `완료 (2026-11-25. escape-bridge 모듈 신설, TT 공개 조회 getBridgeState 추가(architecture §3.2 정의대로, 사용자 승인). 모드는 TRACKING→POLL, CANCEL_ATTEMPTED→REENTRY, MISSED_BILLED·BILLED_CONFIRMED→GUIDE_ONLY, 그 밖은 422 BRIDGE_NOT_AVAILABLE. escapeLink·escapeLinkFallbackUrl은 REENTRY·GUIDE_ONLY에만, exitReasons는 POLL에만 싣고 forcedChannel은 모드와 무관하게 주고, 안내 모드(GUIDE_ONLY)는 SPEC §7대로 백업 체크리스트를 빼고 backupFirst를 false로 두며, 빈 체크리스트는 없는 것으로 보고 생략한다. 로고는 카탈로그 getTrackingTerms의 logoUrl을 재사용해 카탈로그 인터페이스는 바꾸지 않았다. 사유 5개 목록은 openapi ExitReason과 같은 순서로 escape-bridge domain에 둠. openapi·D1 스키마 변경 없음)`
 - **근거**: §7 진입 경로·`EscapePattern`별 동작, D-09, S16~S19·S22~S24, V-05
 - **선행**: T14, T10
 - **내용**: `getBridgeView` 모드 결정(POLL·REENTRY·GUIDE_ONLY·거부), `escapeLink` 노출 범위, `backupFirst`, `forcedChannel`, `GET /api/trials/{id}/bridge`

@@ -93,9 +93,7 @@ describe('IA 카카오 로그인 HTTP 계약 [S16][T05]', () => {
 
     const { callback } = await loginAndGetCookie(built, { code: 'c1', kakaoId: '1001' });
 
-    const cleared = callback.headers
-      .getSetCookie()
-      .find((c) => c.startsWith('sc_login_nonce='));
+    const cleared = callback.headers.getSetCookie().find((c) => c.startsWith('sc_login_nonce='));
     expect(cleared).toMatch(/Max-Age=0/);
     expect(cleared).toMatch(/Path=\/auth\/kakao/);
   });
@@ -220,6 +218,7 @@ describe('IA 세션 보호 API HTTP 계약 [S16][T05]', () => {
       identity: { ...built.identity, getMe: async () => null },
       catalog: built.catalog,
       trialTracking: built.trialTracking,
+      escapeBridge: built.escapeBridge,
     });
 
     const res = await orphaned.request(`${ORIGIN}/api/me`, { headers: { Cookie: cookie } });
