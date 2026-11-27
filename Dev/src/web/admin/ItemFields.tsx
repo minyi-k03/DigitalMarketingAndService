@@ -117,6 +117,23 @@ export function ItemFields({
         )}
       </Field>
 
+      <Field id="item-category" label="분야">
+        {() => (
+          <select
+            id="item-category"
+            className={styles.select}
+            value={form.serviceCategory}
+            onChange={(e) => onChange({ serviceCategory: e.target.value as ServiceCategory })}
+          >
+            {CATEGORIES.map((c) => (
+              <option key={c} value={c}>
+                {categoryLabel(c)}
+              </option>
+            ))}
+          </select>
+        )}
+      </Field>
+
       {form.kind === 'SPONSORED_TRIAL' ? (
         <>
           <Field
@@ -176,7 +193,6 @@ export function ItemFields({
             label="가입 페이지 URL"
             error={errors.signupUrl}
             hint="https 주소만 쓸 수 있어요. 사용자가 ‘가입하러 가기’를 누르면 이 주소로 이동해요."
-            wide
           >
             {(d) => (
               <input
@@ -193,23 +209,6 @@ export function ItemFields({
           </Field>
         </>
       ) : null}
-
-      <Field id="item-category" label="분야">
-        {() => (
-          <select
-            id="item-category"
-            className={styles.select}
-            value={form.serviceCategory}
-            onChange={(e) => onChange({ serviceCategory: e.target.value as ServiceCategory })}
-          >
-            {CATEGORIES.map((c) => (
-              <option key={c} value={c}>
-                {categoryLabel(c)}
-              </option>
-            ))}
-          </select>
-        )}
-      </Field>
 
       <Field id="item-price" label="월 가격 (원)" error={errors.monthlyPrice}>
         {(d) => (

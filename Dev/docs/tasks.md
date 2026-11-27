@@ -353,7 +353,7 @@
 - **선행**: T25, T10, T13
 - **내용**: 분야별 목록·검색, 상세(다크패턴 등급, 가이드, 보존 정책, 백업, EduBenefit, 'YYYY-MM-DD 확인'), 1회 클릭 등록, 시작일 변경, '이미 가입했어요', '게시 중단' 안내와 등록 버튼 숨김
 
-### T27 내 체험 화면 — `진행 (2026-11-20 구현·npm run verify 통과(test 48파일 703건, 웹 순수 로직 6개 seam 51건 추가. Antigravity code-review·교차 검증 반영 2026-11-20). 목록 `/trials`(요약·탭·카드)와 상세 `/trials/:id`(BILLING_CHECK 알림 도착지), 유지·등록 취소·해지 확정·결제 확인 정정(확인 시트, ExitPoll 사유 필요 시 선택), 날짜 수정을 구현. 로컬 브라우저 확인(Chrome CDP, 360px·1280px, 가로 넘침 없음). 2026-11-27 환불 템플릿 보기 연결: 서버 `actions`의 `VIEW_REFUND_TEMPLATE`(BILLED_CONFIRMED)를 '환불 요청 템플릿 보기' 링크로 표시하고 `/trials/:id/refund-template` 화면(국·영문 본문, 언어별 복사, 결제 예정일 참고 표시)을 추가, npm run verify 통과(test 57파일 797건). SPEC §9 정합(사용자 결정 2026-11-27): `MISSED_BILLED` 서버 `actions`에도 `VIEW_REFUND_TEMPLATE`를 마지막에 추가(SPEC §13·architecture §5.9 갱신). 화면 상단에 실제 결제 여부 확인 안내를 상시 표시(Antigravity 지적 반영, T22 메모 이행). 잔여: 브라우저 점검(복사 동작 포함, Antigravity), 반영분 재점검(Antigravity))`
+### T27 내 체험 화면 — `진행 (2026-11-20 구현·npm run verify 통과(test 48파일 703건, 웹 순수 로직 6개 seam 51건 추가. Antigravity code-review·교차 검증 반영 2026-11-20). 목록 `/trials`(요약·탭·카드)와 상세 `/trials/:id`(BILLING_CHECK 알림 도착지), 유지·등록 취소·해지 확정·결제 확인 정정(확인 시트, ExitPoll 사유 필요 시 선택), 날짜 수정을 구현. 로컬 브라우저 확인(Chrome CDP, 360px·1280px, 가로 넘침 없음). 2026-11-27 환불 템플릿 보기 연결: 서버 `actions`의 `VIEW_REFUND_TEMPLATE`(BILLED_CONFIRMED)를 '환불 요청 템플릿 보기' 링크로 표시하고 `/trials/:id/refund-template` 화면(국·영문 본문, 언어별 복사, 결제 예정일 참고 표시)을 추가, npm run verify 통과(test 57파일 797건). SPEC §9 정합(사용자 결정 2026-11-27): `MISSED_BILLED` 서버 `actions`에도 `VIEW_REFUND_TEMPLATE`를 마지막에 추가(SPEC §13·architecture §5.9 갱신). 화면 상단에 실제 결제 여부 확인 안내를 상시 표시(Antigravity 지적 반영, T22 메모 이행). 환불 템플릿 복사 동작은 2026-11-27 agent-browser로 확인(한국어 287자·영어 453자 복사, 빈칸 포함). 잔여: 나머지 브라우저 점검(Antigravity), 반영분 재점검(Antigravity))`
 - **근거**: S10·S23·S28~S32·S41·S42, D-09
 - **선행**: T25, T19, T16, T22(환불 템플릿 부분만. 나머지는 T22 없이 구현)
 - **내용**: 탭 대시보드(누적 방어 금액·진행 중 건수), 카드 행동 버튼, 기록 상세·수정, 해지 확정(필요 시 ExitPoll), 결제 확인 정정 화면, 환불 템플릿 복사
@@ -378,7 +378,7 @@
 - **내용**: 알림 수신 토글(끌 때 확인 창, 확인해야만 요청), 탈퇴(확인 후 삭제)
 - **완료 기준**: V-07
 
-### T30 관리 콘솔 — `진행 (발표용 간소화: 카탈로그 폼·게시 상태·제보 목록만. 2026-11-27 구현·npm run verify 통과(test 63파일 863건, 웹 순수 로직 4개 seam 41건 추가). 서브에이전트 2축 리뷰와 Antigravity code-review(조건부 통과) 반영. 잔여: 브라우저 점검(운영자 로그인 상태의 등록·수정·게시 중단·제보 처리, 360px·PC. 아직 화면을 브라우저로 열어 보지 못했다))`
+### T30 관리 콘솔 — `진행 (발표용 간소화: 카탈로그 폼·게시 상태·제보 목록만. 2026-11-27 구현·npm run verify 통과(test 63파일 863건, 웹 순수 로직 4개 seam 41건 추가). 서브에이전트 2축 리뷰와 Antigravity code-review(조건부 통과) 반영. 브라우저 점검은 2026-11-27 agent-browser로 통과: `GUARDED_SERVICE` 등록, 수정·확인일 갱신, 게시 중단과 사용자 화면의 '게시 중단' 표시, 제보 처리(수정 완료·반려), 360px·PC. 같은 날 디자인 보완: 상단 탭 활성 표시, 필터·건수·파트너 체험 배지, 폼 열 배치, callout))`
 - **근거**: S38~S40·S47·S48
 - **선행**: T25, T09, T11, T12, T23
 - **내용**: 카탈로그 목록·등록·수정 폼(원점수 입력, 버퍼 변경 시 '진행 중 기록에도 적용' 선택), 변경 이력·되돌리기, 게시 상태, 제보 처리, 역할·설정(ADMIN)
@@ -389,7 +389,7 @@
   - 게시 상태 전이는 서버 `canChangePublicationStatus`와 같다: `SUBMITTED → PUBLISHED/REJECTED`, `PUBLISHED → UNPUBLISHED`. 재게시 전이가 SPEC에 없어 `UNPUBLISHED`에는 버튼이 없다.
 - **주요 파일**: `src/web/admin/*`(순수 로직 `access`·`item-form`·`publication`·`reports`·`admin-error`, 데이터 `api`, 화면 `AdminLayout`·`AdminCatalogPage`·`AdminItemPage`·`ItemFields`·`AdminReportsPage`), `src/web/app/router.tsx`·`Layout.tsx`, `tests/web/admin-*.test.ts`(4파일)
 
-### T61 파트너 대리 제출·검수 콘솔 — `진행 (발표용, D-17. 2026-11-27 구현, 브라우저 점검 남음)`
+### T61 파트너 대리 제출·검수 콘솔 — `완료 (발표용, D-17. 2026-11-27 구현·브라우저 점검 통과, 결정 2건 대기)`
 - **근거**: SPEC §2·§16(`SponsoredTrial` 대리 제출·검수·게시), S35, D-17
 - **선행**: T30
 - **내용**: T30 폼을 `kind = SPONSORED_TRIAL`로 재사용한다. `SUBMITTED → PUBLISHED/REJECTED` 전이는 T30 `PublicationPanel`을 그대로 쓴다.
@@ -459,7 +459,7 @@
 | TASK | 내용 | 선행 | 완료 기준 | 상태 |
 | :--- | :--- | :--- | :--- | :--- |
 | T60 | 제휴 체험 라운지(`published_at` 내림차순)와 피처드 슬롯(`featured_order`, 최대 3개). `FeaturedEvent` 노출·클릭 기록(노출 하루 1회 중복 제거) | T10, T35 | V-02 중 정렬·슬롯 순서, BA "`FeaturedEvent` 노출 하루 1회 중복 제거" | `대기` |
-| T61 | 파트너 대리 제출·검수 콘솔(T30 폼 재사용, `SUBMITTED → PUBLISHED/REJECTED`, 파트너 최소 등록) | T30 | CM 게시 상태 전이, `SPONSORED_TRIAL`의 `ownerPartnerId`·`signupUrl` 필수 | `진행 (2026-11-27 구현. 사용자 승인으로 서버 `GET/POST /api/admin/partners`·`openapi.yaml` 추가. 잔여: 브라우저 점검(파트너 등록 → 체험 제출 → 검수 대기 필터 → 게시/반려, 360px·PC))` |
+| T61 | 파트너 대리 제출·검수 콘솔(T30 폼 재사용, `SUBMITTED → PUBLISHED/REJECTED`, 파트너 최소 등록) | T30 | CM 게시 상태 전이, `SPONSORED_TRIAL`의 `ownerPartnerId`·`signupUrl` 필수 | `완료 (2026-11-27 구현·커밋 e62279a. 사용자 승인으로 서버 `GET/POST /api/admin/partners`·`openapi.yaml` 추가. 같은 날 agent-browser로 브라우저 점검 통과: 파트너 등록 → 체험 제출 → 검수 대기 필터 → 게시/반려, 360px, 일반 계정 차단, 파트너 조회 실패 안내. 사용자 결정 대기: 게시 뒤 소유 파트너 변경, 회사명 중복)` |
 | T62 | 대안 매칭 배너(트리거·사유 필터·후보 선정·7일 1회, 앱 안 배너만) | T14, T60 | BA "`AlternativeMatch`" 전 항목 | `대기` (지연 시 가장 먼저 축소) |
 | T63 | 이탈 분석 리포트 화면(`ExitReason` 분포, 해지 시도율·확정률, 유지·결제 비율, 분야 평균, 노출·클릭 수). TT 공개 집계 조회만 사용 | T14, T60 | `VOIDED` 제외, 응답에 `userId` 등 식별 정보 없음, 새 투표가 다시 조회했을 때 반영 | `대기` |
 

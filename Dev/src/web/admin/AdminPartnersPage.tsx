@@ -106,6 +106,10 @@ export function AdminPartnersPage() {
         </div>
       </form>
 
+      <h3 className={`${styles.sectionTitle} ${styles.listHeading}`}>
+        등록된 파트너{query.data ? ` ${query.data.length}` : ''}
+      </h3>
+
       {query.isPending ? (
         <div className={styles.list} aria-busy="true" aria-label="불러오는 중">
           <div className={`${skeleton.block} ${styles.skeleton}`} />

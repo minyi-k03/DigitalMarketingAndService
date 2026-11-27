@@ -1,5 +1,5 @@
 import { useEffect } from 'react';
-import { Link, NavLink, Outlet, useLocation } from 'react-router';
+import { Link, Outlet, useLocation } from 'react-router';
 import { buildLoginRedirect } from '../api/login-redirect';
 import { useMe } from '../api/me';
 import pageMessage from '../app/PageMessage.module.css';
@@ -8,6 +8,13 @@ import { ErrorNotice } from '../ui/ErrorNotice';
 import skeleton from '../ui/skeleton.module.css';
 import { adminAccess } from './access';
 import styles from './admin.module.css';
+import { adminTabOf } from './tabs';
+
+const TABS = [
+  { tab: 'catalog', to: '/admin', label: '서비스' },
+  { tab: 'partners', to: '/admin/partners', label: '파트너' },
+  { tab: 'reports', to: '/admin/reports', label: '경로 오류 제보' },
+] as const;
 
 /**
  * `/admin*` 공통 틀. 운영자(OPERATOR)·관리자(ADMIN)만 안쪽 화면을 본다.
@@ -17,6 +24,8 @@ export function AdminLayout() {
   const me = useMe();
   const { pathname, search } = useLocation();
   const access = me.isError ? 'ERROR' : adminAccess(me.data);
+  // 등록·수정 화면에서도 '서비스' 탭이 선택돼 지금 위치를 알 수 있게 한다
+  const currentTab = adminTabOf(pathname);
 
   useEffect(() => {
     if (access === 'LOGIN')
@@ -59,15 +68,16 @@ export function AdminLayout() {
     <div className={styles.page}>
       <h1 className={styles.heading}>관리 콘솔</h1>
       <nav className={styles.tabs} aria-label="관리 메뉴">
-        <NavLink to="/admin" end className={styles.tab}>
-          서비스
-        </NavLink>
-        <NavLink to="/admin/partners" className={styles.tab}>
-          파트너
-        </NavLink>
-        <NavLink to="/admin/reports" className={styles.tab}>
-          경로 오류 제보
-        </NavLink>
+        {TABS.map(({ tab, to, label }) => (
+          <Link
+            key={tab}
+            to={to}
+            className={styles.tab}
+            aria-current={tab === currentTab ? 'page' : undefined}
+          >
+            {label}
+          </Link>
+        ))}
       </nav>
       <Outlet />
     </div>

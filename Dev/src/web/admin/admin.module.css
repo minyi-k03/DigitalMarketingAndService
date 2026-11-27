@@ -23,6 +23,7 @@
 }
 
 .lead {
+  max-width: 62ch;
   color: var(--color-ink-muted);
 }
 
@@ -51,6 +52,74 @@
   color: var(--color-ink);
   font-size: 14px;
   text-decoration: none;
+}
+
+.filters {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-xs);
+}
+
+/* 목록 거르기. 이동용 탭(검정 채움)과 구분하려고 작고 가볍게 두고, 선택은 파란색 글자·테두리로 알린다 */
+.filter {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  min-height: var(--tap-target);
+  padding: 4px 12px;
+  border: 1px solid transparent;
+  border-radius: var(--radius-full);
+  color: var(--color-ink-muted);
+  font-size: 14px;
+  text-decoration: none;
+}
+
+.filter[aria-current='page'] {
+  border-color: var(--color-primary);
+  background: var(--color-surface);
+  color: var(--color-primary);
+  font-weight: 600;
+}
+
+.count,
+.countAlert {
+  min-width: 20px;
+  padding: 0 6px;
+  border-radius: var(--radius-full);
+  font-size: 12px;
+  font-weight: 600;
+  line-height: 20px;
+  text-align: center;
+  font-variant-numeric: tabular-nums;
+}
+
+.count {
+  background: var(--color-canvas-soft);
+  color: var(--color-ink-muted);
+}
+
+/* 처리할 제출이 있을 때만 눈에 띄게 한다 */
+.countAlert {
+  background: var(--color-primary);
+  color: var(--color-on-primary);
+}
+
+.kind {
+  display: inline-block;
+  margin-left: var(--space-xs);
+  padding: 2px 8px;
+  border: 1px solid var(--color-hairline);
+  border-radius: var(--radius-full);
+  background: var(--color-surface);
+  color: var(--color-primary);
+  font-size: 12px;
+  font-weight: 600;
+  line-height: 1.33;
+  vertical-align: 2px;
+}
+
+.listHeading {
+  margin-top: var(--space-md);
 }
 
 .tab[aria-current='page'] {
@@ -212,8 +281,9 @@
 
 .callout {
   padding: var(--space-sm) var(--space-md);
+  border: 1px solid var(--color-hairline);
   border-radius: var(--radius-md);
-  background: var(--color-canvas-soft);
+  background: var(--color-surface);
   color: var(--color-ink-secondary);
   font-size: 14px;
   line-height: 1.5;

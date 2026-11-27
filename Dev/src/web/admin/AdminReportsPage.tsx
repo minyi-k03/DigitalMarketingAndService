@@ -41,13 +41,13 @@ export function AdminReportsPage() {
         완료’로 처리해 주세요.
       </p>
 
-      <nav className={styles.tabs} aria-label="처리 상태">
+      <nav className={styles.filters} aria-label="처리 상태">
         {REPORT_FILTERS.map((f) => (
           <Link
             key={f}
             replace
             to={{ search: f === 'OPEN' ? '' : `?status=${f}` }}
-            className={styles.tab}
+            className={styles.filter}
             aria-current={f === filter ? 'page' : undefined}
           >
             {reportFilterLabel(f)}

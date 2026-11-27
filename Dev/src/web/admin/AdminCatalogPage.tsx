@@ -52,11 +52,12 @@ export function AdminCatalogPage() {
         </div>
       </div>
 
-      <nav className={styles.tabs} aria-label="게시 상태">
+      {/* 상단 탭(이동)과 모양을 달리해 '지금 보는 목록을 거르는 것'임이 보이게 한다 */}
+      <nav className={styles.filters} aria-label="게시 상태">
         <Link
           replace
           to={{ search: '' }}
-          className={styles.tab}
+          className={styles.filter}
           aria-current={filter === 'ALL' ? 'page' : undefined}
         >
           전체
@@ -64,10 +65,13 @@ export function AdminCatalogPage() {
         <Link
           replace
           to={{ search: '?status=SUBMITTED' }}
-          className={styles.tab}
+          className={styles.filter}
           aria-current={filter === 'SUBMITTED' ? 'page' : undefined}
         >
-          검수 대기{query.data ? ` ${awaiting}` : ''}
+          검수 대기
+          {query.data ? (
+            <span className={awaiting > 0 ? styles.countAlert : styles.count}>{awaiting}</span>
+          ) : null}
         </Link>
       </nav>
 
@@ -111,7 +115,9 @@ export function AdminCatalogPage() {
                 >
                   <span className={styles.rowName}>
                     {item.name}
-                    {item.kind === 'SPONSORED_TRIAL' ? ' · 파트너 체험' : ''}
+                    {item.kind === 'SPONSORED_TRIAL' ? (
+                      <span className={styles.kind}>파트너 체험</span>
+                    ) : null}
                   </span>
                   <span className={styles.meta}>
                     {categoryLabel(item.serviceCategory)} · 월 {won(item.monthlyPrice)} · 체험{' '}
