@@ -31,6 +31,17 @@ export function useTrial(trialRecordId: string) {
   });
 }
 
+export type RefundTemplate = components['schemas']['RefundTemplate'];
+
+/** 환불 요청 템플릿(국·영문). 결제 확인 정정으로 상태가 바뀔 수 있어 같은 키 아래에 둔다 */
+export function useRefundTemplate(trialRecordId: string) {
+  return useQuery({
+    queryKey: [...TRIALS_KEY, 'refund-template', trialRecordId],
+    queryFn: () =>
+      apiFetch<RefundTemplate>(`/api/trials/${encodeURIComponent(trialRecordId)}/refund-template`),
+  });
+}
+
 type CommandInput = { action: TrialAction; exitReason?: ExitReason };
 
 /**

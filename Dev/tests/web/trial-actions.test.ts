@@ -52,8 +52,15 @@ describe('내 체험 행동 버튼 표시 [T27][S41][D-09]', () => {
     ]);
   });
 
-  it('BILLED_CONFIRMED: 환불 요청 템플릿 버튼은 T22 전까지 숨기고 다음 달 결제 막기만 남긴다', () => {
-    expect(labelsFor('BILLED_CONFIRMED')).toEqual(['다음 달 결제 막기']);
+  it('BILLED_CONFIRMED: 다음 달 결제 막기와 환불 요청 템플릿 보기 [S32]', () => {
+    expect(labelsFor('BILLED_CONFIRMED')).toEqual(['다음 달 결제 막기', '환불 요청 템플릿 보기']);
+  });
+
+  it('환불 요청 템플릿 보기는 확인 없이 화면으로 이동하는 링크이고 파란 버튼이 아니다', () => {
+    const refund = presentActions('BILLED_CONFIRMED', SERVER_ACTIONS.BILLED_CONFIRMED).find(
+      (a) => a.action === 'VIEW_REFUND_TEMPLATE',
+    );
+    expect(refund).toMatchObject({ kind: 'refund', primary: false, confirm: null });
   });
 
   it('종료 상태는 버튼이 없다', () => {

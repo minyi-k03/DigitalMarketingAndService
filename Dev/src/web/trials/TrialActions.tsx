@@ -4,6 +4,7 @@ import buttons from '../ui/buttons.module.css';
 import { canDirectCancel, presentActions, type ActionPresentation } from './actions';
 import type { TrialRecordView } from './api';
 import { ActionSheet } from './ActionSheet';
+import { refundTemplatePath } from './refund-template';
 import styles from './TrialActions.module.css';
 
 type TrialActionsProps = {
@@ -28,10 +29,10 @@ export function TrialActions({ record, allowDirectCancel = false }: TrialActions
   return (
     <div className={styles.actions}>
       {visible.map((item) =>
-        item.kind === 'bridge' ? (
+        item.kind === 'bridge' || item.kind === 'refund' ? (
           <Link
             key={item.action}
-            to={bridgePath}
+            to={item.kind === 'bridge' ? bridgePath : refundTemplatePath(record.id)}
             className={item.primary ? buttons.primary : buttons.secondary}
           >
             {item.label}

@@ -8,8 +8,11 @@ export type ActionConfirm = { title: string; detail: string; button: string };
 export type ActionPresentation = {
   action: TrialAction;
   label: string;
-  /** `bridge`는 해지 브릿지로 이동하는 링크, `command`는 확인을 거쳐 API를 호출한다 */
-  kind: 'bridge' | 'command';
+  /**
+   * `bridge`는 해지 브릿지, `refund`는 환불 요청 템플릿 화면으로 이동하는 링크,
+   * `command`는 확인을 거쳐 API를 호출한다
+   */
+  kind: 'bridge' | 'refund' | 'command';
   /** 화면의 유일한 파란 버튼 (DESIGN-notion: 파란색은 행동에만) */
   primary: boolean;
   confirm: ActionConfirm | null;
@@ -73,7 +76,7 @@ function bridgeLabel(action: TrialAction, status: TrialStatus): string {
 
 /**
  * 서버가 내려 준 `actions`를 화면에 보일 버튼으로 옮긴다 (SPEC §13, D-09, architecture §5.9).
- * 서버가 준 것만 보이고 순서는 서버를 따른다. `VIEW_REFUND_TEMPLATE`는 T22(환불 템플릿 API) 전까지 숨긴다.
+ * 서버가 준 것만 보이고 순서는 서버를 따른다.
  */
 export function presentActions(
   status: TrialStatus,
@@ -88,6 +91,16 @@ export function presentActions(
         label: bridgeLabel(action, status),
         kind: 'bridge',
         primary,
+        confirm: null,
+      });
+      continue;
+    }
+    if (action === 'VIEW_REFUND_TEMPLATE') {
+      result.push({
+        action,
+        label: '환불 요청 템플릿 보기',
+        kind: 'refund',
+        primary: false,
         confirm: null,
       });
       continue;

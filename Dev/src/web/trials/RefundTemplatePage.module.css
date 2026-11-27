@@ -1,0 +1,90 @@
+.page {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: var(--space-md);
+  width: 100%;
+  max-width: 640px;
+  margin: 0 auto;
+  padding: var(--space-lg) var(--space-md) var(--space-xxl);
+}
+
+.back {
+  display: inline-flex;
+  align-items: center;
+  min-height: var(--tap-target);
+  color: var(--color-primary);
+  font-size: 15px;
+  text-decoration: none;
+}
+
+.skeleton {
+  width: 100%;
+  height: 320px;
+}
+
+.title {
+  font-size: 26px;
+  font-weight: 700;
+  line-height: 1.23;
+  letter-spacing: -0.625px;
+}
+
+.note {
+  color: var(--color-ink-secondary);
+  font-size: 15px;
+  line-height: 1.5;
+}
+
+/* 안내용이라 경고색 없이 중립 표면을 쓴다 (DESIGN-notion: 스티커 팔레트로 구조를 칠하지 않는다) */
+.reference {
+  width: 100%;
+  padding: var(--space-sm) var(--space-md);
+  border-radius: var(--radius-md);
+  background: var(--color-canvas-soft);
+  color: var(--color-ink-secondary);
+  font-size: 14px;
+  line-height: 1.5;
+  font-variant-numeric: tabular-nums;
+}
+
+.section {
+  display: flex;
+  flex-direction: column;
+  align-items: stretch;
+  gap: var(--space-sm);
+  width: 100%;
+  padding: var(--space-md);
+  border: 1px solid var(--color-hairline);
+  border-radius: var(--radius-lg);
+  background: var(--color-surface);
+}
+
+.heading {
+  font-size: 18px;
+  font-weight: 700;
+  line-height: 1.33;
+  letter-spacing: -0.25px;
+}
+
+/* 줄바꿈과 빈칸 [ ]을 그대로 보여 준다. 긴 줄은 접는다 */
+.text {
+  margin: 0;
+  padding: var(--space-sm);
+  border: 1px solid var(--color-field-border);
+  border-radius: var(--radius-xs);
+  background: var(--color-canvas-soft);
+  color: var(--color-ink);
+  font-family: inherit;
+  font-size: 15px;
+  line-height: 1.6;
+  white-space: pre-wrap;
+  overflow-wrap: anywhere;
+}
+
+.copyState {
+  min-height: 1.5em;
+  color: var(--color-ink-muted);
+  font-size: 14px;
+  line-height: 1.5;
+}

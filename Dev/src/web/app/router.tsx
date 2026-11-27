@@ -2,6 +2,7 @@ import { createBrowserRouter } from 'react-router';
 import { BridgePage } from '../bridge/BridgePage';
 import { CatalogDetail } from '../catalog/CatalogDetail';
 import { CatalogPage } from '../catalog/CatalogPage';
+import { RefundTemplatePage } from '../trials/RefundTemplatePage';
 import { TrialDetail } from '../trials/TrialDetail';
 import { TrialsPage } from '../trials/TrialsPage';
 import { Layout } from './Layout';
@@ -20,6 +21,7 @@ export const router = createBrowserRouter([
       // `/trials/:id`는 BILLING_CHECK 알림의 도착지이기도 하다 (architecture §5.5)
       { path: 'trials', element: <TrialsPage /> },
       { path: 'trials/:trialRecordId', element: <TrialDetail /> },
+      { path: 'trials/:trialRecordId/refund-template', element: <RefundTemplatePage /> },
       { path: 'bridge/:trialRecordId', element: <BridgePage /> },
       { path: '*', element: <NotFound /> },
     ],
