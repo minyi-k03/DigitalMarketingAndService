@@ -299,7 +299,7 @@
   - V-05
 - **주요 파일**: `m/escape-bridge/*`, `w/http/routes/bridge.ts`
 
-### T21 사유 선택·재진입·'이미 가입했어요' — `대기`
+### T21 사유 선택·재진입·'이미 가입했어요' — `완료 (서버 범위, 웹 화면 연결은 T28. 2026-11-25. escape-bridge selectExitReason은 TT startCancelAttempt에 위임하고 결과(직링크·escapePattern·forcedChannel)를 그대로 돌려준다. 이미 사유를 고른 기록(CANCEL_ATTEMPTED)에 다시 호출하면 409 INVALID_TRANSITION이고 기존 응답은 보존되며, 재진입은 GET bridge의 REENTRY로 직링크를 받는다. '이미 가입했어요'는 서버 신규 코드 없이 T13 POST /api/trials + 응답 id(중복이면 409 existingTrialRecordId)로 /bridge/{id} 이동하는 웹 조합이다. 현재 /bridge/{id}는 자리표시 화면이라 실제 브릿지 진입은 T28에서 연결한다(UNPUBLISHED 거부는 T13 V-08 테스트가 이미 검증). 요청 본문 검증용 사유 목록은 http/exit-reason.ts로 모아 trials.ts와 공유. openapi cancel-attempts에 400 응답은 문서화하지 않는다(confirm-cancel 등 다른 라우트도 400 미기재라 일관되게 유지, 2026-11-27 사용자 결정). 사유 목록은 http/exit-reason.ts와 bridge-mode.ts 두 곳에 두고 http 쪽에 컴파일 타임 누락 검사를 둔다(shared로 단일화하지 않음, 같은 날 사용자 결정))`
 - **근거**: §7 단일 명령·재진입·'이미 가입했어요', §19 `StartCancelAttemptResult`(G2 확정), S20·S21·S22·S46, V-08
 - **선행**: T20
 - **내용**: `selectExitReason` → TT `startCancelAttempt`, `POST /api/trials/{id}/cancel-attempts`. '이미 가입했어요'는 T13 API와 브릿지 이동을 조합합니다(중복이면 기존 기록으로 이동).
@@ -307,7 +307,7 @@
   - EB "사유 선택 한 번으로 `EscapeLink` 반환, 재진입 시 투표 생략"
   - EB "'이미 가입했어요' 경로로 기록 생성 후 브릿지 진입"
   - V-08(`UNPUBLISHED`는 '이미 가입했어요'도 거부, 기존 기록은 브릿지 계속 이용)
-- **주요 파일**: `m/escape-bridge/application/select-exit-reason.ts`
+- **주요 파일**: `m/escape-bridge/application/select-exit-reason.ts`, `w/http/routes/bridge.ts`, `w/http/exit-reason.ts`
 
 ### T22 환불 요청 템플릿 — `대기`
 - **근거**: §9, S32

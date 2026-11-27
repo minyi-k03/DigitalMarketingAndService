@@ -1,8 +1,8 @@
 import { Hono, type Context } from 'hono';
 import { z } from 'zod';
-import type { components } from '../../../shared/api-types';
 import type { AppEnv } from '../app-env';
 import type { AppDeps } from '../deps';
+import { exitReasonField } from '../exit-reason';
 import { requireSession } from '../middleware/session';
 import { validateJson, validateQuery } from '../validate';
 
@@ -27,20 +27,12 @@ const updateTrialBody = z
   .strictObject({ startDate: startDateField.optional(), trialDays: trialDaysField.optional() })
   .refine((body) => Object.keys(body).length > 0, '수정할 필드를 하나 이상 보내야 합니다');
 
-const EXIT_REASONS = [
-  'PRICE_BURDEN',
-  'LACK_OF_FEATURES',
-  'COMPLEX_UX',
-  'SHORT_TERM_GOAL_MET',
-  'MOVED_TO_ALTERNATIVE',
-] as const satisfies readonly components['schemas']['ExitReason'][];
-
 // 본문은 선택이다. 본문 없이 보내면(Content-Type 없음) 빈 객체로 검증한다
-const confirmCancelBody = z.strictObject({ exitReason: z.enum(EXIT_REASONS).optional() });
+const confirmCancelBody = z.strictObject({ exitReason: exitReasonField.optional() });
 
 const billingResolutionBody = z.strictObject({
   resolution: z.enum(['BILLED', 'CANCELED_BEFORE_BILLING', 'KEEP_USING']),
-  exitReason: z.enum(EXIT_REASONS).optional(),
+  exitReason: exitReasonField.optional(),
 });
 
 export const trialRoutes = ({
