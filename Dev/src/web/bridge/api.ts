@@ -2,6 +2,7 @@ import { useMutation, useQuery } from '@tanstack/react-query';
 import type { components } from '../../shared/api-types';
 import { apiFetch } from '../api/client';
 import type { ExitReason } from '../trials/labels';
+import type { BrokenLinkReportReceipt, BrokenLinkTarget } from './broken-link-report';
 
 export type BridgeView = components['schemas']['BridgeView'];
 export type StartCancelAttemptResult = components['schemas']['StartCancelAttemptResult'];
@@ -24,6 +25,17 @@ export function useSelectExitReason(trialRecordId: string) {
       apiFetch<StartCancelAttemptResult>(
         `/api/trials/${encodeURIComponent(trialRecordId)}/cancel-attempts`,
         { method: 'POST', body: { exitReason } },
+      ),
+  });
+}
+
+/** 경로 오류 제보 접수 (SPEC §10). 새 제보는 201, 24시간 내 중복은 200(duplicate=true) */
+export function useReportBrokenLink(trialRecordId: string) {
+  return useMutation({
+    mutationFn: (target: BrokenLinkTarget) =>
+      apiFetch<BrokenLinkReportReceipt>(
+        `/api/trials/${encodeURIComponent(trialRecordId)}/broken-link-reports`,
+        { method: 'POST', body: { target } },
       ),
   });
 }

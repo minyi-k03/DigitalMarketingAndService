@@ -136,7 +136,8 @@
   border-color: var(--color-primary);
 }
 
-.reason:disabled {
+.reason:disabled,
+.reportActions button:disabled {
   opacity: 0.45;
   cursor: not-allowed;
 }
@@ -165,9 +166,16 @@
   font-size: 14px;
 }
 
-.copyState {
+.copyState,
+.reportState {
   min-height: 1.5em;
   color: var(--color-ink-muted);
   font-size: 14px;
   line-height: 1.5;
+}
+
+.reportActions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-xs);
 }

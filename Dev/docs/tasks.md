@@ -353,14 +353,14 @@
 - **선행**: T25, T10, T13
 - **내용**: 분야별 목록·검색, 상세(다크패턴 등급, 가이드, 보존 정책, 백업, EduBenefit, 'YYYY-MM-DD 확인'), 1회 클릭 등록, 시작일 변경, '이미 가입했어요', '게시 중단' 안내와 등록 버튼 숨김
 
-### T27 내 체험 화면 — `진행 (2026-11-20 구현·npm run verify 통과(test 48파일 703건, 웹 순수 로직 6개 seam 51건 추가. Antigravity code-review·교차 검증 반영 2026-11-20). 목록 `/trials`(요약·탭·카드)와 상세 `/trials/:id`(BILLING_CHECK 알림 도착지), 유지·등록 취소·해지 확정·결제 확인 정정(확인 시트, ExitPoll 사유 필요 시 선택), 날짜 수정을 구현. 로컬 브라우저 확인(Chrome CDP, 360px·1280px, 가로 넘침 없음). 2026-11-27 환불 템플릿 보기 연결: 서버 `actions`의 `VIEW_REFUND_TEMPLATE`(BILLED_CONFIRMED)를 '환불 요청 템플릿 보기' 링크로 표시하고 `/trials/:id/refund-template` 화면(국·영문 본문, 언어별 복사, 결제 예정일 참고 표시)을 추가, npm run verify 통과(test 57파일 797건). SPEC §9 정합(사용자 결정 2026-11-27): `MISSED_BILLED` 서버 `actions`에도 `VIEW_REFUND_TEMPLATE`를 마지막에 추가(SPEC §13·architecture §5.9 갱신). 화면 상단에 실제 결제 여부 확인 안내를 상시 표시(Antigravity 지적 반영, T22 메모 이행). 환불 템플릿 복사 동작은 2026-11-27 agent-browser로 확인(한국어 287자·영어 453자 복사, 빈칸 포함). 잔여: 나머지 브라우저 점검(Antigravity), 반영분 재점검(Antigravity))`
+### T27 내 체험 화면 — `진행 (2026-11-20 구현·npm run verify 통과(test 48파일 703건, 웹 순수 로직 6개 seam 51건 추가. Antigravity code-review·교차 검증 반영 2026-11-20). 목록 `/trials`(요약·탭·카드)와 상세 `/trials/:id`(BILLING_CHECK 알림 도착지), 유지·등록 취소·해지 확정·결제 확인 정정(확인 시트, ExitPoll 사유 필요 시 선택), 날짜 수정을 구현. 로컬 브라우저 확인(Chrome CDP, 360px·1280px, 가로 넘침 없음). 2026-11-27 환불 템플릿 보기 연결: 서버 `actions`의 `VIEW_REFUND_TEMPLATE`(BILLED_CONFIRMED)를 '환불 요청 템플릿 보기' 링크로 표시하고 `/trials/:id/refund-template` 화면(국·영문 본문, 언어별 복사, 결제 예정일 참고 표시)을 추가, npm run verify 통과(test 57파일 797건). SPEC §9 정합(사용자 결정 2026-11-27): `MISSED_BILLED` 서버 `actions`에도 `VIEW_REFUND_TEMPLATE`를 마지막에 추가(SPEC §13·architecture §5.9 갱신). 화면 상단에 실제 결제 여부 확인 안내를 상시 표시(Antigravity 지적 반영, T22 메모 이행). 환불 템플릿 복사 동작은 2026-11-27 agent-browser로 확인(한국어 287자·영어 453자 복사, 빈칸 포함). 2026-11-27 후속: '공식 결제 예정일(참고)' 안내 박스(`.reference`)를 흰 바탕+hairline으로 수정. 잔여: 나머지 브라우저 점검(Antigravity), 반영분 재점검)`
 - **근거**: S10·S23·S28~S32·S41·S42, D-09
 - **선행**: T25, T19, T16, T22(환불 템플릿 부분만. 나머지는 T22 없이 구현)
 - **내용**: 탭 대시보드(누적 방어 금액·진행 중 건수), 카드 행동 버튼, 기록 상세·수정, 해지 확정(필요 시 ExitPoll), 결제 확인 정정 화면, 환불 템플릿 복사
 - **결정(2026-11-20)**: TRACKING 기록의 직접 해지 확정(S28)은 서버 `actions`에 없으므로 상세 화면의 보조 버튼 '이미 직접 해지했어요'(사유 선택 → `confirm-cancel`)로 둔다. 서버·`openapi.yaml` 변경 없음. 알림 수신 끔 안내 배너는 범위에서 제외했다.
 - **주요 파일**: `src/web/trials/*`(순수 로직 `actions`·`commands`·`command-error`·`edit-request`·`labels`·`tab`·`summary`, 데이터 `api`, 화면 `TrialsPage`·`TrialCard`·`TrialDetail`·`TrialActions`·`ActionSheet`·`EditDatesSheet`), `src/web/ui/money.ts`·`sheetForm.module.css`(공용으로 옮김), `src/web/trials/refund-template.ts`·`RefundTemplatePage.tsx`, `src/web/app/router.tsx`·`Layout.tsx`, `tests/web/trial-*.test.ts`(6파일)·`tests/web/refund-template.test.ts`
 
-### T28 해지 브릿지 화면 — `진행 (2026-11-27 구현·npm run verify 통과(test 56파일 791건, 웹 순수 로직 3개 seam 28건 추가). `/bridge/:trialRecordId`를 BridgePage로 교체. 모드별 화면(POLL 사유 버튼 5개→즉시 이동, REENTRY·GUIDE_ONLY 해지 링크 버튼), 가이드 항상 표시(SPA_MODAL_GUIDE는 사유 위 고정), IMMEDIATE_TERMINATION은 백업을 사유 위에 먼저 배치(V-05), APP 딥링크는 앱이 안 열리면 fallback 이동, PC_WEB은 모바일에서 이동 대신 링크 복사. 사용자 결정(2026-11-27): 경로 오류 제보 버튼은 서버 T23이 없어 숨기고 T23 뒤에 연결, 와이어프레임 합의 없이 DESIGN-notion·T26·T27 패턴으로 구현(추후 와이어프레임 수정·재작업 가능). code-review(서브에이전트 2축 + Antigravity) 반영: 앱 딥링크 대체 이동 타이머 취소(새 이동·화면 이탈·visibilitychange·pagehide), 성공 뒤 중복 제출 차단, bfcache 복원 시 새로 불러옴, 모바일 PC_WEB은 응답 링크를 쥐고 복사 화면 표시·일시 오류에 화면 유지, 백업·callout 중립 표면(DESIGN-notion 스티커 팔레트 규칙). APP+https 직링크는 대체 URL 미사용으로 확정(architecture §6 명기, SPEC 미수정). 잔여: 제보 버튼(T23 뒤), 브라우저 점검(Antigravity, 360px·PC, S-01~S-05))`
+### T28 해지 브릿지 화면 — `진행 (2026-11-27 구현·npm run verify 통과(test 56파일 791건, 웹 순수 로직 3개 seam 28건 추가). `/bridge/:trialRecordId`를 BridgePage로 교체. 모드별 화면(POLL 사유 버튼 5개→즉시 이동, REENTRY·GUIDE_ONLY 해지 링크 버튼), 가이드 항상 표시(SPA_MODAL_GUIDE는 사유 위 고정), IMMEDIATE_TERMINATION은 백업을 사유 위에 먼저 배치(V-05), APP 딥링크는 앱이 안 열리면 fallback 이동, PC_WEB은 모바일에서 이동 대신 링크 복사. 사용자 결정(2026-11-27): 경로 오류 제보 버튼은 서버 T23이 없어 숨기고 T23 뒤에 연결, 와이어프레임 합의 없이 DESIGN-notion·T26·T27 패턴으로 구현(추후 와이어프레임 수정·재작업 가능). code-review(서브에이전트 2축 + Antigravity) 반영: 앱 딥링크 대체 이동 타이머 취소(새 이동·화면 이탈·visibilitychange·pagehide), 성공 뒤 중복 제출 차단, bfcache 복원 시 새로 불러옴, 모바일 PC_WEB은 응답 링크를 쥐고 복사 화면 표시·일시 오류에 화면 유지, 백업·callout 중립 표면(DESIGN-notion 스티커 팔레트 규칙). APP+https 직링크는 대체 URL 미사용으로 확정(architecture §6 명기, SPEC 미수정). 2026-11-27 후속(인계): 경로 오류 제보 섹션(`POST /api/trials/{id}/broken-link-reports`, `ESCAPE_LINK`·`ESCAPE_GUIDE` 2종·24시간 중복 안내·오류 안내) 연결 및 웹 순수 로직 seam 1개+오류 안내(+5건, 총 67파일 908건 통과), 2축 code-review 반영. 잔여: 브라우저 점검(360px·PC, S-01~S-05, 제보 버튼), 인계 구현 교차 검증)`
 - **근거**: S16~S24·S34, V-05
 - **선행**: T25, T21, T23
 - **내용**:
@@ -369,8 +369,8 @@
   - `IMMEDIATE_TERMINATION` 백업 우선 배치
   - 사유 버튼 → 즉시 이동
   - `APP` 딥링크 fallback, `PC_WEB` 모바일 링크 복사
-  - 제보 버튼(T23 서버 뒤 연결, 지금은 숨김)
-- **주요 파일**: `src/web/bridge/*`(순수 로직 `escape-plan`·`sections`·`bridge-error`, 데이터 `api`, 화면 `BridgePage`·`EscapeLinkAction`), `src/web/app/router.tsx`, `tests/web/bridge-*.test.ts`(3파일)
+  - 제보 버튼(T23 서버 뒤 연결 완료)
+- **주요 파일**: `src/web/bridge/*`(순수 로직 `escape-plan`·`sections`·`bridge-error`·`broken-link-report`, 데이터 `api`, 화면 `BridgePage`·`EscapeLinkAction`), `src/web/app/router.tsx`, `tests/web/bridge-*.test.ts`(4파일)
 
 ### T29 설정 화면 — `보류(발표 범위 밖)`
 - **근거**: S44·S45, V-07

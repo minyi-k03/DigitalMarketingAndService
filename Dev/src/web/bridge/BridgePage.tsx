@@ -7,13 +7,21 @@ import { ErrorNotice } from '../ui/ErrorNotice';
 import skeleton from '../ui/skeleton.module.css';
 import { useRefreshTrials } from '../trials/api';
 import { EXIT_REASONS, exitReasonLabel, type ExitReason } from '../trials/labels';
-import { useBridge, useSelectExitReason, type BridgeView } from './api';
+import { useBridge, useReportBrokenLink, useSelectExitReason, type BridgeView } from './api';
 import { cancelFallbackRedirect, currentDevice, openEscape } from './browser';
 import {
   describeBridgeCommandError,
   describeBridgeLoadError,
+  describeBrokenLinkReportError,
   type BridgeCommandFailure,
+  type BrokenLinkReportFailure,
 } from './bridge-error';
+import {
+  BROKEN_LINK_TARGETS,
+  describeBrokenLinkReportSuccess,
+  reportButtonLabel,
+  type BrokenLinkTarget,
+} from './broken-link-report';
 import { CopyLink, EscapeLinkAction } from './EscapeLinkAction';
 import { needsPcHandoff, planEscape, type EscapeTarget } from './escape-plan';
 import { bridgeSections } from './sections';
@@ -170,7 +178,7 @@ function BridgeBody({ view, backTo }: { view: BridgeView; backTo: string }) {
           </section>
         );
       })}
-      {/* 경로 오류 제보 버튼은 서버(T23)가 생긴 뒤에 이 자리에 연결한다 */}
+      <BrokenLinkReportSection trialRecordId={view.trialRecordId} />
     </div>
   );
 }
@@ -277,6 +285,53 @@ function ReasonSection({
           </button>
         ))}
       </div>
+    </section>
+  );
+}
+
+function BrokenLinkReportSection({ trialRecordId }: { trialRecordId: string }) {
+  const report = useReportBrokenLink(trialRecordId);
+  const [notice, setNotice] = useState<string | null>(null);
+  const [failure, setFailure] = useState<BrokenLinkReportFailure | null>(null);
+
+  function submit(target: BrokenLinkTarget) {
+    setNotice(null);
+    setFailure(null);
+    report.mutate(target, {
+      onSuccess: (receipt) => {
+        setNotice(describeBrokenLinkReportSuccess(target, receipt));
+      },
+      onError: (error) => {
+        setFailure(describeBrokenLinkReportError(toApiError(error)));
+      },
+    });
+  }
+
+  return (
+    <section className={styles.section}>
+      <h2 className={styles.heading}>경로가 달라졌나요?</h2>
+      <p className={styles.hint}>
+        링크가 열리지 않거나 안내 순서가 실제 화면과 다르면 알려 주세요.
+      </p>
+      {failure ? <ErrorNotice title={failure.title} detail={failure.detail} /> : null}
+      <div className={styles.reportActions}>
+        {BROKEN_LINK_TARGETS.map((target) => (
+          <button
+            key={target}
+            type="button"
+            className={buttons.utility}
+            disabled={report.isPending}
+            onClick={() => submit(target)}
+          >
+            {report.isPending && report.variables === target
+              ? '보내는 중…'
+              : reportButtonLabel(target)}
+          </button>
+        ))}
+      </div>
+      <p className={styles.reportState} role="status">
+        {notice ?? ''}
+      </p>
     </section>
   );
 }

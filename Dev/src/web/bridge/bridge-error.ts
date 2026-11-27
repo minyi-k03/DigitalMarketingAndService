@@ -58,3 +58,16 @@ export function describeBridgeLoadError(error: ApiError): BridgeLoadFailure {
       };
   }
 }
+
+export type BrokenLinkReportFailure = { title: string; detail: string };
+
+/** 경로 오류 제보(`POST /broken-link-reports`) 실패 안내. 서버 내부 문구는 노출하지 않는다 */
+export function describeBrokenLinkReportError(error: ApiError): BrokenLinkReportFailure {
+  if (error.code === 'NOT_FOUND') {
+    return { title: NOT_FOUND_TITLE, detail: NOT_FOUND_DETAIL };
+  }
+  return {
+    title: '제보를 보내지 못했어요',
+    detail: '잠시 뒤 다시 시도해 주세요.',
+  };
+}
