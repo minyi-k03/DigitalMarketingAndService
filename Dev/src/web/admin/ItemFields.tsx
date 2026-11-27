@@ -1,4 +1,5 @@
 import type { ReactNode } from 'react';
+import { Link } from 'react-router';
 import { categoryLabel } from '../catalog/labels';
 import sheet from '../ui/sheetForm.module.css';
 import styles from './admin.module.css';
@@ -9,6 +10,8 @@ import type {
   ItemForm,
   ServiceCategory,
 } from './item-form';
+import { LoadErrorNotice } from './LoadErrorNotice';
+import type { Partner } from './partner-form';
 
 const CATEGORIES: ServiceCategory[] = [
   'BIGTECH',
@@ -37,19 +40,25 @@ type FieldProps = {
   error?: string | undefined;
   hint?: string;
   wide?: boolean;
+  /** 입력 요소가 없는 상태(불러오는 중·목록 없음·오류)에서는 false. 연결할 대상이 없는 `label for`를 만들지 않는다 */
+  hasControl?: boolean;
   children: (describedBy: string | undefined) => ReactNode;
 };
 
 /** 라벨·도움말·오류를 한 칸으로 묶는다. 입력 요소는 `aria-describedby`에 연결할 id를 받는다 */
-function Field({ id, label, error, hint, wide, children }: FieldProps) {
+function Field({ id, label, error, hint, wide, hasControl = true, children }: FieldProps) {
   const describedBy = [error ? `${id}-error` : null, hint ? `${id}-hint` : null]
     .filter(Boolean)
     .join(' ');
   return (
     <div className={`${sheet.field} ${wide ? styles.span : ''}`}>
-      <label htmlFor={id} className={sheet.label}>
-        {label}
-      </label>
+      {hasControl ? (
+        <label htmlFor={id} className={sheet.label}>
+          {label}
+        </label>
+      ) : (
+        <span className={sheet.label}>{label}</span>
+      )}
       {children(describedBy || undefined)}
       {hint ? (
         <p id={`${id}-hint`} className={sheet.note}>
@@ -65,18 +74,32 @@ function Field({ id, label, error, hint, wide, children }: FieldProps) {
   );
 }
 
+/** 파트너 목록을 불러오지 못했을 때의 안내와 다시 시도 */
+export type PartnersFailure = { error: unknown; onRetry: () => void };
+
 type ItemFieldsProps = {
   form: ItemForm;
   errors: FormErrors;
   onChange: (patch: Partial<ItemForm>) => void;
   /** 수정 화면에서만 진행 중 기록 안내를 보인다 */
   editing: boolean;
+  /** SPONSORED_TRIAL의 소유 파트너 후보. 아직 불러오는 중이면 undefined */
+  partners?: Partner[] | undefined;
+  /** 파트너 목록 조회가 실패했으면 불러오는 중 문구 대신 오류와 다시 시도를 보인다 */
+  partnersFailure?: PartnersFailure | undefined;
 };
 
 const SCORE_OPTIONS = [0, 1, 2] as const;
 
 /** 카탈로그 항목 입력 칸 전체 (SPEC §2). 값 검사는 `item-form`과 서버가 맡는다 */
-export function ItemFields({ form, errors, onChange, editing }: ItemFieldsProps) {
+export function ItemFields({
+  form,
+  errors,
+  onChange,
+  editing,
+  partners,
+  partnersFailure,
+}: ItemFieldsProps) {
   const invalid = (key: string) => (errors[key] ? true : undefined);
 
   return (
@@ -93,6 +116,83 @@ export function ItemFields({ form, errors, onChange, editing }: ItemFieldsProps)
           />
         )}
       </Field>
+
+      {form.kind === 'SPONSORED_TRIAL' ? (
+        <>
+          <Field
+            id="item-partner"
+            label="소유 파트너"
+            error={errors.ownerPartnerId}
+            hasControl={
+              partnersFailure === undefined && partners !== undefined && partners.length > 0
+            }
+            hint={
+              partners?.length === 0
+                ? undefined
+                : '체험을 제공하는 파트너예요. 목록에 없으면 파트너 메뉴에서 먼저 등록해 주세요.'
+            }
+          >
+            {(d) =>
+              partnersFailure ? (
+                <LoadErrorNotice
+                  error={partnersFailure.error}
+                  fallback={{
+                    title: '파트너 목록을 불러오지 못했어요',
+                    detail: '네트워크 상태를 확인한 뒤 다시 시도해 주세요.',
+                  }}
+                  onRetry={partnersFailure.onRetry}
+                />
+              ) : partners === undefined ? (
+                <p className={sheet.note} role="status">
+                  파트너를 불러오는 중…
+                </p>
+              ) : partners.length === 0 ? (
+                <p className={sheet.note}>
+                  등록된 파트너가 없어요. <Link to="/admin/partners">파트너를 먼저 등록</Link>해
+                  주세요.
+                </p>
+              ) : (
+                <select
+                  id="item-partner"
+                  className={styles.select}
+                  value={form.ownerPartnerId}
+                  aria-invalid={invalid('ownerPartnerId')}
+                  aria-describedby={d}
+                  onChange={(e) => onChange({ ownerPartnerId: e.target.value })}
+                >
+                  <option value="">파트너를 골라 주세요</option>
+                  {partners.map((p) => (
+                    <option key={p.id} value={p.id}>
+                      {p.companyName}
+                    </option>
+                  ))}
+                </select>
+              )
+            }
+          </Field>
+
+          <Field
+            id="item-signup-url"
+            label="가입 페이지 URL"
+            error={errors.signupUrl}
+            hint="https 주소만 쓸 수 있어요. 사용자가 ‘가입하러 가기’를 누르면 이 주소로 이동해요."
+            wide
+          >
+            {(d) => (
+              <input
+                id="item-signup-url"
+                className={sheet.input}
+                type="url"
+                inputMode="url"
+                value={form.signupUrl}
+                aria-invalid={invalid('signupUrl')}
+                aria-describedby={d}
+                onChange={(e) => onChange({ signupUrl: e.target.value })}
+              />
+            )}
+          </Field>
+        </>
+      ) : null}
 
       <Field id="item-category" label="분야">
         {() => (

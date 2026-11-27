@@ -389,6 +389,16 @@
   - 게시 상태 전이는 서버 `canChangePublicationStatus`와 같다: `SUBMITTED → PUBLISHED/REJECTED`, `PUBLISHED → UNPUBLISHED`. 재게시 전이가 SPEC에 없어 `UNPUBLISHED`에는 버튼이 없다.
 - **주요 파일**: `src/web/admin/*`(순수 로직 `access`·`item-form`·`publication`·`reports`·`admin-error`, 데이터 `api`, 화면 `AdminLayout`·`AdminCatalogPage`·`AdminItemPage`·`ItemFields`·`AdminReportsPage`), `src/web/app/router.tsx`·`Layout.tsx`, `tests/web/admin-*.test.ts`(4파일)
 
+### T61 파트너 대리 제출·검수 콘솔 — `진행 (발표용, D-17. 2026-11-27 구현, 브라우저 점검 남음)`
+- **근거**: SPEC §2·§16(`SponsoredTrial` 대리 제출·검수·게시), S35, D-17
+- **선행**: T30
+- **내용**: T30 폼을 `kind = SPONSORED_TRIAL`로 재사용한다. `SUBMITTED → PUBLISHED/REJECTED` 전이는 T30 `PublicationPanel`을 그대로 쓴다.
+  - 서버(사용자 승인 2026-11-27): catalog 모듈 `listPartners()`·`createPartner({ companyName, contactEmail })`, `GET/POST /api/admin/partners`(OPERATOR+, `openapi.yaml`의 `Partner`·`PartnerInput`). `partners` 테이블은 0001에 있어 마이그레이션 변경 없음. 수정·삭제·변경 이력은 만들지 않는다(T41).
+  - 화면: `/admin/partners`(목록·최소 등록 폼), `/admin/catalog/new-sponsored`(소유 파트너 선택·가입 URL 포함 제출, `SUBMITTED`로 저장), `/admin`에 '검수 대기' 필터와 파트너 체험 표시. 수정 화면은 SPONSORED_TRIAL이면 소유 파트너·가입 URL도 고칠 수 있다.
+- **완료 기준**: CM 게시 상태 전이, `SPONSORED_TRIAL`의 `ownerPartnerId`·`signupUrl` 필수, 존재하지 않는 파트너는 `VALIDATION_FAILED`
+- **리뷰 반영(2026-11-27, Antigravity)**: 파트너 목록 조회 실패 시 오류·재시도 표시, 등록 화면 `key={kind}`, 컨트롤 없는 `label for` 제거, 경계 테스트 보강. T09 기존 결함도 함께 수정했다: `GUARDED_SERVICE`에 `ownerPartnerId: ""`를 보내면 FK 위반(500)이 나던 것을 `VALIDATION_FAILED`로 바꿨다(`admin.ts` `assertValid`).
+- **주요 파일**: `w/modules/catalog/application/partners.ts`, `w/http/routes/admin-partners.ts`, `src/web/admin/*`(`partner-form`, `AdminPartnersPage`, `item-form`·`publication` 확장), `tests/catalog/partners.test.ts`, `tests/http/admin-catalog.test.ts`, `tests/web/admin-*.test.ts`
+
 ---
 
 ## Phase 8: 연동·검증·배포 준비 (P0)
@@ -449,7 +459,7 @@
 | TASK | 내용 | 선행 | 완료 기준 | 상태 |
 | :--- | :--- | :--- | :--- | :--- |
 | T60 | 제휴 체험 라운지(`published_at` 내림차순)와 피처드 슬롯(`featured_order`, 최대 3개). `FeaturedEvent` 노출·클릭 기록(노출 하루 1회 중복 제거) | T10, T35 | V-02 중 정렬·슬롯 순서, BA "`FeaturedEvent` 노출 하루 1회 중복 제거" | `대기` |
-| T61 | 파트너 대리 제출·검수 콘솔(T30 폼 재사용, `SUBMITTED → PUBLISHED/REJECTED`, 파트너 최소 등록) | T30 | CM 게시 상태 전이, `SPONSORED_TRIAL`의 `ownerPartnerId`·`signupUrl` 필수 | `대기` |
+| T61 | 파트너 대리 제출·검수 콘솔(T30 폼 재사용, `SUBMITTED → PUBLISHED/REJECTED`, 파트너 최소 등록) | T30 | CM 게시 상태 전이, `SPONSORED_TRIAL`의 `ownerPartnerId`·`signupUrl` 필수 | `진행 (2026-11-27 구현. 사용자 승인으로 서버 `GET/POST /api/admin/partners`·`openapi.yaml` 추가. 잔여: 브라우저 점검(파트너 등록 → 체험 제출 → 검수 대기 필터 → 게시/반려, 360px·PC))` |
 | T62 | 대안 매칭 배너(트리거·사유 필터·후보 선정·7일 1회, 앱 안 배너만) | T14, T60 | BA "`AlternativeMatch`" 전 항목 | `대기` (지연 시 가장 먼저 축소) |
 | T63 | 이탈 분석 리포트 화면(`ExitReason` 분포, 해지 시도율·확정률, 유지·결제 비율, 분야 평균, 노출·클릭 수). TT 공개 집계 조회만 사용 | T14, T60 | `VOIDED` 제외, 응답에 `userId` 등 식별 정보 없음, 새 투표가 다시 조회했을 때 반영 | `대기` |
 

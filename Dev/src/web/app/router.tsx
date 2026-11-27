@@ -2,6 +2,7 @@ import { createBrowserRouter } from 'react-router';
 import { AdminCatalogPage } from '../admin/AdminCatalogPage';
 import { AdminItemCreatePage, AdminItemEditPage } from '../admin/AdminItemPage';
 import { AdminLayout } from '../admin/AdminLayout';
+import { AdminPartnersPage } from '../admin/AdminPartnersPage';
 import { AdminReportsPage } from '../admin/AdminReportsPage';
 import { BridgePage } from '../bridge/BridgePage';
 import { CatalogDetail } from '../catalog/CatalogDetail';
@@ -33,7 +34,12 @@ export const router = createBrowserRouter([
         element: <AdminLayout />,
         children: [
           { index: true, element: <AdminCatalogPage /> },
-          { path: 'catalog/new', element: <AdminItemCreatePage /> },
+          { path: 'catalog/new', element: <AdminItemCreatePage kind="GUARDED_SERVICE" /> },
+          {
+            path: 'catalog/new-sponsored',
+            element: <AdminItemCreatePage kind="SPONSORED_TRIAL" />,
+          },
+          { path: 'partners', element: <AdminPartnersPage /> },
           { path: 'catalog/:catalogItemId', element: <AdminItemEditPage /> },
           { path: 'reports', element: <AdminReportsPage /> },
         ],

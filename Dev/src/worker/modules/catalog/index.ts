@@ -7,6 +7,7 @@ import {
   updateCatalogItem,
   type UpdateCatalogItemRequest,
 } from './application/admin';
+import { createPartner, listPartners } from './application/partners';
 import {
   getCatalogItem,
   getEscapeContent,
@@ -18,7 +19,7 @@ import type { CatalogActor, CatalogDeps } from './deps';
 import type { PublicationStatus } from './domain/publication-status';
 
 export type { CatalogActor, CatalogDeps } from './deps';
-export type { CatalogItem, PublicationStatus } from './infra/catalog-repo';
+export type { CatalogItem, Partner, PublicationStatus } from './infra/catalog-repo';
 export type {
   CatalogItemPublicView,
   EscapeContent,
@@ -41,6 +42,8 @@ export function createCatalogService(deps: CatalogDeps) {
     changePublicationStatus: (actor: CatalogActor, id: string, to: PublicationStatus) =>
       changePublicationStatus(deps, actor, id, to),
     listChangeLogs: (catalogItemId: string) => listChangeLogs(deps, catalogItemId),
+    createPartner: (input: Parameters<typeof createPartner>[1]) => createPartner(deps, input),
+    listPartners: () => listPartners(deps),
     listCatalog: (filter?: ListCatalogFilter) => listCatalog(deps, filter),
     getCatalogItem: (id: string) => getCatalogItem(deps, id),
     getTrackingTerms: (id: string) => getTrackingTerms(deps, id),

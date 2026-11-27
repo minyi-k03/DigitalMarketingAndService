@@ -12,9 +12,11 @@ import {
   useChangePublication,
   useCreateItem,
   useFetchLatestItem,
+  usePartners,
   useUpdateItem,
   type CatalogItem,
 } from './api';
+import type { Partner } from './partner-form';
 import styles from './admin.module.css';
 import {
   buildCreateRequest,
@@ -23,8 +25,9 @@ import {
   formFromItem,
   type FormErrors,
   type ItemForm,
+  type ItemKind,
 } from './item-form';
-import { ItemFields } from './ItemFields';
+import { ItemFields, type PartnersFailure } from './ItemFields';
 import { LoadErrorNotice } from './LoadErrorNotice';
 import {
   publicationLabel,
@@ -32,15 +35,18 @@ import {
   type PublicationTransition,
 } from './publication';
 
-/** `/admin/catalog/new` 등록 화면 */
-export function AdminItemCreatePage() {
+/** `/admin/catalog/new`(직접 검증한 서비스)·`/admin/catalog/new-sponsored`(파트너 체험 대리 제출) 등록 화면 */
+export function AdminItemCreatePage({ kind }: { kind: ItemKind }) {
   return (
     <>
       <Link to="/admin" className={styles.back}>
         ← 서비스 목록
       </Link>
-      <h2 className={styles.sectionTitle}>새 서비스 등록</h2>
-      <CreateForm />
+      <h2 className={styles.sectionTitle}>
+        {kind === 'SPONSORED_TRIAL' ? '파트너 체험 대리 제출' : '새 서비스 등록'}
+      </h2>
+      {/* 두 등록 경로 사이를 이동해도 이전 kind의 입력값이 남지 않게 kind마다 새로 만든다 */}
+      <CreateForm key={kind} kind={kind} />
     </>
   );
 }
@@ -84,14 +90,31 @@ export function AdminItemEditPage() {
   );
 }
 
+/** SPONSORED_TRIAL 폼에 넘길 파트너 목록과 조회 실패 상태. 다른 종류에는 아무것도 넘기지 않는다 */
+function usePartnerChoices(sponsored: boolean): {
+  partners: Partner[] | undefined;
+  partnersFailure: PartnersFailure | undefined;
+} {
+  const query = usePartners({ enabled: sponsored });
+  if (!sponsored) return { partners: undefined, partnersFailure: undefined };
+  return {
+    partners: query.data,
+    partnersFailure: query.isError
+      ? { error: query.error, onRetry: () => void query.refetch() }
+      : undefined,
+  };
+}
+
 function FailureNotice({ failure }: { failure: AdminFailure | null }) {
   return failure ? <ErrorNotice title={failure.title} detail={failure.detail} /> : null;
 }
 
-function CreateForm() {
+function CreateForm({ kind }: { kind: ItemKind }) {
   const navigate = useNavigate();
   const create = useCreateItem();
-  const [form, setForm] = useState<ItemForm>(emptyForm);
+  const sponsored = kind === 'SPONSORED_TRIAL';
+  const partnerChoices = usePartnerChoices(sponsored);
+  const [form, setForm] = useState<ItemForm>(() => emptyForm(kind));
   const [errors, setErrors] = useState<FormErrors>({});
   const [failure, setFailure] = useState<AdminFailure | null>(null);
 
@@ -118,18 +141,21 @@ function CreateForm() {
   return (
     <form className={sheet.form} onSubmit={submit} noValidate>
       <p className={styles.callout}>
-        직접 해지 경로를 확인한 서비스만 등록해 주세요. 등록하면 바로 사용자에게 보여요.
+        {sponsored
+          ? '파트너를 대신해 제출하는 체험이에요. 제출하면 ‘검수 대기’ 상태로 저장되고, 서비스 목록에서 게시하거나 반려하기 전까지 사용자에게 보이지 않아요.'
+          : '직접 해지 경로를 확인한 서비스만 등록해 주세요. 등록하면 바로 사용자에게 보여요.'}
       </p>
       <ItemFields
         form={form}
         errors={errors}
         editing={false}
+        {...partnerChoices}
         onChange={(patch) => setForm((prev) => ({ ...prev, ...patch }))}
       />
       <FailureNotice failure={failure} />
       <div className={styles.buttonRow}>
         <button type="submit" className={buttons.primary} disabled={create.isPending}>
-          {create.isPending ? '등록하는 중…' : '등록'}
+          {create.isPending ? '등록하는 중…' : sponsored ? '제출' : '등록'}
         </button>
         <Link to="/admin" className={buttons.utility}>
           취소
@@ -141,6 +167,7 @@ function CreateForm() {
 
 function ItemEditor({ initial }: { initial: CatalogItem }) {
   const update = useUpdateItem(initial.id);
+  const partnerChoices = usePartnerChoices(initial.kind === 'SPONSORED_TRIAL');
   // 저장·게시 상태 변경 응답을 받으면 이 값을 갈아 끼워, 이후 비교가 최신 서버 값을 기준으로 한다
   const [current, setCurrent] = useState(initial);
   const [form, setForm] = useState<ItemForm>(() => formFromItem(initial));
@@ -194,6 +221,7 @@ function ItemEditor({ initial }: { initial: CatalogItem }) {
           form={form}
           errors={errors}
           editing
+          {...partnerChoices}
           onChange={(patch) => {
             setMessage(null);
             setForm((prev) => ({ ...prev, ...patch }));

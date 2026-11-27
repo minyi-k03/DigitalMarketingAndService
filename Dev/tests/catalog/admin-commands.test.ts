@@ -67,6 +67,17 @@ describe('CM 카탈로그 등록 규칙 [S38][T09]', () => {
     });
   });
 
+  it('GUARDED_SERVICE에 빈 ownerPartnerId를 보내도 서버 오류가 아니라 VALIDATION_FAILED다', async () => {
+    const { catalog } = setup();
+
+    await expect(
+      catalog.createCatalogItem(operator, catalogInput({ ownerPartnerId: '' })),
+    ).rejects.toMatchObject({
+      code: 'VALIDATION_FAILED',
+      extensions: { errors: [expect.objectContaining({ field: 'ownerPartnerId' })] },
+    });
+  });
+
   it('운영 설정에 등록된 앱 스킴은 forcedChannel = APP 항목의 escapeLink로 허용된다 [G4]', async () => {
     const { catalog } = setup();
     const appItem = catalogInput({

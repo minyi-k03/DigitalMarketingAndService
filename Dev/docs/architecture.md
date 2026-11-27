@@ -110,6 +110,7 @@ Dev/
 | 명령 | `createCatalogItem(actor, input)` | HTTP(OPERATOR+) | §2, §16 |
 | 명령 | `updateCatalogItem(actor, id, patch, { applyBufferToActiveRecords })` | HTTP(OPERATOR+) | §2 반영 규칙, 스토리 48 |
 | 명령 | `changePublicationStatus(actor, id, to)` | HTTP(OPERATOR+) | §2 게시 상태 |
+| 조회/명령 | `listPartners()` / `createPartner({ companyName, contactEmail })` (발표용 최소 등록 `D-17`, 수정·삭제는 T41) | HTTP(OPERATOR+) | §2, §16, T61 |
 | 명령 | `revertCatalogChange(actor, changeLogId)` | HTTP(OPERATOR+) | §16, V-06 |
 | 명령 | `uploadLogo(actor, id, file)` | HTTP(OPERATOR+) | §2 표시 필드 |
 | 명령 | `updateDarkPatternRubric(actor, thresholds)` (전체 등급 재계산) | HTTP(ADMIN) | §2 기준표, 스토리 39 |

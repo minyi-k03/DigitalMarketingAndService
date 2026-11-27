@@ -1,5 +1,10 @@
 import { describe, expect, it } from 'vitest';
-import { publicationLabel, publicationTransitions } from '../../src/web/admin/publication';
+import {
+  countAwaitingReview,
+  filterByPublication,
+  publicationLabel,
+  publicationTransitions,
+} from '../../src/web/admin/publication';
 
 describe('게시 상태 전이 버튼 [T30][S47] (SPEC §2)', () => {
   it('게시 중인 항목은 게시 중단만 할 수 있다', () => {
@@ -34,5 +39,24 @@ describe('게시 상태 전이 버튼 [T30][S47] (SPEC §2)', () => {
     expect(publicationLabel('PUBLISHED')).toBe('게시 중');
     expect(publicationLabel('REJECTED')).toBe('반려');
     expect(publicationLabel('UNPUBLISHED')).toBe('게시 중단');
+  });
+});
+
+describe('관리 목록 게시 상태 거르기 [T61][S35]', () => {
+  const rows = [
+    { id: 'a', publicationStatus: 'PUBLISHED' },
+    { id: 'b', publicationStatus: 'SUBMITTED' },
+    { id: 'c', publicationStatus: 'REJECTED' },
+    { id: 'd', publicationStatus: 'SUBMITTED' },
+  ] as const;
+
+  it('전체는 그대로, 검수 대기는 SUBMITTED만 남긴다', () => {
+    expect(filterByPublication(rows, 'ALL').map((r) => r.id)).toEqual(['a', 'b', 'c', 'd']);
+    expect(filterByPublication(rows, 'SUBMITTED').map((r) => r.id)).toEqual(['b', 'd']);
+  });
+
+  it('검수 대기 개수를 센다', () => {
+    expect(countAwaitingReview(rows)).toBe(2);
+    expect(countAwaitingReview([])).toBe(0);
   });
 });

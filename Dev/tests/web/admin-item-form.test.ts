@@ -361,3 +361,102 @@ describe('서버 검증 오류 → 폼 필드 [T30]', () => {
     expect(mapServerFieldErrors(undefined)).toEqual({});
   });
 });
+
+/** 파트너가 제출한 SponsoredTrial 항목 */
+const sponsored: CatalogItem = {
+  ...item,
+  id: 'item-2',
+  kind: 'SPONSORED_TRIAL',
+  name: '시연용 체험',
+  signupUrl: 'https://partner.example.com/signup',
+  ownerPartnerId: 'partner-1',
+  publicationStatus: 'SUBMITTED',
+};
+
+describe('SponsoredTrial 대리 제출 폼 [T61][S35]', () => {
+  const sponsoredForm = (patch: Partial<ItemForm> = {}): ItemForm => ({
+    ...formFromItem(sponsored),
+    ...patch,
+  });
+
+  it('kind를 SPONSORED_TRIAL로 두면 가입 URL과 소유 파트너를 본문에 담는다', () => {
+    const result = buildCreateRequest(
+      sponsoredForm({
+        signupUrl: ' https://partner.example.com/signup ',
+        ownerPartnerId: 'partner-1',
+      }),
+    );
+
+    expect(result.ok && result.body).toMatchObject({
+      kind: 'SPONSORED_TRIAL',
+      signupUrl: 'https://partner.example.com/signup',
+      ownerPartnerId: 'partner-1',
+    });
+  });
+
+  it('가입 URL이나 소유 파트너가 비면 칸별 오류를 돌려준다 (D-17, SPEC §2)', () => {
+    const result = buildCreateRequest(sponsoredForm({ signupUrl: '  ', ownerPartnerId: '' }));
+
+    expect(result.ok).toBe(false);
+    if (result.ok) return;
+    expect(Object.keys(result.errors).sort()).toEqual(['ownerPartnerId', 'signupUrl']);
+  });
+
+  it('직접 검증한 서비스(GUARDED_SERVICE)에는 가입 URL·파트너를 보내지 않는다', () => {
+    const result = buildCreateRequest(
+      filled({ signupUrl: 'https://leftover.example.com', ownerPartnerId: 'partner-1' }),
+    );
+
+    expect(result.ok && result.body).not.toHaveProperty('signupUrl');
+    expect(result.ok && result.body).not.toHaveProperty('ownerPartnerId');
+  });
+
+  it('기존 항목에서 폼을 만들면 가입 URL·소유 파트너가 채워진다', () => {
+    expect(formFromItem(sponsored)).toMatchObject({
+      kind: 'SPONSORED_TRIAL',
+      signupUrl: 'https://partner.example.com/signup',
+      ownerPartnerId: 'partner-1',
+    });
+    expect(formFromItem(item)).toMatchObject({
+      kind: 'GUARDED_SERVICE',
+      signupUrl: '',
+      ownerPartnerId: '',
+    });
+  });
+
+  it('수정할 때 바뀐 가입 URL·소유 파트너만 changes에 담고, 그대로면 변경 없음이다', () => {
+    const unchanged = buildUpdateRequest(sponsored, sponsoredForm(), { markVerified: false });
+    expect(unchanged).toEqual({ ok: false, reason: 'NO_CHANGES' });
+
+    const changed = buildUpdateRequest(
+      sponsored,
+      sponsoredForm({ signupUrl: 'https://partner.example.com/new', ownerPartnerId: 'partner-2' }),
+      { markVerified: false },
+    );
+    expect(changed.ok && changed.body.changes).toEqual({
+      signupUrl: 'https://partner.example.com/new',
+      ownerPartnerId: 'partner-2',
+    });
+  });
+
+  it('GUARDED_SERVICE 수정은 가입 URL·파트너를 건드리지 않는다', () => {
+    const result = buildUpdateRequest(
+      item,
+      filled({ name: 'Netflix 2', signupUrl: 'https://x.example.com', ownerPartnerId: 'p' }),
+      { markVerified: false },
+    );
+    expect(result.ok && result.body.changes).toEqual({ name: 'Netflix 2' });
+  });
+
+  it('파트너 체험 수정에서 가입 URL·소유 파트너를 비우면 null로 지우지 않고 칸별 오류를 돌려준다', () => {
+    const result = buildUpdateRequest(
+      sponsored,
+      sponsoredForm({ signupUrl: '', ownerPartnerId: '' }),
+      { markVerified: false },
+    );
+
+    expect(result.ok).toBe(false);
+    if (result.ok || !('errors' in result)) return;
+    expect(Object.keys(result.errors).sort()).toEqual(['ownerPartnerId', 'signupUrl']);
+  });
+});

@@ -131,6 +131,40 @@ export async function partnerExists(db: D1Database, partnerId: string): Promise<
   return row !== null;
 }
 
+export type Partner = components['schemas']['Partner'];
+
+interface PartnerRow {
+  id: string;
+  company_name: string;
+  contact_email: string;
+  created_at: UtcInstant;
+}
+
+const toPartner = (row: PartnerRow): Partner => ({
+  id: row.id,
+  companyName: row.company_name,
+  contactEmail: row.contact_email,
+  createdAt: row.created_at,
+});
+
+export async function listPartners(db: D1Database): Promise<Partner[]> {
+  const { results } = await db
+    .prepare(
+      'SELECT id, company_name, contact_email, created_at FROM partners ORDER BY company_name, rowid',
+    )
+    .all<PartnerRow>();
+  return results.map(toPartner);
+}
+
+export async function insertPartner(db: D1Database, partner: Partner): Promise<void> {
+  await db
+    .prepare(
+      'INSERT INTO partners (id, company_name, contact_email, created_at) VALUES (?, ?, ?, ?)',
+    )
+    .bind(partner.id, partner.companyName, partner.contactEmail, partner.createdAt)
+    .run();
+}
+
 const jsonOrNull = (value: unknown) => (value === undefined ? null : JSON.stringify(value));
 
 export function insertItemStatement(

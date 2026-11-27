@@ -35,3 +35,18 @@ const TRANSITIONS: Record<PublicationStatus, PublicationTransition[]> = {
 export function publicationTransitions(from: PublicationStatus): PublicationTransition[] {
   return TRANSITIONS[from];
 }
+
+export type PublicationFilter = 'ALL' | PublicationStatus;
+
+/** 관리 목록을 게시 상태로 거른다. 'ALL'은 그대로 돌려준다 */
+export function filterByPublication<T extends { publicationStatus: PublicationStatus }>(
+  items: readonly T[],
+  filter: PublicationFilter,
+): T[] {
+  return filter === 'ALL' ? [...items] : items.filter((i) => i.publicationStatus === filter);
+}
+
+/** 검수 대기(`SUBMITTED`) 항목 수. 파트너가 제출했고 운영자가 아직 처리하지 않은 것이다 */
+export function countAwaitingReview(items: readonly { publicationStatus: PublicationStatus }[]) {
+  return items.filter((i) => i.publicationStatus === 'SUBMITTED').length;
+}

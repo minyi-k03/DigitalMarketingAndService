@@ -3,6 +3,7 @@ import type { components } from '../../shared/api-types';
 import { apiFetch } from '../api/client';
 import type { UpdateBody } from './item-form';
 import type { PublicationStatus } from './publication';
+import type { Partner } from './partner-form';
 import type { BrokenLinkReport, ReportStatusFilter } from './reports';
 
 export type CatalogItem = components['schemas']['CatalogItem'];
@@ -11,6 +12,7 @@ type CatalogItemInput = components['schemas']['CatalogItemInput'];
 const ADMIN_KEY = ['admin'] as const;
 const ITEMS_KEY = [...ADMIN_KEY, 'items'] as const;
 const REPORTS_KEY = [...ADMIN_KEY, 'reports'] as const;
+const PARTNERS_KEY = [...ADMIN_KEY, 'partners'] as const;
 
 /** 관리용 카탈로그 목록(모든 게시 상태). 상태별 거르기는 화면에서 한다 */
 export function useAdminItems() {
@@ -105,5 +107,26 @@ export function useResolveReport() {
         body: { status },
       }),
     onSuccess: () => queryClient.invalidateQueries({ queryKey: REPORTS_KEY }),
+  });
+}
+
+/** 파트너 목록. SponsoredTrial 폼에서만 필요하므로 `enabled`로 불필요한 요청을 막는다 */
+export function usePartners({ enabled = true }: { enabled?: boolean } = {}) {
+  return useQuery({
+    queryKey: PARTNERS_KEY,
+    enabled,
+    queryFn: async () => {
+      const body = await apiFetch<{ items: Partner[] }>('/api/admin/partners');
+      return body.items;
+    },
+  });
+}
+
+export function useCreatePartner() {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: (body: components['schemas']['PartnerInput']) =>
+      apiFetch<Partner>('/api/admin/partners', { method: 'POST', body }),
+    onSuccess: () => queryClient.invalidateQueries({ queryKey: PARTNERS_KEY }),
   });
 }

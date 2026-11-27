@@ -567,6 +567,42 @@ paths:
                     items: { $ref: '#/components/schemas/CatalogChangeLog' }
         '401': { $ref: '#/components/responses/Unauthenticated' }
         '403': { $ref: '#/components/responses/Forbidden' }
+  /api/admin/partners:
+    get:
+      tags: [admin]
+      summary: 파트너 목록 (SponsoredTrial 대리 제출 시 소유 파트너 선택, SPEC §2·§16, T61)
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                type: object
+                required: [items]
+                properties:
+                  items:
+                    type: array
+                    items: { $ref: '#/components/schemas/Partner' }
+        '401': { $ref: '#/components/responses/Unauthenticated' }
+        '403': { $ref: '#/components/responses/Forbidden' }
+    post:
+      tags: [admin]
+      summary: 파트너 최소 등록 (발표용 D-17, T61)
+      description: 회사명과 담당자 이메일만 받는다. 수정·삭제는 발표 뒤 T41에서 다룬다.
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: '#/components/schemas/PartnerInput' }
+      responses:
+        '201':
+          description: 생성됨
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/Partner' }
+        '400': { $ref: '#/components/responses/ValidationFailed' }
+        '401': { $ref: '#/components/responses/Unauthenticated' }
+        '403': { $ref: '#/components/responses/Forbidden' }
   /api/admin/change-logs/{changeLogId}/revert:
     parameters:
       - name: changeLogId
@@ -938,6 +974,20 @@ components:
         eduBenefit: { $ref: '#/components/schemas/EduBenefit' }
         supportContact: { $ref: '#/components/schemas/SupportContact' }
         lastVerifiedAt: { $ref: '#/components/schemas/KstDate' }
+    Partner:
+      type: object
+      required: [id, companyName, contactEmail, createdAt]
+      properties:
+        id: { type: string }
+        companyName: { type: string }
+        contactEmail: { type: string, format: email }
+        createdAt: { $ref: '#/components/schemas/UtcInstant' }
+    PartnerInput:
+      type: object
+      required: [companyName, contactEmail]
+      properties:
+        companyName: { type: string, minLength: 1 }
+        contactEmail: { type: string, format: email }
     CatalogItemInput:
       type: object
       description: 등록 입력. darkPatternLevel·lastVerifiedAt(오늘)은 서버가 정한다

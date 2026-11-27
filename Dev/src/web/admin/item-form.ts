@@ -7,10 +7,15 @@ type CatalogItemPatch = components['schemas']['CatalogItemPatch'];
 export type ServiceCategory = components['schemas']['ServiceCategory'];
 export type EscapePattern = components['schemas']['EscapePattern'];
 export type AccessRetentionPolicy = components['schemas']['AccessRetentionPolicy'];
+export type ItemKind = CatalogItem['kind'];
 
 /** 화면 입력값. 숫자 칸은 입력 중인 글자 그대로 두고, 보낼 때 검사해서 숫자로 바꾼다 */
 export type ItemForm = {
+  /** 등록 화면이 정한다. SPONSORED_TRIAL이면 가입 URL·소유 파트너가 필수다 (SPEC §2, D-17) */
+  kind: ItemKind;
   name: string;
+  signupUrl: string;
+  ownerPartnerId: string;
   serviceCategory: ServiceCategory;
   monthlyPrice: string;
   defaultTrialDays: string;
@@ -36,9 +41,12 @@ export type ItemForm = {
 /** 칸 이름 → 안내 문구. 서버 오류(`problem+json`의 `errors[]`)도 같은 칸 이름으로 바꿔 보여 준다 */
 export type FormErrors = Partial<Record<string, string>>;
 
-export function emptyForm(): ItemForm {
+export function emptyForm(kind: ItemKind = 'GUARDED_SERVICE'): ItemForm {
   return {
+    kind,
     name: '',
+    signupUrl: '',
+    ownerPartnerId: '',
     serviceCategory: 'OTT',
     monthlyPrice: '',
     defaultTrialDays: '',
@@ -62,7 +70,10 @@ export function emptyForm(): ItemForm {
 
 export function formFromItem(item: CatalogItem): ItemForm {
   return {
+    kind: item.kind,
     name: item.name,
+    signupUrl: item.signupUrl ?? '',
+    ownerPartnerId: item.ownerPartnerId ?? '',
     serviceCategory: item.serviceCategory,
     monthlyPrice: String(item.monthlyPrice),
     defaultTrialDays: String(item.defaultTrialDays),
@@ -99,6 +110,14 @@ function normalize(form: ItemForm): Normalized {
 
   const name = form.name.trim();
   if (name === '') errors.name = '서비스명을 입력해 주세요.';
+
+  const sponsoredTrial = form.kind === 'SPONSORED_TRIAL';
+  const signupUrl = form.signupUrl.trim();
+  const ownerPartnerId = form.ownerPartnerId.trim();
+  if (sponsoredTrial && signupUrl === '') errors.signupUrl = '가입 페이지 URL을 입력해 주세요.';
+  if (sponsoredTrial && ownerPartnerId === '') {
+    errors.ownerPartnerId = '소유 파트너를 골라 주세요.';
+  }
 
   const priceText = form.monthlyPrice.trim();
   const monthlyPrice = /^\d+$/.test(priceText) ? Number(priceText) : Number.NaN;
@@ -154,6 +173,7 @@ function normalize(form: ItemForm): Normalized {
     ok: true,
     input: {
       name,
+      ...(sponsoredTrial && { signupUrl, ownerPartnerId }),
       serviceCategory: form.serviceCategory,
       monthlyPrice,
       defaultTrialDays,
@@ -182,11 +202,11 @@ function normalize(form: ItemForm): Normalized {
 export type CreateRequest =
   { ok: true; body: CatalogItemInput } | { ok: false; errors: FormErrors };
 
-/** 등록 본문. 이 콘솔은 직접 검증한 서비스(GUARDED_SERVICE)만 등록한다 (파트너 체험은 T61) */
+/** 등록 본문. kind는 폼이 정한다: 직접 검증한 서비스(GUARDED_SERVICE) 또는 파트너 대리 제출(SPONSORED_TRIAL) */
 export function buildCreateRequest(form: ItemForm): CreateRequest {
   const result = normalize(form);
   if (!result.ok) return result;
-  return { ok: true, body: { kind: 'GUARDED_SERVICE', ...result.input } };
+  return { ok: true, body: { kind: form.kind, ...result.input } };
 }
 
 export type UpdateBody = {
@@ -203,6 +223,10 @@ export type UpdateRequest =
 function comparableOf(item: CatalogItem): Omit<CatalogItemInput, 'kind'> {
   return {
     name: item.name,
+    ...(item.kind === 'SPONSORED_TRIAL' && {
+      signupUrl: item.signupUrl ?? '',
+      ownerPartnerId: item.ownerPartnerId ?? '',
+    }),
     serviceCategory: item.serviceCategory,
     monthlyPrice: item.monthlyPrice,
     defaultTrialDays: item.defaultTrialDays,
@@ -242,7 +266,7 @@ const CLEARABLE = [
 
 /**
  * 수정 본문. 바뀐 필드만 `changes`에 담고, 지운 선택 필드는 null로 보낸다.
- * `signupUrl`·`ownerPartnerId`는 이 폼이 다루지 않으므로 건드리지 않는다.
+ * `signupUrl`·`ownerPartnerId`는 SPONSORED_TRIAL 항목에서만 비교한다(둘 다 필수라 지우지 않는다).
  * `markVerified`는 해지 경로를 직접 확인했다는 표시이며 변경이 없어도 보낼 수 있다 (SPEC §2).
  */
 export function buildUpdateRequest(

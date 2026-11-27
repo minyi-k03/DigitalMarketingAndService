@@ -333,3 +333,152 @@ describe('CM 카탈로그 관리 API [S38][S47][T09]', () => {
     });
   });
 });
+
+describe('CM 파트너 관리 API [S35][T61]', () => {
+  it('USER는 목록 조회와 등록 모두 403이고 아무것도 만들어지지 않는다', async () => {
+    const built = buildLoginApp();
+    const cookie = await loginWithRole(built, 'USER');
+    const companyName = `차단-${crypto.randomUUID()}`;
+
+    const list = await call(built, 'GET', '/api/admin/partners', cookie);
+    const create = await call(built, 'POST', '/api/admin/partners', cookie, {
+      companyName,
+      contactEmail: 'p@example.com',
+    });
+
+    expect(list.status).toBe(403);
+    expect(create.status).toBe(403);
+    const stored = await env.DB.prepare('SELECT COUNT(*) AS n FROM partners WHERE company_name = ?')
+      .bind(companyName)
+      .first<{ n: number }>();
+    expect(stored?.n).toBe(0);
+  });
+
+  it('OPERATOR가 등록하면 201과 파트너를 돌려주고 목록에 나타난다', async () => {
+    const built = buildLoginApp();
+    const cookie = await loginWithRole(built, 'OPERATOR');
+    const companyName = `시연용 파트너 ${crypto.randomUUID()}`;
+
+    const created = await call(built, 'POST', '/api/admin/partners', cookie, {
+      companyName,
+      contactEmail: 'p@example.com',
+    });
+    const list = await call(built, 'GET', '/api/admin/partners', cookie);
+
+    expect(created.status).toBe(201);
+    const partner = (await created.json()) as { id: string };
+    expect(partner).toMatchObject({ companyName, contactEmail: 'p@example.com' });
+    expect(((await list.json()) as { items: unknown[] }).items).toContainEqual(partner);
+  });
+
+  it('이메일 형식이 틀리면 400 problem+json에 필드 오류가 담긴다', async () => {
+    const built = buildLoginApp();
+    const cookie = await loginWithRole(built, 'OPERATOR');
+
+    const res = await call(built, 'POST', '/api/admin/partners', cookie, {
+      companyName: '시연용 파트너',
+      contactEmail: 'not-an-email',
+    });
+
+    expect(res.status).toBe(400);
+    expect(await res.json()).toMatchObject({
+      code: 'VALIDATION_FAILED',
+      errors: [expect.objectContaining({ field: 'contactEmail' })],
+    });
+  });
+
+  it('등록한 파트너로 SPONSORED_TRIAL을 SUBMITTED로 제출하고 PUBLISHED로 검수한다', async () => {
+    const built = buildLoginApp();
+    const cookie = await loginWithRole(built, 'OPERATOR');
+    const partner = (await (
+      await call(built, 'POST', '/api/admin/partners', cookie, {
+        companyName: '시연용 파트너',
+        contactEmail: 'p@example.com',
+      })
+    ).json()) as { id: string };
+
+    const submitted = await createViaApi(built, cookie, {
+      kind: 'SPONSORED_TRIAL',
+      signupUrl: 'https://partner.example.com/signup',
+      ownerPartnerId: partner.id,
+    });
+    const reviewed = await call(
+      built,
+      'POST',
+      `/api/admin/catalog-items/${submitted.id}/publication-status`,
+      cookie,
+      { to: 'PUBLISHED' },
+    );
+
+    expect(submitted.publicationStatus).toBe('SUBMITTED');
+    expect(reviewed.status).toBe(200);
+    expect(await reviewed.json()).toMatchObject({ publicationStatus: 'PUBLISHED' });
+  });
+
+  it('로그인하지 않으면 목록 조회와 등록 모두 401이다', async () => {
+    const built = buildLoginApp();
+    const send = (method: string, body?: unknown) =>
+      built.app.request(`${ORIGIN}/api/admin/partners`, {
+        method,
+        headers: { Origin: ORIGIN, 'Content-Type': 'application/json' },
+        ...(body !== undefined && { body: JSON.stringify(body) }),
+      });
+
+    expect((await send('GET')).status).toBe(401);
+    expect(
+      (await send('POST', { companyName: '시연용 파트너', contactEmail: 'p@example.com' })).status,
+    ).toBe(401);
+  });
+
+  it('알 수 없는 필드가 있으면 400이고 파트너가 만들어지지 않는다', async () => {
+    const built = buildLoginApp();
+    const cookie = await loginWithRole(built, 'OPERATOR');
+    const companyName = `미등록-${crypto.randomUUID()}`;
+
+    const res = await call(built, 'POST', '/api/admin/partners', cookie, {
+      companyName,
+      contactEmail: 'p@example.com',
+      id: 'client-chosen-id',
+    });
+
+    expect(res.status).toBe(400);
+    const stored = await env.DB.prepare('SELECT COUNT(*) AS n FROM partners WHERE company_name = ?')
+      .bind(companyName)
+      .first<{ n: number }>();
+    expect(stored?.n).toBe(0);
+  });
+
+  it('공백만 있는 회사명은 400 problem+json이고 companyName 오류를 담는다', async () => {
+    const built = buildLoginApp();
+    const cookie = await loginWithRole(built, 'OPERATOR');
+
+    const res = await call(built, 'POST', '/api/admin/partners', cookie, {
+      companyName: '   ',
+      contactEmail: 'p@example.com',
+    });
+
+    expect(res.status).toBe(400);
+    expect(res.headers.get('Content-Type')).toContain('application/problem+json');
+    expect(await res.json()).toMatchObject({
+      code: 'VALIDATION_FAILED',
+      errors: [expect.objectContaining({ field: 'companyName' })],
+    });
+  });
+
+  it('검수 대기 SPONSORED_TRIAL은 반려할 수 있고, 반려 뒤에는 다시 게시할 수 없다', async () => {
+    const built = buildLoginApp();
+    const cookie = await loginWithRole(built, 'OPERATOR');
+    const submitted = await createSubmittedViaApi(built, cookie);
+    const change = (to: string) =>
+      call(built, 'POST', `/api/admin/catalog-items/${submitted.id}/publication-status`, cookie, {
+        to,
+      });
+
+    const rejected = await change('REJECTED');
+    const republish = await change('PUBLISHED');
+
+    expect(rejected.status).toBe(200);
+    expect(await rejected.json()).toMatchObject({ publicationStatus: 'REJECTED' });
+    expect(republish.status).toBe(409);
+  });
+});

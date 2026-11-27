@@ -62,6 +62,9 @@ export function AdminLayout() {
         <NavLink to="/admin" end className={styles.tab}>
           서비스
         </NavLink>
+        <NavLink to="/admin/partners" className={styles.tab}>
+          파트너
+        </NavLink>
         <NavLink to="/admin/reports" className={styles.tab}>
           경로 오류 제보
         </NavLink>

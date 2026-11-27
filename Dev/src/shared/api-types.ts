@@ -1170,6 +1170,76 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/admin/partners": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** 파트너 목록 (SponsoredTrial 대리 제출 시 소유 파트너 선택, SPEC §2·§16, T61) */
+        get: {
+            parameters: {
+                query?: never;
+                header?: never;
+                path?: never;
+                cookie?: never;
+            };
+            requestBody?: never;
+            responses: {
+                /** @description OK */
+                200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": {
+                            items: components["schemas"]["Partner"][];
+                        };
+                    };
+                };
+                401: components["responses"]["Unauthenticated"];
+                403: components["responses"]["Forbidden"];
+            };
+        };
+        put?: never;
+        /**
+         * 파트너 최소 등록 (발표용 D-17, T61)
+         * @description 회사명과 담당자 이메일만 받는다. 수정·삭제는 발표 뒤 T41에서 다룬다.
+         */
+        post: {
+            parameters: {
+                query?: never;
+                header?: never;
+                path?: never;
+                cookie?: never;
+            };
+            requestBody: {
+                content: {
+                    "application/json": components["schemas"]["PartnerInput"];
+                };
+            };
+            responses: {
+                /** @description 생성됨 */
+                201: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "application/json": components["schemas"]["Partner"];
+                    };
+                };
+                400: components["responses"]["ValidationFailed"];
+                401: components["responses"]["Unauthenticated"];
+                403: components["responses"]["Forbidden"];
+            };
+        };
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/admin/change-logs/{changeLogId}/revert": {
         parameters: {
             query?: never;
@@ -1616,6 +1686,18 @@ export interface components {
             eduBenefit?: components["schemas"]["EduBenefit"];
             supportContact: components["schemas"]["SupportContact"];
             lastVerifiedAt: components["schemas"]["KstDate"];
+        };
+        Partner: {
+            id: string;
+            companyName: string;
+            /** Format: email */
+            contactEmail: string;
+            createdAt: components["schemas"]["UtcInstant"];
+        };
+        PartnerInput: {
+            companyName: string;
+            /** Format: email */
+            contactEmail: string;
         };
         /** @description 등록 입력. darkPatternLevel·lastVerifiedAt(오늘)은 서버가 정한다 */
         CatalogItemInput: {

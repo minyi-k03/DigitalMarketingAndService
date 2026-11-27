@@ -41,8 +41,15 @@ async function assertValid(
   const errors = validateCatalogItemInput(candidate, {
     allowedDeepLinkSchemes: settings.allowedDeepLinkSchemes,
   });
-  // 외래키 위반이 서버 오류로 새지 않게, 소유 파트너가 실제로 있는지 먼저 확인한다
-  if (candidate.ownerPartnerId && !(await partnerExists(deps.db, candidate.ownerPartnerId))) {
+  // 외래키 위반이 서버 오류로 새지 않게, 소유 파트너가 실제로 있는지 먼저 확인한다.
+  // 빈 문자열도 값이 있는 것으로 보고 확인한다(빈 문자열이 그대로 저장되면 FK 위반이다).
+  // SponsoredTrial의 필수 누락은 위에서 이미 같은 필드로 알렸으므로 중복해서 쌓지 않는다.
+  const ownerFlagged = errors.some((e) => e.field === 'ownerPartnerId');
+  if (
+    candidate.ownerPartnerId !== undefined &&
+    !ownerFlagged &&
+    !(await partnerExists(deps.db, candidate.ownerPartnerId))
+  ) {
     errors.push({ field: 'ownerPartnerId', message: '존재하지 않는 파트너입니다' });
   }
   if (errors.length > 0) {
