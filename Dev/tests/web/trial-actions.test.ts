@@ -19,6 +19,7 @@ const SERVER_ACTIONS: Record<Status, Action[]> = {
     'RESOLVE_CANCELED_BEFORE_BILLING',
     'RESOLVE_KEEP_USING',
     'GO_TO_BRIDGE_GUIDE',
+    'VIEW_REFUND_TEMPLATE',
   ],
   BILLED_CONFIRMED: ['GO_TO_BRIDGE_GUIDE', 'VIEW_REFUND_TEMPLATE'],
   CANCELED_CONFIRMED: [],
@@ -43,12 +44,13 @@ describe('내 체험 행동 버튼 표시 [T27][S41][D-09]', () => {
     ]);
   });
 
-  it('MISSED_BILLED: 결제 확인 정정 세 가지와 다음 달 결제 막기 (D-09)', () => {
+  it('MISSED_BILLED: 결제 확인 정정 세 가지, 다음 달 결제 막기, 환불 요청 템플릿 보기 (D-09, SPEC §9)', () => {
     expect(labelsFor('MISSED_BILLED')).toEqual([
       '결제됐어요',
       '결제 전에 해지했어요',
       '계속 쓸래요',
       '다음 달 결제 막기',
+      '환불 요청 템플릿 보기',
     ]);
   });
 

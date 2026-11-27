@@ -80,6 +80,7 @@ describe('TT 내 체험 목록 [S41][S23][T19]', () => {
         'RESOLVE_CANCELED_BEFORE_BILLING',
         'RESOLVE_KEEP_USING',
         'GO_TO_BRIDGE_GUIDE',
+        'VIEW_REFUND_TEMPLATE',
       ],
       ['GO_TO_BRIDGE', 'KEEP', 'VOID'],
       ['CONFIRM_CANCEL', 'GO_TO_BRIDGE', 'KEEP'],

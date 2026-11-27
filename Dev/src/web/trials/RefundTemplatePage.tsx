@@ -48,6 +48,10 @@ export function RefundTemplatePage() {
       </Link>
       <h1 className={styles.title}>환불 요청 템플릿</h1>
       <p className={styles.note}>
+        먼저 카드·계좌 내역에서 실제로 결제됐는지 확인해 주세요. 결제가 없었다면 환불을 요청할
+        필요가 없어요.
+      </p>
+      <p className={styles.note}>
         서비스 이름·체험 시작일·고객센터는 채워 두었어요. 대괄호 [ ] 안의 실제 결제일, 결제 금액,
         이름만 직접 적어서 고객센터에 보내 주세요. 구독컷이 대신 보내 주지는 않아요.
       </p>
@@ -56,8 +60,9 @@ export function RefundTemplatePage() {
         실제로 결제된 날짜와 다를 수 있어 템플릿에는 넣지 않았어요.
       </p>
 
-      <TemplateBlock heading="한국어" lang="ko" text={ko} primary />
-      <TemplateBlock heading="English" lang="en" text={en} />
+      {/* 다른 체험으로 바뀌면 이전 체험의 복사 안내가 남지 않도록 새로 그린다 */}
+      <TemplateBlock key={`${trialRecordId}-ko`} heading="한국어" lang="ko" text={ko} primary />
+      <TemplateBlock key={`${trialRecordId}-en`} heading="English" lang="en" text={en} />
     </div>
   );
 }

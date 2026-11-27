@@ -353,7 +353,7 @@
 - **선행**: T25, T10, T13
 - **내용**: 분야별 목록·검색, 상세(다크패턴 등급, 가이드, 보존 정책, 백업, EduBenefit, 'YYYY-MM-DD 확인'), 1회 클릭 등록, 시작일 변경, '이미 가입했어요', '게시 중단' 안내와 등록 버튼 숨김
 
-### T27 내 체험 화면 — `진행 (2026-11-20 구현·npm run verify 통과(test 48파일 703건, 웹 순수 로직 6개 seam 51건 추가. Antigravity code-review·교차 검증 반영 2026-11-20). 목록 `/trials`(요약·탭·카드)와 상세 `/trials/:id`(BILLING_CHECK 알림 도착지), 유지·등록 취소·해지 확정·결제 확인 정정(확인 시트, ExitPoll 사유 필요 시 선택), 날짜 수정을 구현. 로컬 브라우저 확인(Chrome CDP, 360px·1280px, 가로 넘침 없음). 2026-11-27 환불 템플릿 보기 연결: 서버 `actions`의 `VIEW_REFUND_TEMPLATE`(BILLED_CONFIRMED)를 '환불 요청 템플릿 보기' 링크로 표시하고 `/trials/:id/refund-template` 화면(국·영문 본문, 언어별 복사, 결제 예정일 참고 표시)을 추가, npm run verify 통과(test 57파일 797건). 잔여: 브라우저 점검(복사 동작 포함, Antigravity), 반영분 재점검(Antigravity))`
+### T27 내 체험 화면 — `진행 (2026-11-20 구현·npm run verify 통과(test 48파일 703건, 웹 순수 로직 6개 seam 51건 추가. Antigravity code-review·교차 검증 반영 2026-11-20). 목록 `/trials`(요약·탭·카드)와 상세 `/trials/:id`(BILLING_CHECK 알림 도착지), 유지·등록 취소·해지 확정·결제 확인 정정(확인 시트, ExitPoll 사유 필요 시 선택), 날짜 수정을 구현. 로컬 브라우저 확인(Chrome CDP, 360px·1280px, 가로 넘침 없음). 2026-11-27 환불 템플릿 보기 연결: 서버 `actions`의 `VIEW_REFUND_TEMPLATE`(BILLED_CONFIRMED)를 '환불 요청 템플릿 보기' 링크로 표시하고 `/trials/:id/refund-template` 화면(국·영문 본문, 언어별 복사, 결제 예정일 참고 표시)을 추가, npm run verify 통과(test 57파일 797건). SPEC §9 정합(사용자 결정 2026-11-27): `MISSED_BILLED` 서버 `actions`에도 `VIEW_REFUND_TEMPLATE`를 마지막에 추가(SPEC §13·architecture §5.9 갱신). 화면 상단에 실제 결제 여부 확인 안내를 상시 표시(Antigravity 지적 반영, T22 메모 이행). 잔여: 브라우저 점검(복사 동작 포함, Antigravity), 반영분 재점검(Antigravity))`
 - **근거**: S10·S23·S28~S32·S41·S42, D-09
 - **선행**: T25, T19, T16, T22(환불 템플릿 부분만. 나머지는 T22 없이 구현)
 - **내용**: 탭 대시보드(누적 방어 금액·진행 중 건수), 카드 행동 버튼, 기록 상세·수정, 해지 확정(필요 시 ExitPoll), 결제 확인 정정 화면, 환불 템플릿 복사
