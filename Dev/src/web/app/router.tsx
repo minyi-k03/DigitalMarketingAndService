@@ -1,4 +1,8 @@
 import { createBrowserRouter } from 'react-router';
+import { AdminCatalogPage } from '../admin/AdminCatalogPage';
+import { AdminItemCreatePage, AdminItemEditPage } from '../admin/AdminItemPage';
+import { AdminLayout } from '../admin/AdminLayout';
+import { AdminReportsPage } from '../admin/AdminReportsPage';
 import { BridgePage } from '../bridge/BridgePage';
 import { CatalogDetail } from '../catalog/CatalogDetail';
 import { CatalogPage } from '../catalog/CatalogPage';
@@ -23,6 +27,17 @@ export const router = createBrowserRouter([
       { path: 'trials/:trialRecordId', element: <TrialDetail /> },
       { path: 'trials/:trialRecordId/refund-template', element: <RefundTemplatePage /> },
       { path: 'bridge/:trialRecordId', element: <BridgePage /> },
+      // 발표용 간소화(T30): 카탈로그 목록·등록·수정·게시 상태, 경로 오류 제보만 둔다
+      {
+        path: 'admin',
+        element: <AdminLayout />,
+        children: [
+          { index: true, element: <AdminCatalogPage /> },
+          { path: 'catalog/new', element: <AdminItemCreatePage /> },
+          { path: 'catalog/:catalogItemId', element: <AdminItemEditPage /> },
+          { path: 'reports', element: <AdminReportsPage /> },
+        ],
+      },
       { path: '*', element: <NotFound /> },
     ],
   },

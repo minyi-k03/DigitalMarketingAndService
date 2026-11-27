@@ -1,5 +1,6 @@
 import { useMutation, useQueryClient } from '@tanstack/react-query';
 import { Link, NavLink, Outlet, useLocation } from 'react-router';
+import { adminAccess } from '../admin/access';
 import { apiFetch } from '../api/client';
 import { buildLoginRedirect } from '../api/login-redirect';
 import { ME_QUERY_KEY, useMe } from '../api/me';
@@ -30,6 +31,11 @@ export function Layout() {
                 <NavLink to="/trials" className={styles.navLink}>
                   내 체험
                 </NavLink>
+                {adminAccess(me.data) === 'OK' ? (
+                  <NavLink to="/admin" className={styles.navLink}>
+                    관리
+                  </NavLink>
+                ) : null}
                 <span className={styles.nickname}>{me.data.nickname ?? '회원'}</span>
                 <button
                   type="button"

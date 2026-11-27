@@ -378,10 +378,16 @@
 - **내용**: 알림 수신 토글(끌 때 확인 창, 확인해야만 요청), 탈퇴(확인 후 삭제)
 - **완료 기준**: V-07
 
-### T30 관리 콘솔 — `대기 (발표용 간소화: 카탈로그 폼·게시 상태·제보 목록만)`
+### T30 관리 콘솔 — `진행 (발표용 간소화: 카탈로그 폼·게시 상태·제보 목록만. 2026-11-27 구현·npm run verify 통과(test 63파일 863건, 웹 순수 로직 4개 seam 41건 추가). 서브에이전트 2축 리뷰와 Antigravity code-review(조건부 통과) 반영. 잔여: 브라우저 점검(운영자 로그인 상태의 등록·수정·게시 중단·제보 처리, 360px·PC. 아직 화면을 브라우저로 열어 보지 못했다))`
 - **근거**: S38~S40·S47·S48
 - **선행**: T25, T09, T11, T12, T23
 - **내용**: 카탈로그 목록·등록·수정 폼(원점수 입력, 버퍼 변경 시 '진행 중 기록에도 적용' 선택), 변경 이력·되돌리기, 게시 상태, 제보 처리, 역할·설정(ADMIN)
+- **발표용 범위(사용자 결정 2026-11-27)**: 아래만 만든다. 서버·`openapi.yaml` 변경 없음.
+  - `/admin`(서비스 목록, 모든 게시 상태), `/admin/catalog/new`(등록, `GUARDED_SERVICE`만. `SPONSORED_TRIAL`은 T61), `/admin/catalog/:id`(수정·게시 상태 전이·'경로를 직접 확인했어요'=`markVerified`), `/admin/reports`(경로 오류 제보 목록, `FIXED`/`REJECTED` 처리)
+  - 접근: `useMe().role`이 `OPERATOR`·`ADMIN`일 때만 화면을 보이고(미로그인은 로그인으로, `USER`는 안내), 헤더에 '관리' 링크를 둔다. 권한은 서버 `/api/admin*`가 최종 검사한다.
+  - 만들지 않은 것: '진행 중 기록에도 적용' 선택(서버가 `applyBufferToActiveRecords=true`를 400으로 거부. 버퍼를 바꾸면 진행 중 기록에는 반영되지 않는다는 안내만 표시, `prepareBufferChange`와 함께 발표 뒤), 변경 이력 화면·되돌리기(T09 발표용 간소화), 로고 업로드(T11 보류), 항목 단위 일괄 `mark-fixed`(서버 엔드포인트 없음, 제보별 처리만), 역할·설정·다크패턴 기준표 화면(ADMIN, 발표 범위 밖)
+  - 게시 상태 전이는 서버 `canChangePublicationStatus`와 같다: `SUBMITTED → PUBLISHED/REJECTED`, `PUBLISHED → UNPUBLISHED`. 재게시 전이가 SPEC에 없어 `UNPUBLISHED`에는 버튼이 없다.
+- **주요 파일**: `src/web/admin/*`(순수 로직 `access`·`item-form`·`publication`·`reports`·`admin-error`, 데이터 `api`, 화면 `AdminLayout`·`AdminCatalogPage`·`AdminItemPage`·`ItemFields`·`AdminReportsPage`), `src/web/app/router.tsx`·`Layout.tsx`, `tests/web/admin-*.test.ts`(4파일)
 
 ---
 

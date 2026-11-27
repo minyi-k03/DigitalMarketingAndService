@@ -69,6 +69,11 @@
   .nickname {
     display: none;
   }
+
+  /* 운영자는 항목이 하나 더(관리) 있어 360px에서 줄바꿈되지 않게 간격을 줄인다. 링크 자체에 좌우 여백이 있다 */
+  .actions {
+    gap: var(--space-xxs);
+  }
 }
 
 .main {
