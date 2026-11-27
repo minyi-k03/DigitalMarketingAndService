@@ -1,3 +1,4 @@
+import { env } from 'cloudflare:test';
 import { createEscapeBridgeService } from '../../src/worker/modules/escape-bridge';
 import type { CatalogItemInput } from './catalog-fixtures';
 import { registerTrial } from './trial-tracking';
@@ -11,6 +12,8 @@ export async function registerBridgeTrial(
   const escapeBridge = createEscapeBridgeService({
     trialTracking: ctx.trialTracking,
     catalog: ctx.catalog,
+    db: env.DB,
+    clock: ctx.clock,
   });
   return { ...ctx, escapeBridge };
 }

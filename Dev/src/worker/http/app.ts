@@ -11,6 +11,7 @@ import { requireRole } from './middleware/role';
 import { requireSession } from './middleware/session';
 import { INTERNAL_ERROR_PROBLEM, PROBLEM_CONTENT_TYPE, toProblem } from './problem';
 import { adminCatalogRoutes } from './routes/admin-catalog';
+import { adminReportRoutes } from './routes/admin-reports';
 import { authRoutes } from './routes/auth';
 import { bridgeRoutes } from './routes/bridge';
 import { catalogRoutes } from './routes/catalog';
@@ -38,6 +39,7 @@ export function createApp(deps: AppDeps) {
   app.route('/', authRoutes(deps));
   app.route('/', meRoutes(deps));
   app.route('/', adminCatalogRoutes(deps));
+  app.route('/', adminReportRoutes(deps));
   app.route('/', catalogRoutes(deps));
   app.route('/', trialRoutes(deps));
   app.route('/', bridgeRoutes(deps));

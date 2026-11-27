@@ -24,7 +24,12 @@ export function buildLoginApp() {
     identity,
     sender,
   });
-  const escapeBridge = createEscapeBridgeService({ trialTracking, catalog });
+  const escapeBridge = createEscapeBridgeService({
+    trialTracking,
+    catalog,
+    db: env.DB,
+    clock,
+  });
   const app = createApp({
     clock,
     db: env.DB,

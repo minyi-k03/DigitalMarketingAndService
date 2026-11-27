@@ -316,7 +316,7 @@
 - **완료 기준**: EB "`RefundTemplate` 국/영문 변수 자동 기입(`name` 포함), 실제 결제일 빈칸과 공식 결제 예정일 참고 표시"
 - **주요 파일**: `m/escape-bridge/domain/refund-template.ts`, `w/http/routes/bridge.ts`
 
-### T23 경로 오류 제보 — `대기 (발표용 간소화: 일괄 FIXED·markVerified 제외)`
+### T23 경로 오류 제보 — `완료 (서버 범위, 웹 제보 버튼 연결은 T28 후속. 2026-11-27. 발표용 간소화로 일괄 FIXED(`mark-fixed`)와 `markVerified`는 만들지 않았다. escape-bridge가 `submitBrokenLinkReport`·`listBrokenLinkReports`·`resolveBrokenLinkReport`를 공개하고 `EscapeBridgeDeps`에 `db`·`clock`이 추가됐다. 24시간 중복은 "없을 때만 INSERT" 한 문장으로 막아 동시 제보 중 하나만 접수되며(경계: 정확히 24시간 뒤는 새 제보), 처리 상태(FIXED·REJECTED)와 무관하게 중복으로 본다. 제보는 본인 기록이면 상태와 무관하게 접수한다(SPEC §10에 상태 제한 없음, openapi에 422 없음). 처리 상태 변경은 OPEN→FIXED·REJECTED뿐 아니라 FIXED↔REJECTED 정정도 허용하고(오류 코드 추가 없이 openapi 유지), 같은 결과로 다시 처리하면 처음 `resolvedAt`을 지킨다. 권한은 `/api/admin/*` 가드(OPERATOR+)가 건다. openapi·D1 스키마 변경 없음)`
 - **근거**: §10, §16 최종 검증일, S34·S40
 - **선행**: T20, T09
 - **내용**: 제보 접수(24시간 중복 시 기존 반환), 관리 목록·상태 변경, 항목별 일괄 FIXED, 처리 수정 시 `markVerified`

@@ -147,7 +147,7 @@ Dev/
 | 명령 | `selectExitReason({ userId, trialRecordId, exitReason })` → TT `startCancelAttempt` 위임 | §7 단일 명령 |
 | 조회 | `getRefundTemplate({ userId, trialRecordId })` → 국·영문 텍스트 | §9 |
 | 명령 | `submitBrokenLinkReport({ userId, trialRecordId, target })` | §10 |
-| 명령 | `resolveBrokenLinkReport(actor, id, status)` / `markOpenReportsFixed(actor, catalogItemId)` | §10, §16 |
+| 명령 | `resolveBrokenLinkReport(id, status)`(권한은 HTTP `requireRole`, 처리자 컬럼이 없어 `actor` 생략) / `markOpenReportsFixed(actor, catalogItemId)`(발표용 보류) | §10, §16 |
 | 조회 | `listBrokenLinkReports(filter)` | §10 |
 | 명령 | `prepareUserDeletion(userId)` | §15 |
 

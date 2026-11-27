@@ -46,7 +46,7 @@ function buildDeps(env: Env) {
     identity,
     sender,
   });
-  const escapeBridge = createEscapeBridgeService({ trialTracking, catalog });
+  const escapeBridge = createEscapeBridgeService({ trialTracking, catalog, db: env.DB, clock });
   const app: AppDeps = {
     clock,
     db: env.DB,
