@@ -2,6 +2,9 @@ import { describe, expect, it } from 'vitest';
 import type { components } from '../../src/shared/api-types';
 import { seedItem } from '../support/catalog-seed';
 import { buildLoginApp, loginAs, ORIGIN } from '../support/http-login';
+import { forceMissedBilled } from '../support/trial-state-seed';
+
+const MISSED_AT = '2026-12-05T15:10:00.000Z'; // 2026-12-06 00:10 KST 배치 시각
 
 type Problem = components['schemas']['Problem'];
 type Built = ReturnType<typeof buildLoginApp>;
@@ -18,6 +21,71 @@ async function withTrackingRecord() {
   const record = await built.trialTracking.createTrialRecord({ userId, catalogItemId: item.id });
   return { built, cookie, userId, record };
 }
+
+describe('EB 환불 템플릿 API [S32][T22]', () => {
+  it('로그인 없이 호출하면 401이다', async () => {
+    const { built, record } = await withTrackingRecord();
+
+    const res = await get(built, `/api/trials/${record.id}/refund-template`);
+
+    expect(res.status).toBe(401);
+    expect(res.headers.get('Content-Type')).toContain('application/problem+json');
+    expect(await res.json()).toMatchObject({
+      code: 'UNAUTHENTICATED',
+      loginUrl: `/auth/kakao/login?returnTo=${encodeURIComponent(`/api/trials/${record.id}/refund-template`)}`,
+    });
+  });
+
+  it('BILLED_CONFIRMED 기록도 템플릿 200을 계속 준다', async () => {
+    const { built, cookie, userId, record } = await withTrackingRecord();
+    await forceMissedBilled(record.id, MISSED_AT);
+    await built.trialTracking.resolveMissedBilling({
+      userId,
+      trialRecordId: record.id,
+      resolution: 'BILLED',
+    });
+
+    const res = await get(built, `/api/trials/${record.id}/refund-template`, cookie);
+
+    expect(res.status).toBe(200);
+    expect(await res.json()).toMatchObject({ referenceBillingDate: record.billingDate });
+  });
+
+  it('MISSED_BILLED 기록은 국·영문 템플릿과 referenceBillingDate 200을 준다', async () => {
+    const { built, cookie, record } = await withTrackingRecord();
+    await forceMissedBilled(record.id, MISSED_AT);
+
+    const res = await get(built, `/api/trials/${record.id}/refund-template`, cookie);
+
+    expect(res.status).toBe(200);
+    const body = (await res.json()) as components['schemas']['RefundTemplate'];
+    expect(body.referenceBillingDate).toBe(record.billingDate);
+    expect(body.ko).toContain('help@example.com');
+    expect(body.en).toContain('help@example.com');
+  });
+
+  it('TRACKING 기록은 422 BRIDGE_NOT_AVAILABLE problem+json이다', async () => {
+    const { built, cookie, record } = await withTrackingRecord();
+
+    const res = await get(built, `/api/trials/${record.id}/refund-template`, cookie);
+
+    expect(res.status).toBe(422);
+    expect(res.headers.get('Content-Type')).toContain('application/problem+json');
+    expect(((await res.json()) as Problem).code).toBe('BRIDGE_NOT_AVAILABLE');
+  });
+
+  it('남의 기록이나 없는 기록은 404 NOT_FOUND다', async () => {
+    const { built, record } = await withTrackingRecord();
+    await forceMissedBilled(record.id, MISSED_AT);
+    const other = await loginAs(built, { kakaoId: `k-${crypto.randomUUID()}` });
+
+    for (const id of [record.id, crypto.randomUUID()]) {
+      const res = await get(built, `/api/trials/${id}/refund-template`, other.cookie);
+      expect(res.status).toBe(404);
+      expect(((await res.json()) as Problem).code).toBe('NOT_FOUND');
+    }
+  });
+});
 
 describe('EB 브릿지 조회 API [S16][S22][T20]', () => {
   it('로그인 없이 호출하면 401이다', async () => {

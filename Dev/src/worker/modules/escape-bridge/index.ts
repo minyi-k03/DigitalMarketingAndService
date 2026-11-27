@@ -1,9 +1,11 @@
 import { getBridgeView, type BridgeViewQuery } from './application/get-bridge-view';
+import { getRefundTemplate, type RefundTemplateQuery } from './application/get-refund-template';
 import { selectExitReason, type SelectExitReasonCommand } from './application/select-exit-reason';
 import type { EscapeBridgeDeps } from './deps';
 
 export type { EscapeBridgeDeps } from './deps';
 export type { BridgeView, BridgeViewQuery } from './application/get-bridge-view';
+export type { RefundTemplate, RefundTemplateQuery } from './application/get-refund-template';
 export type {
   SelectExitReasonCommand,
   SelectExitReasonResult,
@@ -14,6 +16,7 @@ export function createEscapeBridgeService(deps: EscapeBridgeDeps) {
   return {
     getBridgeView: (query: BridgeViewQuery) => getBridgeView(deps, query),
     selectExitReason: (cmd: SelectExitReasonCommand) => selectExitReason(deps, cmd),
+    getRefundTemplate: (query: RefundTemplateQuery) => getRefundTemplate(deps, query),
   };
 }
 

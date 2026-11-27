@@ -457,7 +457,7 @@ SELECT …, 'BILLING_CHECK', 'REGULAR', r.safe_end_date, :T(today), 'PENDING'
 | 422 | `EXIT_POLL_REQUIRED` | 응답 없는 확정·정정 |
 | 422 | `CATALOG_ITEM_NOT_PUBLISHED` | `UNPUBLISHED` 등 항목에 새 기록 생성 |
 | 422 | `TRIAL_ALREADY_ENDED` | 계산된 `BillingDate`가 오늘 이전 |
-| 422 | `BRIDGE_NOT_AVAILABLE` | 브릿지 진입이 허용되지 않는 상태 |
+| 422 | `BRIDGE_NOT_AVAILABLE` | 브릿지 진입이 허용되지 않는 상태. `GET /api/trials/{id}/refund-template`이 `MISSED_BILLED`·`BILLED_CONFIRMED`가 아닌 상태에서 내는 거절에도 같은 코드를 쓴다(T22, 전용 코드 없음). 화면은 `code`만으로 브릿지 문구를 고르지 않고 엔드포인트별 문구나 `detail`을 쓴다 |
 | 500 | `INTERNAL_ERROR` | 예상하지 못한 서버 오류. 내부 정보 없이 응답하고 오류 종류(`name`)만 로그에 남김 |
 
 ---

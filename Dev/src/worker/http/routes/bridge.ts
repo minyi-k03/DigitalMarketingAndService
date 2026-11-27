@@ -23,6 +23,15 @@ export const bridgeRoutes = ({
         }),
       ),
     )
+    // 환불 요청 템플릿 (SPEC §9). MISSED_BILLED·BILLED_CONFIRMED만 200, 그 밖의 상태는 422다
+    .get('/api/trials/:trialRecordId/refund-template', requireSession(identity), async (c) =>
+      c.json(
+        await escapeBridge.getRefundTemplate({
+          userId: c.get('user').userId,
+          trialRecordId: c.req.param('trialRecordId'),
+        }),
+      ),
+    )
     // 사유 선택 = ExitPoll 응답 + CANCEL_ATTEMPTED 전이, 결과로 직링크를 준다 (SPEC §5, §7 단일 명령). 재진입은 위 조회의 REENTRY로 받는다
     .post(
       '/api/trials/:trialRecordId/cancel-attempts',

@@ -309,7 +309,7 @@
   - V-08(`UNPUBLISHED`는 '이미 가입했어요'도 거부, 기존 기록은 브릿지 계속 이용)
 - **주요 파일**: `m/escape-bridge/application/select-exit-reason.ts`, `w/http/routes/bridge.ts`, `w/http/exit-reason.ts`
 
-### T22 환불 요청 템플릿 — `대기`
+### T22 환불 요청 템플릿 — `완료 (서버 범위, 웹 화면 연결은 T27·T28. 2026-11-27. escape-bridge getRefundTemplate이 TT getBridgeState(상태·startDate·billingDate)와 카탈로그 getEscapeContent(name·supportContact)로 국·영문 텍스트를 만든다. 서비스명·고객센터는 조회 시점 값(SPEC §2). 실제 결제일·결제 금액·이름은 [    ] 빈칸이고 공식 결제 예정일은 본문에 넣지 않고 referenceBillingDate로만 준다. MISSED_BILLED·BILLED_CONFIRMED만 200이며 그 밖의 상태는 422다. 오류 코드는 기존 BRIDGE_NOT_AVAILABLE을 재사용한다(2026-11-27 사용자 확정 A안, openapi 변경 없음, architecture §8 설명만 보완). T27·T28 화면은 `code`만으로 브릿지 공통 문구를 고르지 않고 엔드포인트별 문구나 `detail`을 쓰며, `MISSED_BILLED`는 결제가 추정 상태이므로 템플릿 옆에 실제 결제 여부 확인 안내를 함께 둔다. Antigravity code-review·교차 검증 반영: 연락처 라벨 구분(이메일·문의 페이지), 테스트 공백 보강(연락처 둘 다, 조회 시점 연락처, UNPUBLISHED 기존 기록, 결제 전 해지 정정 뒤 중단, HTTP BILLED_CONFIRMED·401 본문). D1 스키마 변경 없음)`
 - **근거**: §9, S32
 - **선행**: T14, T10
 - **내용**: 국·영문 템플릿 생성(`name`·`startDate`·`supportContact` 자동 기입, 실제 결제일·결제 금액·이름 빈칸), `referenceBillingDate`. `MISSED_BILLED`·`BILLED_CONFIRMED`에서만 제공합니다(그 밖의 상태는 422). 엔드포인트: `GET /api/trials/{id}/refund-template`
