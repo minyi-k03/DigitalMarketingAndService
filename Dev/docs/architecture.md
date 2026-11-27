@@ -394,8 +394,8 @@ SELECT …, 'BILLING_CHECK', 'REGULAR', r.safe_end_date, :T(today), 'PENDING'
 - `backupFirst = accessRetentionPolicy === 'IMMEDIATE_TERMINATION' && backupChecklist?.length > 0`이면 화면은 백업 체크리스트를 투표 위에 둡니다(V-05).
 - `escapePattern = SPA_MODAL_GUIDE`이면 가이드를 펼친 상태로 고정합니다.
 - **`forcedChannel`별 클라이언트 동작**
-  - `APP`: 딥링크로 이동을 시도하고 약 1.5초 안에 `document.visibilityState`가 `visible`로 남아 있으면 `escapeLinkFallbackUrl`로 이동합니다. 카카오 인앱 브라우저에서는 수동 점검이 필요합니다(T33).
-  - `PC_WEB`: 모바일(UA와 `(pointer: coarse)`)이면 이동하지 않고 'PC에서 열어 주세요'와 링크 복사 버튼을 보여 줍니다. `selectExitReason`은 똑같이 호출합니다.
+  - `APP`: 딥링크로 이동을 시도하고 약 1.5초 안에 `document.visibilityState`가 `visible`로 남아 있으면 `escapeLinkFallbackUrl`로 이동합니다. 그 사이 `visibilitychange`·`pagehide`가 일어나거나 화면을 떠나면 대체 이동을 취소합니다. `escapeLink`가 `https:`이면 브라우저(유니버설 링크)가 처리하므로 대체 이동을 쓰지 않고, 커스텀 스킴일 때만 씁니다(T28 확정). 카카오 인앱 브라우저에서는 수동 점검이 필요합니다(T33).
+  - `PC_WEB`: 모바일이면 이동하지 않고 'PC에서 열어 주세요'와 링크 복사 버튼을 보여 줍니다. `selectExitReason`은 똑같이 호출하고, 응답의 `escapeLink`로 바로 복사 화면을 보여 줍니다. 모바일 판별은 UA(`Android`·`iPhone`·`iPad`·`iPod`·`Mobile`)이거나, iPadOS처럼 `Macintosh`로 보이면서 `maxTouchPoints > 1`인 경우입니다(T28).
   - 이 판단을 위해 `StartCancelAttemptResult`에 `forcedChannel`을 포함합니다(SPEC §19, G2 확정).
 - **'이미 가입했어요'**: 카탈로그 상세 → 시작일 확인 화면 → `POST /api/trials` → 응답의 `id`로 `/bridge/{id}` 이동. 중복 진행 기록이면 409 응답의 `existingTrialRecordId`로 이동합니다.
 - **`RefundTemplate`**(§9): 국문과 영문 텍스트 2종을 만듭니다. 서비스명·시작일·고객센터를 채우고 실제 결제일·결제 금액·이름은 `[ ]` 빈칸으로 둡니다. `referenceBillingDate`(공식 결제 예정일)는 참고 정보로 따로 내려 줍니다.

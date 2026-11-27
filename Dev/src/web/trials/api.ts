@@ -1,4 +1,5 @@
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
+import { useCallback } from 'react';
 import type { components, paths } from '../../shared/api-types';
 import { apiFetch } from '../api/client';
 import type { TrialRecordView } from '../catalog/api';
@@ -39,9 +40,10 @@ type CommandInput = { action: TrialAction; exitReason?: ExitReason };
  */
 export function useRefreshTrials() {
   const queryClient = useQueryClient();
-  return () => {
+  // 화면의 이벤트 리스너 등록 effect가 매 렌더마다 다시 걸리지 않도록 같은 함수를 돌려준다
+  return useCallback(() => {
     void queryClient.invalidateQueries({ queryKey: TRIALS_KEY });
-  };
+  }, [queryClient]);
 }
 
 /**

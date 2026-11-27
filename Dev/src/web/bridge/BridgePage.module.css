@@ -1,0 +1,173 @@
+.page {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: var(--space-md);
+  width: 100%;
+  max-width: 640px;
+  margin: 0 auto;
+  padding: var(--space-lg) var(--space-md) var(--space-xxl);
+}
+
+.back {
+  display: inline-flex;
+  align-items: center;
+  min-height: var(--tap-target);
+  color: var(--color-primary);
+  font-size: 15px;
+  text-decoration: none;
+}
+
+.skeleton {
+  width: 100%;
+  height: 320px;
+}
+
+.head {
+  display: flex;
+  align-items: center;
+  gap: var(--space-sm);
+  width: 100%;
+}
+
+.headText {
+  flex: 1;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: var(--space-xxs);
+}
+
+.name {
+  max-width: 100%;
+  font-size: 26px;
+  font-weight: 700;
+  line-height: 1.23;
+  letter-spacing: -0.625px;
+  overflow-wrap: anywhere;
+}
+
+.callout {
+  width: 100%;
+  padding: var(--space-sm) var(--space-md);
+  border-radius: var(--radius-md);
+  /* 안내용이라 경고색 없이 중립 표면을 쓴다 (DESIGN-notion: 스티커 팔레트로 구조를 칠하지 않는다) */
+  background: var(--color-canvas-soft);
+  color: var(--color-ink-secondary);
+  font-size: 15px;
+  line-height: 1.5;
+}
+
+.note {
+  color: var(--color-ink-secondary);
+  font-size: 15px;
+  line-height: 1.5;
+}
+
+.section {
+  display: flex;
+  flex-direction: column;
+  align-items: stretch;
+  gap: var(--space-sm);
+  width: 100%;
+  padding: var(--space-md);
+  border: 1px solid var(--color-hairline);
+  border-radius: var(--radius-lg);
+  background: var(--color-surface);
+}
+
+.heading {
+  font-size: 18px;
+  font-weight: 700;
+  line-height: 1.33;
+  letter-spacing: -0.25px;
+}
+
+.hint {
+  color: var(--color-ink-muted);
+  font-size: 14px;
+  line-height: 1.5;
+}
+
+.list,
+.steps {
+  margin: 0;
+  padding-left: 1.25em;
+  font-size: 15px;
+  line-height: 1.6;
+}
+
+.list li,
+.steps li {
+  padding-left: var(--space-xxs);
+  overflow-wrap: anywhere;
+}
+
+.verified {
+  color: var(--color-ink-muted);
+  font-size: 13px;
+  font-variant-numeric: tabular-nums;
+}
+
+/* 사유 버튼은 터치 영역 44px 이상, 누르면 바로 이동한다 */
+.reasons {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-xs);
+}
+
+.reason {
+  display: flex;
+  align-items: center;
+  min-height: var(--tap-target);
+  padding: 4px var(--space-md);
+  border: 1px solid var(--color-field-border);
+  border-radius: var(--radius-md);
+  background: var(--color-surface);
+  color: var(--color-ink);
+  font-family: inherit;
+  font-size: 16px;
+  text-align: left;
+  cursor: pointer;
+}
+
+.reason:active:not(:disabled) {
+  border-color: var(--color-primary);
+}
+
+.reason:disabled {
+  opacity: 0.45;
+  cursor: not-allowed;
+}
+
+.handoff {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-sm);
+}
+
+.handoffTitle {
+  font-size: 16px;
+  font-weight: 600;
+}
+
+.url {
+  width: 100%;
+  min-height: var(--tap-target);
+  padding: 4px var(--space-sm);
+  border: 1px solid var(--color-field-border);
+  /* 입력 칸은 알약 모양이 아니라 4px로 좁게 둔다 (DESIGN-notion text-input) */
+  border-radius: var(--radius-xs);
+  background: var(--color-canvas-soft);
+  color: var(--color-ink);
+  font-family: inherit;
+  font-size: 14px;
+}
+
+.copyState {
+  min-height: 1.5em;
+  color: var(--color-ink-muted);
+  font-size: 14px;
+  line-height: 1.5;
+}

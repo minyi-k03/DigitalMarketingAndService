@@ -360,7 +360,7 @@
 - **결정(2026-11-20)**: TRACKING 기록의 직접 해지 확정(S28)은 서버 `actions`에 없으므로 상세 화면의 보조 버튼 '이미 직접 해지했어요'(사유 선택 → `confirm-cancel`)로 둔다. 서버·`openapi.yaml` 변경 없음. 알림 수신 끔 안내 배너는 범위에서 제외했다.
 - **주요 파일**: `src/web/trials/*`(순수 로직 `actions`·`commands`·`command-error`·`edit-request`·`labels`·`tab`·`summary`, 데이터 `api`, 화면 `TrialsPage`·`TrialCard`·`TrialDetail`·`TrialActions`·`ActionSheet`·`EditDatesSheet`), `src/web/ui/money.ts`·`sheetForm.module.css`(공용으로 옮김), `src/web/app/router.tsx`·`Layout.tsx`, `tests/web/trial-*.test.ts`(6파일)
 
-### T28 해지 브릿지 화면 — `대기`
+### T28 해지 브릿지 화면 — `진행 (2026-11-27 구현·npm run verify 통과(test 56파일 791건, 웹 순수 로직 3개 seam 28건 추가). `/bridge/:trialRecordId`를 BridgePage로 교체. 모드별 화면(POLL 사유 버튼 5개→즉시 이동, REENTRY·GUIDE_ONLY 해지 링크 버튼), 가이드 항상 표시(SPA_MODAL_GUIDE는 사유 위 고정), IMMEDIATE_TERMINATION은 백업을 사유 위에 먼저 배치(V-05), APP 딥링크는 앱이 안 열리면 fallback 이동, PC_WEB은 모바일에서 이동 대신 링크 복사. 사용자 결정(2026-11-27): 경로 오류 제보 버튼은 서버 T23이 없어 숨기고 T23 뒤에 연결, 와이어프레임 합의 없이 DESIGN-notion·T26·T27 패턴으로 구현(추후 와이어프레임 수정·재작업 가능). code-review(서브에이전트 2축 + Antigravity) 반영: 앱 딥링크 대체 이동 타이머 취소(새 이동·화면 이탈·visibilitychange·pagehide), 성공 뒤 중복 제출 차단, bfcache 복원 시 새로 불러옴, 모바일 PC_WEB은 응답 링크를 쥐고 복사 화면 표시·일시 오류에 화면 유지, 백업·callout 중립 표면(DESIGN-notion 스티커 팔레트 규칙). APP+https 직링크는 대체 URL 미사용으로 확정(architecture §6 명기, SPEC 미수정). 잔여: 제보 버튼(T23 뒤), 브라우저 점검(Antigravity, 360px·PC, S-01~S-05))`
 - **근거**: S16~S24·S34, V-05
 - **선행**: T25, T21, T23
 - **내용**:
@@ -369,7 +369,8 @@
   - `IMMEDIATE_TERMINATION` 백업 우선 배치
   - 사유 버튼 → 즉시 이동
   - `APP` 딥링크 fallback, `PC_WEB` 모바일 링크 복사
-  - 제보 버튼
+  - 제보 버튼(T23 서버 뒤 연결, 지금은 숨김)
+- **주요 파일**: `src/web/bridge/*`(순수 로직 `escape-plan`·`sections`·`bridge-error`, 데이터 `api`, 화면 `BridgePage`·`EscapeLinkAction`), `src/web/app/router.tsx`, `tests/web/bridge-*.test.ts`(3파일)
 
 ### T29 설정 화면 — `보류(발표 범위 밖)`
 - **근거**: S44·S45, V-07

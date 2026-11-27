@@ -7,6 +7,13 @@ export class ApiRequestError extends Error {
   }
 }
 
+/** 서버가 준 오류가 아니면(네트워크 실패 등) 서버 문구 없이 내부 오류로 본다 */
+export function toApiError(error: unknown): ApiError {
+  return error instanceof ApiRequestError
+    ? error.problem
+    : { status: 0, code: 'INTERNAL_ERROR', title: '' };
+}
+
 type ApiFetchOptions = {
   method?: 'GET' | 'POST' | 'PUT' | 'PATCH' | 'DELETE';
   body?: unknown;
